@@ -11,6 +11,9 @@ class Repository(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        ordering = ['name']
+
 
 class Commit(models.Model):
     repository = models.ForeignKey(Repository, related_name='commits', on_delete=models.CASCADE)
