@@ -21,6 +21,7 @@ class Commit(models.Model):
 
     class Meta:
         unique_together = ('repository', 'revision')
+        ordering = ['-revision']  # Default ordering by date
 
     def __str__(self):
         return f"r{self.revision} - {self.author}"

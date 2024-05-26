@@ -2,7 +2,6 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
-from django.utils import timezone
 from .models import Repository, Commit, FileChange
 from .serializers import RepositorySerializer, CommitSerializer, FileChangeSerializer, UserSerializer
 from rest_framework.authtoken.models import Token
@@ -19,7 +18,7 @@ class RepositoryViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated])
     def commits(self, request, pk=None):
         repository = self.get_object()
-        commits = repository.commits.all().order_by('id')
+        commits = repository.commits.all().order_by('-revision')
         page = self.paginate_queryset(commits)
         if page is not None:
             serializer = CommitSerializer(page, many=True)
@@ -29,7 +28,7 @@ class RepositoryViewSet(viewsets.ModelViewSet):
 
 
 class CommitViewSet(viewsets.ModelViewSet):
-    queryset = Commit.objects.annotate(file_changes_count=Count('file_changes')).order_by('id')
+    queryset = Commit.objects.annotate(file_changes_count=Count('file_changes')).order_by('-revision')
     serializer_class = CommitSerializer
     permission_classes = [IsAuthenticated]
 
