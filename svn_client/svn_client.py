@@ -7,17 +7,17 @@ from datetime import datetime
 from requests.auth import HTTPBasicAuth
 
 ROOT_URL = 'http://127.0.0.1:8000'
-SERVER_URL = f'{ROOT_URL}/svn/'
+SERVER_URL = f'{ROOT_URL}/api/'
 
 REPO_URL = 'https://qiaoyuanzhen/svn/TestRepo/'
 # REPO_URL = 'https://QIAOYUANZHEN/svn/TESTREPO1/'
 # REPO_NAME = 'TESTREPO1'
 REPO_NAME = 'TestRepo'
 
+
 USERNAME = 'admin'
 PASSWORD = 'adminadmin'
 MAX_UPLOAD_SIZE = 200 * 1024 * 1024  # 200 MB in bytes
-
 
 def get_token(username, password):
     response = requests.post(SERVER_URL + 'api-token-auth/', data={'username': username, 'password': password})
