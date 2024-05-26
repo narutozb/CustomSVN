@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
+    path('api/', include('users.urls')),  # 新添加的路由
     path('admin/', admin.site.urls),
-    path('svn/', include('svn.urls')),
+    path('api/', include('svn.urls')),
 ]
-

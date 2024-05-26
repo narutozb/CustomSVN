@@ -9,9 +9,10 @@ from requests.auth import HTTPBasicAuth
 ROOT_URL = 'http://127.0.0.1:8000'
 SERVER_URL = f'{ROOT_URL}/svn/'
 
-# REPO_URL = 'https://qiaoyuanzhen/svn/TestRepo/'
-REPO_URL = 'https://QIAOYUANZHEN/svn/TESTREPO1/'
-REPO_NAME = 'TESTREPO1'
+REPO_URL = 'https://qiaoyuanzhen/svn/TestRepo/'
+# REPO_URL = 'https://QIAOYUANZHEN/svn/TESTREPO1/'
+# REPO_NAME = 'TESTREPO1'
+REPO_NAME = 'TestRepo'
 
 USERNAME = 'admin'
 PASSWORD = 'adminadmin'
@@ -24,13 +25,11 @@ def get_token(username, password):
         return response.json().get('token')
     return None
 
-
 def get_latest_revision(repo_name, headers):
     response = requests.get(SERVER_URL + f'repositories/{repo_name}/latest_revision/', headers=headers)
     if response.status_code == 200:
         return response.json().get('latest_revision')
     return None
-
 
 def get_svn_log(repo_url, start_revision=None):
     cmd = ['svn', 'log', repo_url, '--xml']
@@ -38,7 +37,6 @@ def get_svn_log(repo_url, start_revision=None):
         cmd.extend(['-r', f'{start_revision}:HEAD'])
     result = subprocess.run(cmd, stdout=subprocess.PIPE)
     return result.stdout
-
 
 def parse_svn_log(xml_data):
     import xml.etree.ElementTree as ET
@@ -59,7 +57,6 @@ def parse_svn_log(xml_data):
         commits.append(commit)
     return commits
 
-
 def get_svn_changes(repo_url, revision):
     result = subprocess.run(['svn', 'diff', repo_url, '-c', revision, '--summarize'], stdout=subprocess.PIPE)
     changes = []
@@ -68,11 +65,9 @@ def get_svn_changes(repo_url, revision):
         changes.append({'file_path': file_path, 'change_type': change_type})
     return changes
 
-
 def get_latest_svn_revision(repo_url):
     result = subprocess.run(['svn', 'info', '--show-item', 'revision', repo_url], stdout=subprocess.PIPE)
     return int(result.stdout.strip())
-
 
 def repository_exists(repo_name, repo_url, headers):
     url = SERVER_URL + 'repositories/'
@@ -91,10 +86,8 @@ def repository_exists(repo_name, repo_url, headers):
             return False
     return False
 
-
 def calculate_size(data):
     return sys.getsizeof(json.dumps(data))
-
 
 def main():
     repo_url = REPO_URL
@@ -160,7 +153,6 @@ def main():
     if data['commits']:
         response = requests.post(SERVER_URL + 'receive_svn_data/', json=data, headers=headers)
         print(response.status_code, response.json())
-
 
 if __name__ == '__main__':
     main()

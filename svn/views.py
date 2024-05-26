@@ -3,7 +3,7 @@ from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from .models import Repository, Commit, FileChange
-from .serializers import RepositorySerializer, CommitSerializer, FileChangeSerializer, UserSerializer
+from .serializers import RepositorySerializer, CommitSerializer, FileChangeSerializer
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import User
 from django.db.models import F, IntegerField, Count
@@ -96,40 +96,3 @@ def get_latest_revision(request, repo_name):
         return Response({'latest_revision': latest_revision}, status=status.HTTP_200_OK)
     except Repository.DoesNotExist:
         return Response({'status': 'error', 'message': 'Repository does not exist'}, status=status.HTTP_404_NOT_FOUND)
-
-
-class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-
-    def get_permissions(self):
-        if self.action in ['create', 'list']:
-            self.permission_classes = [AllowAny, ]
-        else:
-            self.permission_classes = [IsAuthenticated, ]
-        return super(UserViewSet, self).get_permissions()
-
-    @action(detail=False, methods=['post'], permission_classes=[AllowAny])
-    def login(self, request):
-        from django.contrib.auth import authenticate
-        username = request.data.get('username')
-        password = request.data.get('password')
-        user = authenticate(username=username, password=password)
-        if user:
-            token, created = Token.objects.get_or_create(user=user)
-            return Response({'token': token.key}, status=status.HTTP_200_OK)
-        else:
-            return Response({'error': 'Invalid Credentials'}, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
-    def logout(self, request):
-        request.user.auth_token.delete()
-        return Response(status=status.HTTP_200_OK)
-
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def get_user_token(request):
-    user = request.user
-    token, created = Token.objects.get_or_create(user=user)
-    return Response({'token': token.key}, status=status.HTTP_200_OK)
