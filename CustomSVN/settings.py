@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'users',
     'svn.apps.SvnConfig',
+    'maya.apps.MayaConfig',
 ]
 
 REST_FRAMEWORK = {

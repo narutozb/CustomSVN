@@ -17,6 +17,8 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+
+from maya.views import MayaFileViewSet
 from users.views import UserViewSet, CustomAuthToken
 from svn.views import RepositoryViewSet, CommitViewSet, receive_svn_data
 
@@ -25,6 +27,7 @@ router = DefaultRouter()
 router.register(r'users', UserViewSet)
 router.register(r'repositories', RepositoryViewSet)
 router.register(r'commits', CommitViewSet)
+router.register(r'mayafiles', MayaFileViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
