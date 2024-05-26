@@ -30,12 +30,12 @@ class NodeAttribute(models.Model):
 
 
 class TransformNode(NodeAttribute):
-    transform_property = models.CharField(max_length=255)  # 示例属性
+    transform_property = models.CharField(max_length=255)
     scene = models.ForeignKey(SceneInfo, on_delete=models.CASCADE, related_name='transform_nodes')
 
 
 class ShapeNode(NodeAttribute):
-    shape_property = models.CharField(max_length=255)  # 示例属性
+    shape_property = models.CharField(max_length=255)
     scene = models.ForeignKey(SceneInfo, on_delete=models.CASCADE, related_name='shape_nodes')
 
 
@@ -44,6 +44,8 @@ class MayaFile(models.Model):
     file_attribute = models.OneToOneField(FileAttribute, on_delete=models.CASCADE, related_name='maya_file')
     scene_info = models.OneToOneField(SceneInfo, on_delete=models.CASCADE, related_name='maya_file', blank=True,
                                       null=True)
+    transform_nodes = models.ManyToManyField(TransformNode, related_name='maya_files')
+    shape_nodes = models.ManyToManyField(ShapeNode, related_name='maya_files')
 
     def __str__(self):
         return f"MayaFile for {self.changed_file.file_path}"
