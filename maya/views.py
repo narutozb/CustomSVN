@@ -1,10 +1,16 @@
 from rest_framework import viewsets
-from .models import MayaFile, TransformNode, ShapeNode
-from .serializers import MayaFileSerializer, TransformNodeSerializer, ShapeNodeSerializer
+from .models import MayaFile,  SceneInfo, TransformNode, ShapeNode
+from .serializers import MayaFileSerializer,  SceneInfoSerializer, TransformNodeSerializer, ShapeNodeSerializer
 
 class MayaFileViewSet(viewsets.ModelViewSet):
     queryset = MayaFile.objects.all()
     serializer_class = MayaFileSerializer
+
+
+
+class SceneInfoViewSet(viewsets.ModelViewSet):
+    queryset = SceneInfo.objects.all()
+    serializer_class = SceneInfoSerializer
 
 class TransformNodeViewSet(viewsets.ModelViewSet):
     queryset = TransformNode.objects.all()

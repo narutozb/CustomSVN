@@ -16,9 +16,9 @@ class MayaFileTest(TestCase):
         # 创建 Commit 对象
         self.commit = Commit.objects.create(
             repository=self.repository,
-            revision=1,  # 这里使用整数值
+            revision=1,
             message='Initial commit',
-            date=timezone.now()  # 添加日期字段
+            date=timezone.now()
         )
 
         # 创建 FileChange 对象
@@ -41,11 +41,29 @@ class MayaFileTest(TestCase):
             groups=2,
             empty_groups=1,
             meshes=10,
+            verts=100,
             edges=15,
+            faces=50,
+            tris=75,
+            uvs=200,
+            ngons=3,
+            materials=4,
+            textures=2,
+            cameras=1,
+            joints=6,
+            lights=3,
+            blend_shapes=1,
+            morph_targets=2,
+            nurbs_curves=1,
+            root_nodes=5,
             up_axis='Y',
             linear='cm',
+            angular='deg',
             current_time=24.0,
             anim_start_time=0.0,
+            anim_end_time=100.0,
+            play_back_start_time=0.0,
+            play_back_end_time=100.0,
             frame_rate=24.0
         )
 
@@ -53,14 +71,25 @@ class MayaFileTest(TestCase):
         self.transform_node = TransformNode.objects.create(
             scene=self.scene_info,
             node_name='Node0|NodeA',
-            transform_property='translateX'
+            transform_property='translateX',
+            translate_x=1.0,
+            translate_y=2.0,
+            translate_z=3.0,
+            rotate_x=0.0,
+            rotate_y=0.0,
+            rotate_z=0.0,
+            scale_x=1.0,
+            scale_y=1.0,
+            scale_z=1.0,
+            parent=None
         )
 
         # 创建 ShapeNode 对象
         self.shape_node = ShapeNode.objects.create(
             scene=self.scene_info,
-            node_name='Node0|NodeA',
-            shape_property='polygon'
+            node_name='Node0|NodeB',
+            shape_property='polygon',
+            parent=None
         )
 
         # 创建 MayaFile 对象

@@ -2,8 +2,7 @@ from django.core.management.base import BaseCommand
 from django.utils.crypto import get_random_string
 from django.utils import timezone
 from svn.models import Repository, Commit, FileChange
-from maya.models import MayaFile, FileAttribute, SceneInfo, TransformNode, ShapeNode
-
+from maya.models import MayaFile, SceneInfo, TransformNode, ShapeNode
 
 class Command(BaseCommand):
     help = 'Add test data to the database'
@@ -30,24 +29,35 @@ class Command(BaseCommand):
             change_type='modified'
         )
 
-        # 创建 FileAttribute 对象
-        file_attribute = FileAttribute.objects.create(
-            status='opened',
-            description='This is a test file.',
-            local_path='/path/to/test/file.mb'
-        )
-
         # 创建 SceneInfo 对象
         scene_info = SceneInfo.objects.create(
             transforms=5,
             groups=2,
             empty_groups=1,
             meshes=10,
+            verts=100,
             edges=15,
+            faces=50,
+            tris=75,
+            uvs=200,
+            ngons=3,
+            materials=4,
+            textures=2,
+            cameras=1,
+            joints=6,
+            lights=3,
+            blend_shapes=1,
+            morph_targets=2,
+            nurbs_curves=1,
+            root_nodes=5,
             up_axis='Y',
             linear='cm',
+            angular='deg',
             current_time=24.0,
             anim_start_time=0.0,
+            anim_end_time=100.0,
+            play_back_start_time=0.0,
+            play_back_end_time=100.0,
             frame_rate=24.0
         )
 
@@ -55,20 +65,33 @@ class Command(BaseCommand):
         transform_node = TransformNode.objects.create(
             scene=scene_info,
             node_name='Node0|NodeA',
-            transform_property='translateX'
+            transform_property='translateX',
+            translate_x=1.0,
+            translate_y=2.0,
+            translate_z=3.0,
+            rotate_x=0.0,
+            rotate_y=0.0,
+            rotate_z=0.0,
+            scale_x=1.0,
+            scale_y=1.0,
+            scale_z=1.0,
+            parent=None
         )
 
         # 创建 ShapeNode 对象
         shape_node = ShapeNode.objects.create(
             scene=scene_info,
-            node_name='Node0|NodeA',
-            shape_property='polygon'
+            node_name='Node0|NodeB',
+            shape_property='polygon',
+            parent=None
         )
 
         # 创建 MayaFile 对象
         maya_file = MayaFile.objects.create(
             changed_file=file_change,
-            file_attribute=file_attribute,
+            status='opened',
+            description='This is a test file.',
+            local_path='/path/to/test/file.mb',
             scene_info=scene_info
         )
 

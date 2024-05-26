@@ -1,10 +1,7 @@
 from rest_framework import serializers
-from .models import MayaFile, FileAttribute, SceneInfo, TransformNode, ShapeNode
+from .models import MayaFile,  SceneInfo, TransformNode, ShapeNode
 
-class FileAttributeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = FileAttribute
-        fields = '__all__'
+
 
 class SceneInfoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -22,8 +19,9 @@ class ShapeNodeSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class MayaFileSerializer(serializers.ModelSerializer):
-    file_attribute = FileAttributeSerializer()
     scene_info = SceneInfoSerializer()
+    transform_nodes = TransformNodeSerializer(many=True)
+    shape_nodes = ShapeNodeSerializer(many=True)
 
     class Meta:
         model = MayaFile
