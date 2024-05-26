@@ -2,9 +2,7 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
-
 from svn.models import FileChange
-
 
 class SceneInfo(models.Model):
     transforms = models.IntegerField(default=0)
@@ -37,7 +35,6 @@ class SceneInfo(models.Model):
     play_back_end_time = models.FloatField(default=0.0, blank=True, null=True)
     frame_rate = models.FloatField(default=0.0, blank=True, null=True)
 
-
 class NodeAttribute(models.Model):
     scene = models.ForeignKey(SceneInfo, on_delete=models.CASCADE, related_name='node_attributes')
     node_name = models.CharField(max_length=255)
@@ -49,7 +46,6 @@ class NodeAttribute(models.Model):
 
     class Meta:
         abstract = True
-
 
 class TransformNode(NodeAttribute):
     transform_property = models.CharField(max_length=255)
@@ -64,19 +60,16 @@ class TransformNode(NodeAttribute):
     scale_z = models.FloatField(default=1.0)
     scene = models.ForeignKey(SceneInfo, on_delete=models.CASCADE, related_name='transform_nodes')
 
-
 class ShapeNode(NodeAttribute):
     shape_property = models.CharField(max_length=255)
     scene = models.ForeignKey(SceneInfo, on_delete=models.CASCADE, related_name='shape_nodes')
-
 
 class MayaFile(models.Model):
     changed_file = models.OneToOneField(FileChange, on_delete=models.CASCADE, related_name='maya_file')
     status = models.CharField(max_length=50)
     description = models.TextField(blank=True, null=True)
-    local_path = models.CharField(max_length=255, blank=True, null=True, )
-    scene_info = models.OneToOneField(SceneInfo, on_delete=models.CASCADE, related_name='maya_file', blank=True,
-                                      null=True)
+    local_path = models.CharField(max_length=255)
+    scene_info = models.OneToOneField(SceneInfo, on_delete=models.CASCADE, related_name='maya_file', blank=True, null=True)
     transform_nodes = models.ManyToManyField(TransformNode, related_name='maya_files')
     shape_nodes = models.ManyToManyField(ShapeNode, related_name='maya_files')
 
@@ -84,7 +77,17 @@ class MayaFile(models.Model):
         return f"MayaFile for {self.changed_file.file_path}"
 
     def delete(self, *args, **kwargs):
-        print('删除MayaFile中...')
+        # 删除关联的 scene_info
         if self.scene_info:
             self.scene_info.delete()
+        # 调用父类的 delete 方法
         super().delete(*args, **kwargs)
+
+
+@receiver(post_delete, sender=FileChange)
+def delete_related_maya_file(sender, instance, **kwargs):
+    try:
+        maya_file = instance.maya_file
+        maya_file.delete()
+    except MayaFile.DoesNotExist:
+        pass
