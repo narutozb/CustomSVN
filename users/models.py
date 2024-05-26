@@ -4,3 +4,6 @@ from django.db import models
 class CustomUser(AbstractUser):
     # 在这里添加任何自定义字段
     pass
+
+    class Meta:
+        ordering = ['id']

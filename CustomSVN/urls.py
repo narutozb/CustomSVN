@@ -16,9 +16,18 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from users.views import UserViewSet, CustomAuthToken
+from svn.views import RepositoryViewSet, CommitViewSet
+
+# 定义默认路由器
+router = DefaultRouter()
+router.register(r'users', UserViewSet)
+router.register(r'repositories', RepositoryViewSet)
+router.register(r'commits', CommitViewSet)
 
 urlpatterns = [
-    path('api/', include('users.urls')),  # 新添加的路由
     path('admin/', admin.site.urls),
-    path('api/', include('svn.urls')),
+    path('api/', include(router.urls)),  # 合并的路由配置
+    path('api/api-token-auth/', CustomAuthToken.as_view(), name='api_token_auth'),  # 添加api-token-auth路径
 ]
