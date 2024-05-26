@@ -49,7 +49,7 @@ def receive_svn_data(request):
             repo_data = data['repository']
             commits_data = data['commits']
 
-            # Check if repository exists
+            # 检查仓库是否存在
             try:
                 repository = Repository.objects.get(name=repo_data['name'], url=repo_data['url'])
             except Repository.DoesNotExist:
