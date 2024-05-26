@@ -12,14 +12,14 @@ from django.db.models.functions import Cast
 
 
 class RepositoryViewSet(viewsets.ModelViewSet):
-    queryset = Repository.objects.all()
+    queryset = Repository.objects.annotate(commits_count=Count('commits'))
     serializer_class = RepositorySerializer
     permission_classes = [IsAuthenticated]
 
     @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated])
     def commits(self, request, pk=None):
         repository = self.get_object()
-        commits = repository.commits.all()
+        commits = repository.commits.all().order_by('id')
         page = self.paginate_queryset(commits)
         if page is not None:
             serializer = CommitSerializer(page, many=True)
@@ -29,7 +29,7 @@ class RepositoryViewSet(viewsets.ModelViewSet):
 
 
 class CommitViewSet(viewsets.ModelViewSet):
-    queryset = Commit.objects.all()
+    queryset = Commit.objects.annotate(file_changes_count=Count('file_changes')).order_by('id')
     serializer_class = CommitSerializer
     permission_classes = [IsAuthenticated]
 
