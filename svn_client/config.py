@@ -11,3 +11,4 @@ class Config:
     FORCE_UPDATE = False  # 默认不强制更新
     START_REVISION = None  # 默认起始 revision
     END_REVISION = None  # 默认终止 revision
+    MAYA_DATA_API_URL = f'{ROOT_URL}/'
