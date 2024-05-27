@@ -32,7 +32,7 @@ class Commit(models.Model):
 
 class FileChange(models.Model):
     commit = models.ForeignKey(Commit, related_name='file_changes', on_delete=models.CASCADE)
-    file_path = models.CharField(max_length=255)
+    file_path = models.CharField(max_length=255, )
     change_type = models.CharField(max_length=10, choices=[('A', 'Added'), ('M', 'Modified'), ('D', 'Deleted')])
 
     def __str__(self):

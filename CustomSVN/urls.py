@@ -17,6 +17,8 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+
+from maya.views import MayaFileViewSet
 from users.views import UserViewSet, CustomAuthToken
 from svn.views import RepositoryViewSet, CommitViewSet, receive_svn_data
 
@@ -31,4 +33,5 @@ urlpatterns = [
     path('api/', include(router.urls)),  # 合并的路由配置
     path('api/api-token-auth/', CustomAuthToken.as_view(), name='api_token_auth'),  # 添加api-token-auth路径
     path('api/receive_svn_data/', receive_svn_data, name='receive_svn_data'),  # 添加receive_svn_data路径
+    path('maya/', include('maya.urls'))
 ]
