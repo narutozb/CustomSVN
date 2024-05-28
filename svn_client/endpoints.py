@@ -3,10 +3,10 @@ class Endpoints:
     APP_ENDPOINT = ''
     '''
     root_url = 'http://127.0.0.1:8000'
-
     api_url = f'{root_url}/api/'
     svn_commits = 'svn/commits/'
     svn_receive_svn_data = 'svn/receive_svn_data/'
+    token_auth = 'api-token-auth/'
 
     @classmethod
     def get_api_url(cls, endpoint):

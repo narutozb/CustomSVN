@@ -1,13 +1,14 @@
 import requests
 
 from config import Config
+from endpoints import Endpoints
 from svn_utils import get_token
 
 
 class MayaClientManager:
     def __init__(self):
         self.session = requests.Session()
-        self.token = get_token(self.session, Config.USERNAME, Config.PASSWORD, Config.API_URL)
+        self.token = get_token(self.session, Config.USERNAME, Config.PASSWORD)
         if not self.token:
             raise Exception("Failed to get token")
         self.headers = {
