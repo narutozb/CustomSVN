@@ -8,6 +8,8 @@ class Endpoints:
     svn_receive_svn_data = 'svn/receive_svn_data/'
     token_auth = 'api-token-auth/'
 
+    maya_sceneinfos = 'maya/sceneinfos/'
+
     @classmethod
     def get_api_url(cls, endpoint):
         '''

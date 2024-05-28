@@ -2,19 +2,11 @@ import requests
 
 from config import Config
 from endpoints import Endpoints
-from svn_utils import get_token
+from login import ClientBase
 
-
-class MayaClientManager:
+class MayaClientManager(ClientBase):
     def __init__(self):
-        self.session = requests.Session()
-        self.token = get_token(self.session, Config.USERNAME, Config.PASSWORD)
-        if not self.token:
-            raise Exception("Failed to get token")
-        self.headers = {
-            'Authorization': f'Token {self.token}',
-            'Content-Type': 'application/json'
-        }
+        super().__init__()
 
     def send_scene_info(self, data: dict):
         url = f'{Config.ROOT_URL}/api/maya/sceneinfos/'
@@ -57,6 +49,4 @@ scene_info_data = {
 client = MayaClientManager()
 sended_data = client.send_scene_info(scene_info_data)
 print(sended_data.content)
-# print(client.session.get(f'{Config.ROOT_URL}/api/repositories/', headers=client.headers).content)
 
-'http://127.0.0.1:8000/api/repositories/'
