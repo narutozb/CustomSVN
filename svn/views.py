@@ -84,6 +84,7 @@ def receive_svn_data(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_latest_revision(request, repo_name):
+    print('get_latest_revision function')
     try:
         repository = Repository.objects.get(name=repo_name)
         latest_commit = repository.commits.annotate(

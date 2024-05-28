@@ -27,5 +27,5 @@ class TestClient(ClientBase):
 
 if __name__ == '__main__':
     client = TestClient()
-    commits = client.session.get(Endpoints.get_url(Endpoints.COMMITS), headers=client.headers)
+    commits = client.session.get(Endpoints.get_api_url(Endpoints.svn_commits), headers=client.headers)
     print(commits.text)
