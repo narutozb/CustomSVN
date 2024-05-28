@@ -1,20 +1,15 @@
 import requests
 from config import Config
+from login import ClientBase
 from svn_utils import (
     get_token, get_latest_revision, get_svn_log, parse_svn_log,
     get_svn_changes, calculate_size, get_latest_svn_revision
 )
 
-class SVNManager:
+
+class SVNManager(ClientBase):
     def __init__(self):
-        self.session = requests.Session()
-        self.token = get_token(self.session, Config.USERNAME, Config.PASSWORD, Config.API_URL)
-        if not self.token:
-            raise Exception("Failed to get token")
-        self.headers = {
-            'Authorization': f'Token {self.token}',
-            'Content-Type': 'application/json'
-        }
+        super().__init__()
 
     def get_existing_revision(self):
         latest_revision = get_latest_revision(self.session, Config.REPO_NAME, self.headers, Config.API_URL)
