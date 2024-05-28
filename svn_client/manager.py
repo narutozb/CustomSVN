@@ -1,5 +1,6 @@
 import requests
 from config import Config
+from endpoints import Endpoints
 from login import ClientBase
 from svn_utils import (
     get_token, get_latest_revision, get_svn_log, parse_svn_log,
@@ -49,11 +50,12 @@ class SVNManager(ClientBase):
         }
 
         current_size = calculate_size(data)
-
+        print('Current size:', current_size, 'Max size:', Config.MAX_UPLOAD_SIZE)
         for commit in commits:
             commit_size = calculate_size(commit)
             if current_size + commit_size > Config.MAX_UPLOAD_SIZE:
-                response = self.session.post(Config.API_URL + 'receive_svn_data/', json=data, headers=self.headers)
+                response = self.session.post(
+                    Endpoints.get_api_url(Endpoints.svn_receive_svn_data), json=data, headers=self.headers)
                 try:
                     print(response.status_code, response.json())
                 except requests.exceptions.JSONDecodeError:
@@ -64,7 +66,10 @@ class SVNManager(ClientBase):
             current_size += commit_size
 
         if data['commits']:
-            response = self.session.post(Config.API_URL + 'receive_svn_data/', json=data, headers=self.headers)
+            response = self.session.post(
+                Endpoints.get_api_url(Endpoints.svn_receive_svn_data),
+                json=data,
+                headers=self.headers)
             try:
                 print(response.status_code, response.json())
             except requests.exceptions.JSONDecodeError:
