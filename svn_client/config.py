@@ -13,3 +13,4 @@ class Config:
     START_REVISION = None  # 默认起始 revision
     END_REVISION = None  # 默认终止 revision
     MAYA_DATA_API_URL = f'{ROOT_URL}/'
+    SVN_UPDATE_INTERVAL = 15  # svn检查和更新数据的间隔。秒

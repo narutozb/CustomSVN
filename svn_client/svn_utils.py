@@ -1,20 +1,19 @@
 import subprocess
 import json
 import sys
-import requests
-from datetime import datetime
 
 from endpoints import Endpoints
 
 
-def get_token(session, username, password, api_url):
-    response = session.post(api_url + 'api-token-auth/', data={'username': username, 'password': password})
+def get_token(session, username, password):
+    response = session.post(Endpoints.get_api_url(Endpoints.token_auth),
+                            data={'username': username, 'password': password})
     if response.status_code == 200:
         return response.json().get('token')
     return None
 
 
-def get_latest_revision(session, repo_name, headers, api_url):
+def get_latest_revision(session, repo_name, headers):
     response = session.get(Endpoints.get_latest_revision_api_url(repo_name), headers=headers)
     if response.status_code == 200:
         return response.json().get('latest_revision')

@@ -11,7 +11,7 @@ class ClientBase:
         初始化 session 和 headers
         '''
         self.session = requests.Session()
-        self.token = get_token(self.session, Config.USERNAME, Config.PASSWORD, Config.API_URL)
+        self.token = get_token(self.session, Config.USERNAME, Config.PASSWORD)
         if not self.token:
             raise Exception("Failed to get token")
         self.headers = {
