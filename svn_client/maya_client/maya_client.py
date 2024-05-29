@@ -1,22 +1,11 @@
-import requests
+import os.path
 
-from config import Config
-from endpoints import Endpoints
-from login import ClientBase
+import maya_client_config
+import maya_client_manager
+from classes import SVNChangedFileDC
+from maya_client_config import MayaClientPaths
+from maya_client_maya_data_getter import MayaDataGetter
 from temp import get_local_current_revision
-from maya_client_paths import MayaClientPaths
-
-
-class MayaClientManager(ClientBase):
-    def __init__(self):
-        super().__init__()
-
-    def send_scene_info(self, data: dict):
-        url = f'{Config.ROOT_URL}/api/maya/sceneinfos/'
-        response = requests.post(url, json=scene_info_data, headers=self.headers)
-
-        return response
-
 
 scene_info_data = {
     "transforms": 10,
@@ -51,20 +40,29 @@ scene_info_data = {
 }
 
 if __name__ == '__main__':
-    client = MayaClientManager()
-    # sended_data = client.send_scene_info(scene_info_data)
-    # print(sended_data.content)
+    client = maya_client_manager.MayaClientManager()
+    local_current_revision = int(get_local_current_revision(maya_client_config.MayaClientPaths.local_svn_path))
+    response = client.get_maya_changed_maya_files(local_current_revision)
+    results = [SVNChangedFileDC(
+        revision=local_current_revision,
+        change_type=_.get('change_type'),
+        url=_.get('file_path'),
+    ) for _ in response.json().get('results')]
+    maya_data_getter = MayaDataGetter()
+    local_svn_files = maya_data_getter.get_local_changed_files()
 
-    local_current_revision = get_local_current_revision(MayaClientPaths.local_svn_path)
+    for i in local_svn_files:
+        if i in results:
+            print(i)
 
-    response = client.session.get(
-        Endpoints.get_file_changes_by_repo_and_revision_api_url('TestRepo', int(local_current_revision)),
-        headers=client.headers
-    )
-    results = response.json().get('results')
-    print(results)
 
-    '''
-    /api/svn/repositories/TestRepo/commits/26/file_changes/
-    /api/svn/repositories/TestRepo/commits/26/file_changes/
-    '''
+
+    # for i in results:
+    #     local_path = maya_data_getter.get_svn_file_path(i.file_path, MayaClientPaths.local_svn_path)
+    #     msg = f'路径{local_path}'
+    #     if os.path.exists(local_path):
+    #         msg += '存在'
+    #     else:
+    #         msg += '不存在'
+    #
+    #     print(msg)
