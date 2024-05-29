@@ -3,6 +3,7 @@
 class Config:
     ROOT_URL = 'http://127.0.0.1:8000'
     API_URL = f'{ROOT_URL}/api/'
+
     REPO_URL = 'https://qiaoyuanzhen/svn/TestRepo/'
     REPO_NAME = 'TestRepo'
     USERNAME = 'admin'
@@ -11,3 +12,6 @@ class Config:
     FORCE_UPDATE = False  # 默认不强制更新
     START_REVISION = None  # 默认起始 revision
     END_REVISION = None  # 默认终止 revision
+    MAYA_DATA_API_URL = f'{ROOT_URL}/'
+    SVN_UPDATE_INTERVAL = 15  # svn检查和更新数据的间隔。秒
+    RUN_ONCE = False  # 新增选项，控制程序是否只运行一次
