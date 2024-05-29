@@ -14,14 +14,14 @@ class CommitInline(admin.TabularInline):
 
 @admin.register(Repository)
 class RepositoryAdmin(admin.ModelAdmin):
-    list_display = ('name', 'url', 'created_at')
+    list_display = ('id','name', 'url', 'created_at')
     search_fields = ('name', 'url')
     inlines = [CommitInline]
 
 
 @admin.register(Commit)
 class CommitAdmin(admin.ModelAdmin):
-    list_display = ('repository', 'revision', 'author', 'message', 'date')
+    list_display = ('id','repository', 'revision', 'author', 'message', 'date')
     search_fields = ('repository__name', 'revision', 'author')
     list_filter = ('repository', 'author', 'date')
     inlines = [FileChangeInline]

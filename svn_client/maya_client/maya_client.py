@@ -2,19 +2,14 @@ import requests
 
 from config import Config
 from endpoints import Endpoints
-from svn_utils import get_token
+from login import ClientBase
+from temp import get_local_current_revision
+from maya_client_paths import MayaClientPaths
 
 
-class MayaClientManager:
+class MayaClientManager(ClientBase):
     def __init__(self):
-        self.session = requests.Session()
-        self.token = get_token(self.session, Config.USERNAME, Config.PASSWORD)
-        if not self.token:
-            raise Exception("Failed to get token")
-        self.headers = {
-            'Authorization': f'Token {self.token}',
-            'Content-Type': 'application/json'
-        }
+        super().__init__()
 
     def send_scene_info(self, data: dict):
         url = f'{Config.ROOT_URL}/api/maya/sceneinfos/'
@@ -52,11 +47,24 @@ scene_info_data = {
     "play_back_start_time": 0.0,
     "play_back_end_time": 100.0,
     "frame_rate": 24.0
+
 }
 
-client = MayaClientManager()
-sended_data = client.send_scene_info(scene_info_data)
-print(sended_data.content)
-# print(client.session.get(f'{Config.ROOT_URL}/api/repositories/', headers=client.headers).content)
+if __name__ == '__main__':
+    client = MayaClientManager()
+    # sended_data = client.send_scene_info(scene_info_data)
+    # print(sended_data.content)
 
-'http://127.0.0.1:8000/api/repositories/'
+    local_current_revision = get_local_current_revision(MayaClientPaths.local_svn_path)
+
+    response = client.session.get(
+        Endpoints.get_file_changes_by_repo_and_revision_api_url('TestRepo', int(local_current_revision)),
+        headers=client.headers
+    )
+    results = response.json().get('results')
+    print(results)
+
+    '''
+    /api/svn/repositories/TestRepo/commits/26/file_changes/
+    /api/svn/repositories/TestRepo/commits/26/file_changes/
+    '''

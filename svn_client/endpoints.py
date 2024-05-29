@@ -6,7 +6,10 @@ class Endpoints:
     api_url = f'{root_url}/api/'
     svn_commits = 'svn/commits/'
     svn_receive_svn_data = 'svn/receive_svn_data/'
+
     token_auth = 'api-token-auth/'
+
+    maya_sceneinfos = 'maya/sceneinfos/'
 
     @classmethod
     def get_api_url(cls, endpoint):
@@ -25,3 +28,7 @@ class Endpoints:
         :return:
         '''
         return f'{cls.api_url}svn/repositories/{repo_name}/latest_revision/'
+
+    @classmethod
+    def get_file_changes_by_repo_and_revision_api_url(cls, repo_name: str, revision: int):
+        return f'{cls.api_url}svn/repositories/{repo_name}/commits/{revision}/file_changes/'

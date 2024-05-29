@@ -1,5 +1,6 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from .models import Repository, Commit, FileChange
@@ -8,6 +9,20 @@ from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import User
 from django.db.models import F, IntegerField, Count
 from django.db.models.functions import Cast
+
+
+class CustomPagination(PageNumberPagination):
+    page_size = 500  # 每页显示的记录数，可以在此调整
+
+    def get_paginated_response(self, data):
+        return Response({
+            'count': self.page.paginator.count,
+            'next': self.get_next_link(),
+            'previous': self.get_previous_link(),
+            'results': data,
+            'page_size': self.page_size,  # 自定义返回值
+            'page_count': (len(data) // self.page_size) + 1
+        })
 
 
 class RepositoryViewSet(viewsets.ModelViewSet):
@@ -97,3 +112,40 @@ def get_latest_revision(request, repo_name):
         return Response({'latest_revision': latest_revision}, status=status.HTTP_200_OK)
     except Repository.DoesNotExist:
         return Response({'status': 'error', 'message': 'Repository does not exist'}, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def list_commits(request, repo_name):
+    try:
+        repository = Repository.objects.get(name=repo_name)
+        commits = Commit.objects.filter(repository=repository).order_by('revision')
+
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(commits, request)
+
+        commit_list = [
+            {'revision': commit.revision, 'author': commit.author, 'message': commit.message, 'date': commit.date} for
+            commit in result_page]
+        return paginator.get_paginated_response(commit_list)
+    except Repository.DoesNotExist:
+        return Response({'status': 'error', 'message': 'Repository does not exist'}, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def list_file_changes(request, repo_name, revision):
+    try:
+        repository = Repository.objects.get(name=repo_name)
+        commit = Commit.objects.get(repository=repository, revision=revision)
+        file_changes = FileChange.objects.filter(commit=commit)
+
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(file_changes, request)
+
+        file_change_list = [{'file_path': change.file_path, 'change_type': change.change_type} for change in
+                            result_page]
+        return paginator.get_paginated_response(file_change_list)
+    except (Repository.DoesNotExist, Commit.DoesNotExist):
+        return Response({'status': 'error', 'message': 'Repository or Commit does not exist'},
+                        status=status.HTTP_404_NOT_FOUND)
