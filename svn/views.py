@@ -134,11 +134,15 @@ def list_commits(request, repo_name):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def list_file_changes(request, repo_name, revision):
+def list_file_changes(request, repo_name, revision, ):
+    change_type = request.GET.get('change_type')
     try:
         repository = Repository.objects.get(name=repo_name)
         commit = Commit.objects.get(repository=repository, revision=revision)
-        file_changes = FileChange.objects.filter(commit=commit)
+        if change_type:
+            file_changes = FileChange.objects.filter(commit=commit, change_type=change_type)
+        else:
+            file_changes = FileChange.objects.filter(commit=commit)
 
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(file_changes, request)

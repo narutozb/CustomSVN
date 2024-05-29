@@ -78,6 +78,7 @@ class MayaFile(models.Model):
                                       null=True)
     transform_nodes = models.ManyToManyField(TransformNode, related_name='maya_files')
     shape_nodes = models.ManyToManyField(ShapeNode, related_name='maya_files')
+    client_version = models.CharField(max_length=10, null=True, blank=True)
 
     def __str__(self):
         return f"MayaFile for {self.changed_file.file_path}"
@@ -85,5 +86,12 @@ class MayaFile(models.Model):
 
 @receiver(post_delete, sender=MayaFile)
 def delete_related_scene_info(sender, instance, **kwargs):
+    '''
+    删除 MayaFile 对象时删除关联的 SceneInfo 对象
+    :param sender:
+    :param instance:
+    :param kwargs:
+    :return:
+    '''
     if instance.scene_info:
         instance.scene_info.delete()
