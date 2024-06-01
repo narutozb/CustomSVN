@@ -4,6 +4,7 @@ from .validators import validate_url
 
 class Repository(models.Model):
     name = models.CharField(max_length=100, unique=True)
+
     url = models.CharField(max_length=200, unique=True, validators=[validate_url])
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)

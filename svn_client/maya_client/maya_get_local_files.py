@@ -45,6 +45,6 @@ def print_svn_info(file_info_list):
 
 if __name__ == "__main__":
 
-    directory = maya_client_config.MayaClientPaths.local_svn_path # 替换为你的SVN检出路径
+    directory = maya_client_config.MayaClientConfig.local_svn_path # 替换为你的SVN检出路径
     file_info_list = get_svn_info(directory)
     print_svn_info(file_info_list)

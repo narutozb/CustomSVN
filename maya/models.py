@@ -71,13 +71,14 @@ class ShapeNode(NodeAttribute):
 
 class MayaFile(models.Model):
     changed_file = models.OneToOneField(FileChange, on_delete=models.CASCADE, related_name='maya_file')
-    status = models.CharField(max_length=50)
+    opened_successfully = models.BooleanField(null=True, blank=True)
+    status = models.CharField(max_length=50, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
-    local_path = models.CharField(max_length=255)
+    local_path = models.CharField(max_length=255, null=True, blank=True)
     scene_info = models.OneToOneField(SceneInfo, on_delete=models.CASCADE, related_name='maya_file', blank=True,
                                       null=True)
-    transform_nodes = models.ManyToManyField(TransformNode, related_name='maya_files')
-    shape_nodes = models.ManyToManyField(ShapeNode, related_name='maya_files')
+    transform_nodes = models.ManyToManyField(TransformNode, related_name='maya_files', null=True, blank=True)
+    shape_nodes = models.ManyToManyField(ShapeNode, related_name='maya_files', null=True, blank=True)
     client_version = models.CharField(max_length=10, null=True, blank=True)
 
     def __str__(self):

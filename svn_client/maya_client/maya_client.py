@@ -3,9 +3,8 @@ import os.path
 import maya_client_config
 import maya_client_manager
 from classes import SVNChangedFileDC
-from maya_client_config import MayaClientPaths
 from maya_client_maya_data_getter import MayaDataGetter
-from temp import get_local_current_revision
+from svn_utils import get_local_last_changed_revision
 
 scene_info_data = {
     "transforms": 10,
@@ -41,28 +40,25 @@ scene_info_data = {
 
 if __name__ == '__main__':
     client = maya_client_manager.MayaClientManager()
-    local_current_revision = int(get_local_current_revision(maya_client_config.MayaClientPaths.local_svn_path))
-    response = client.get_maya_changed_maya_files(local_current_revision)
+
+    local_last_changed_rev = int(get_local_last_changed_revision(maya_client_config.MayaClientConfig.local_svn_path))
+
+    response = client.get_maya_changed_maya_files(local_last_changed_rev)
+
     results = [SVNChangedFileDC(
-        revision=local_current_revision,
+        revision=local_last_changed_rev,
         change_type=_.get('change_type'),
         url=_.get('file_path'),
     ) for _ in response.json().get('results')]
+
     maya_data_getter = MayaDataGetter()
     local_svn_files = maya_data_getter.get_local_changed_files()
 
+    # 获取自定义svn服务器非同步文件。也就是需要上传数据的文件
+    file_path_list = []
     for i in local_svn_files:
         if i in results:
-            print(i)
+            file_path_list.append(i)
 
-
-
-    # for i in results:
-    #     local_path = maya_data_getter.get_svn_file_path(i.file_path, MayaClientPaths.local_svn_path)
-    #     msg = f'路径{local_path}'
-    #     if os.path.exists(local_path):
-    #         msg += '存在'
-    #     else:
-    #         msg += '不存在'
-    #
-    #     print(msg)
+    for i in file_path_list:
+        print(os.path.exists(i.local_path))

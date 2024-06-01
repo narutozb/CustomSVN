@@ -1,7 +1,6 @@
 from config import Config
 from endpoints import Endpoints
 from login import ClientBase
-from temp import get_local_current_revision
 import maya_client_config
 
 
