@@ -2,7 +2,8 @@ import os
 import subprocess
 
 from classes import SVNFileSimpleDC
-from maya_client_config import MayaClientPaths
+from config import Config
+from maya_client_config import MayaClientConfig
 
 
 def parse_svn_info(info_text):
@@ -22,7 +23,17 @@ def get_svn_info(directory):
     for root, dirs, files in os.walk(directory):
         for file_name in files:
             file_path = os.path.join(root, file_name)
+            # Skip files in IGNORED_PATHS
+            if any(ignored_path in file_path for ignored_path in Config.IGNORED_PATHS):
+                continue
             try:
+                # Check if the file is under SVN management
+                svn_status_result = subprocess.run(['svn', 'status', '--no-ignore', file_path], capture_output=True,
+                                                   text=True)
+                if svn_status_result.stdout.startswith('?'):
+                    print(f"File {file_path} is not under SVN management. Skipping...")
+                    continue
+
                 # 执行 svn info 命令
                 result = subprocess.run(['svn', 'info', file_path], capture_output=True, text=True, check=True)
                 # 解析输出
@@ -64,6 +75,10 @@ class MayaDataGetter:
     @classmethod
     def get_local_changed_files(cls):
         result = []
-        for i in get_svn_info(MayaClientPaths.local_svn_path):
-            result.append(SVNFileSimpleDC(local_path=i.get('File'), url=i.get('URL'), revision=int(i.get('Revision'))))
+        for i in get_svn_info(MayaClientConfig.local_svn_path):
+            # 判断文件后缀是否与MayaClientConfig.MAYA_FILE_SUFFIXES中的任意一个匹配
+            if any(i.get('Path').endswith(suffix) for suffix in MayaClientConfig.MAYA_FILE_SUFFIXES):
+                latest_changed_rev = int(i.get('Last Changed Rev'))
+                result.append(
+                    SVNFileSimpleDC(local_path=i.get('Path'), url=i.get('URL'), revision=latest_changed_rev))
         return result

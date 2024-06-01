@@ -76,3 +76,31 @@ def handle_encoding(output):
         except UnicodeDecodeError:
             continue
     return output.decode('utf-8', errors='ignore')
+
+
+
+def run_svn_command(command, cwd):
+    """Run a given SVN command in the specified working directory."""
+    result = subprocess.run(command, cwd=cwd, text=True, capture_output=True, check=True)
+    return result.stdout
+
+
+def get_local_current_revision(svn_path):
+    """Get the current revision of the SVN repository."""
+    command = ["svn", "info"]
+    info_output = run_svn_command(command, cwd=svn_path)
+    print(info_output)
+    for line in info_output.splitlines():
+        if line.startswith("Revision:"):
+            return line.split()[1]
+    return None
+
+
+def get_local_last_changed_revision(svn_path):
+    """Get the current revision of the SVN repository."""
+    command = ["svn", "info"]
+    info_output = run_svn_command(command, cwd=svn_path)
+    for line in info_output.splitlines():
+        if line.startswith("Last Changed Rev:"):
+            return line.split()[-1]
+    return None
