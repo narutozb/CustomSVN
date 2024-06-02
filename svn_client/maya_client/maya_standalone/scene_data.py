@@ -54,6 +54,26 @@ class SceneFileInformation:
             'scene_information': scene_information
         }
 
+    def get_transforms(self):
+        scene_info = SceneInformation()
+        result = []
+        for i in scene_info.transform_manager.get_all_transforms():
+            result.append({
+                'node_name': i.get_long_name(),
+                'translate_x': i.translation_x,
+                'translate_y': i.translation_y,
+                'translate_z': i.translation_z,
+                'rotate_x': i.rotation_x,
+                'rotate_y': i.rotation_y,
+                'rotate_z': i.rotation_z,
+                'scale_x': i.scale_x,
+                'scale_y': i.scale_y,
+                'scale_z': i.scale_z,
+                'visibility': i.visibility,
+            })
+
+        return result
+
     def get_scene_info(self):
         scene_info = SceneInformation()
         scene_function = CustomSceneFunction()
@@ -105,7 +125,7 @@ class CheckMayaData:
             'local_path': self.file_path,
             'client_version': MayaClientConfig.version,
             'scene_info': {},
-            "transform_nodes": [],
+            "transform_nodes": self.scene_file_information.get_transforms(),
             "shape_nodes": [],
         }
         if self.scene_file_information.opened_file_status.opened_successfully:
@@ -118,4 +138,5 @@ if __name__ == '__main__':
     file_path = r'D:\svn_project_test\MyDataSVN\RootFolder\_test_file.mb'
 
     md = CheckMayaData(file_path, 'dummy')
-    pprint(md.get_data())
+    print(md.scene_file_information.get_transforms())
+    # pprint(md.get_data())

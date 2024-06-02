@@ -1,4 +1,4 @@
 class MayaClientConfig:
-    version = '0.0.4'  # 客户端版本号
+    version = '0.0.0'  # 客户端版本号
     local_svn_path = r'D:\svn_project_test\MyDataSVN'  # 本地仓库路径
     MAYA_FILE_SUFFIXES = ['.ma', '.mb']

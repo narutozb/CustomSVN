@@ -51,7 +51,6 @@ class NodeAttribute(models.Model):
 
 
 class TransformNode(NodeAttribute):
-    transform_property = models.CharField(max_length=255)
     translate_x = models.FloatField(default=0.0)
     translate_y = models.FloatField(default=0.0)
     translate_z = models.FloatField(default=0.0)
@@ -61,12 +60,12 @@ class TransformNode(NodeAttribute):
     scale_x = models.FloatField(default=1.0)
     scale_y = models.FloatField(default=1.0)
     scale_z = models.FloatField(default=1.0)
-    scene = models.ForeignKey(SceneInfo, on_delete=models.CASCADE, related_name='transform_nodes')
+    visibility = models.BooleanField(default=True)
+    scene = models.ForeignKey(SceneInfo, on_delete=models.CASCADE, related_name='transform_nodes', null=True)
 
 
 class ShapeNode(NodeAttribute):
-    shape_property = models.CharField(max_length=255)
-    scene = models.ForeignKey(SceneInfo, on_delete=models.CASCADE, related_name='shape_nodes')
+    scene = models.ForeignKey(SceneInfo, on_delete=models.CASCADE, related_name='shape_nodes', null=True)
 
 
 class MayaFile(models.Model):
@@ -77,8 +76,8 @@ class MayaFile(models.Model):
     local_path = models.CharField(max_length=255, null=True, blank=True)
     scene_info = models.OneToOneField(SceneInfo, on_delete=models.CASCADE, related_name='related_maya_file', blank=True,
                                       null=True)
-    transform_nodes = models.ManyToManyField(TransformNode, related_name='maya_files',  blank=True)
-    shape_nodes = models.ManyToManyField(ShapeNode, related_name='maya_files',  blank=True)
+    transform_nodes = models.ManyToManyField(TransformNode, related_name='maya_files', blank=True)
+    shape_nodes = models.ManyToManyField(ShapeNode, related_name='maya_files', blank=True)
     client_version = models.CharField(max_length=10, null=True, blank=True)
 
     def __str__(self):

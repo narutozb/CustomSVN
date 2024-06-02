@@ -37,9 +37,6 @@ def list_maya_file_changes(request, repo_name, revision, ):
     print('list_maya_file_changes'.center(20, '*'))
     maya_client_version = request.GET.get('maya_client_version')
     client_version = parse(maya_client_version)
-    print(client_version)
-    print(maya_client_version)
-
     try:
         repository = Repository.objects.get(name=repo_name)
         commit = Commit.objects.get(repository=repository, revision=revision)
@@ -71,7 +68,7 @@ def list_maya_file_changes(request, repo_name, revision, ):
 
 class MayaFileView(APIView):
     def post(self, request, format=None):
-        print(request.data)
+        # print(request.data)
         changed_file = request.data.get('changed_file')
         maya_file = MayaFile.objects.filter(changed_file=changed_file).first()
 

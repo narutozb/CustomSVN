@@ -93,5 +93,7 @@ class MayaClientManager(ClientBase):
                 for i in changed_files:
                     md = CheckMayaData(i.local_path, i.change_file_id)
                     data = md.get_data()
+                    print(data)
                     url = Endpoints.get_api_url(Endpoints.maya_sceneinfos)
-                    self.session.post(url, data=json.dumps(data), headers=self.headers)
+                    response = self.session.post(url, data=json.dumps(data), headers=self.headers)
+                    print(response.json())
