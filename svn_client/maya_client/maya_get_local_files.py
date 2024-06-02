@@ -3,6 +3,7 @@ import os
 
 import maya_client_config
 
+
 def get_svn_info(directory):
     # 存储文件版本信息的列表
     file_info_list = []
@@ -40,11 +41,9 @@ def print_svn_info(file_info_list):
         print("  Last Changed Author:", info.get("Last Changed Author"))
         print("  Last Changed Rev:", info.get("Last Changed Rev"))
         print("  Last Changed Date:", info.get("Last Changed Date"))
-        print()
 
 
 if __name__ == "__main__":
-
-    directory = maya_client_config.MayaClientConfig.local_svn_path # 替换为你的SVN检出路径
+    directory = maya_client_config.MayaClientConfig.local_svn_path  # 替换为你的SVN检出路径
     file_info_list = get_svn_info(directory)
     print_svn_info(file_info_list)

@@ -34,7 +34,8 @@ class MayaFileSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def create(self, validated_data):
-        print(f'---MayaFileSerializer--- {"create"*20}')
+        # print debug information
+        print(f'---MayaFileSerializer---')
 
         scene_info_data = validated_data.pop('scene_info', None)
         transform_nodes_data = validated_data.pop('transform_nodes', [])
@@ -46,24 +47,24 @@ class MayaFileSerializer(serializers.ModelSerializer):
         )
 
         if created:
-            transform_nodes = TransformNode.objects.filter(id__in=transform_nodes_data)
-            shape_nodes = ShapeNode.objects.filter(id__in=shape_nodes_data)
-            maya_file.transform_nodes.set(transform_nodes)
-            maya_file.shape_nodes.set(shape_nodes)
+            if scene_info_data:
+                scene_info = SceneInfo.objects.create(**scene_info_data)
+                maya_file.scene_info = scene_info
 
-        if scene_info_data:
-            # scene_info_data['maya_file'] = maya_file
-            scene_info = SceneInfoSerializer.create(SceneInfoSerializer(),
-                                                    validated_data=scene_info_data)
-            print('-' * 50)
+            if transform_nodes_data:
+                transform_nodes = [TransformNode.objects.create(**data) for data in transform_nodes_data]
+                maya_file.transform_nodes.set(transform_nodes)
 
-            maya_file.scene_info = scene_info
+            if shape_nodes_data:
+                shape_nodes = [ShapeNode.objects.create(**data) for data in shape_nodes_data]
+                maya_file.shape_nodes.set(shape_nodes)
+
             maya_file.save()
 
         return maya_file
 
     def update(self, instance, validated_data):
-        print(f'---MayaFileSerializer--- {"update"*20}')
+        print(f'---MayaFileSerializer--- {"update" * 20}')
         scene_info_data = validated_data.pop('scene_info', None)
 
         client_version = validated_data.get('client_version') or '0.0.0'
