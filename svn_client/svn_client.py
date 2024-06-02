@@ -12,8 +12,10 @@ def main():
     global running
     status_manager = StatusManager()
     manager = SVNManager(status_manager)
+    print('manager finished')
 
     def upload_data():
+        print('run upload_data')
         while running:
             try:
                 manager.update_svn_data()
@@ -21,6 +23,9 @@ def main():
                     break
             except Exception as e:
                 print(f"Error: {e}")
+                # 如果报错的话，则退出程序
+                sys.exit(1)
+
             time.sleep(Config.SVN_UPDATE_INTERVAL)
 
     # 创建并启动上传数据的线程
@@ -31,6 +36,8 @@ def main():
         while running:
             if Config.RUN_ONCE and not upload_thread.is_alive():
                 running = False
+                print('not running...')
+            print('sleep1...')
             time.sleep(1)
     except KeyboardInterrupt:
         print("Exiting program...")

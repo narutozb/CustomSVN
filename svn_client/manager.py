@@ -37,14 +37,12 @@ class SVNManager:
                     start_revision += 1
                 else:
                     start_revision = 1
-
             end_revision = Config.END_REVISION or get_latest_svn_revision(Config.REPO_URL)
-
             if start_revision > end_revision:
                 print(f"No new revisions to update. Current latest revision is {end_revision}.")
                 return
 
-            log_data = get_svn_log(Config.REPO_URL, start_revision=start_revision)
+            log_data = get_svn_log(Config.LOCAL_REPO_URL, start_revision=start_revision)
             commits = parse_svn_log(log_data)
 
             if not commits:
@@ -52,13 +50,13 @@ class SVNManager:
                 return
 
             for commit in commits:
-                commit['file_changes'] = get_svn_changes(Config.REPO_URL, commit['revision'])
+                commit['file_changes'] = get_svn_changes(Config.LOCAL_REPO_URL, commit['revision'])
 
             data = {
                 'repository': {
                     'name': Config.REPO_NAME,
                     'url': Config.REPO_URL,
-                    'description': 'Test repository'
+                    # 'description': 'Test repository'
                 },
                 'commits': []
             }

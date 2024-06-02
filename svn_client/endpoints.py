@@ -7,9 +7,9 @@ class Endpoints:
     svn_commits = 'svn/commits/'
     svn_receive_svn_data = 'svn/receive_svn_data/'
 
-    token_auth = 'api-token-auth/'
+    token_auth = 'api-token-auth/' # 验证用户
 
-    maya_sceneinfos = 'maya/sceneinfos/'
+    maya_sceneinfos = 'maya/mayafilesview/'  # 上传maya数据
 
     @classmethod
     def get_api_url(cls, endpoint):
@@ -32,3 +32,12 @@ class Endpoints:
     @classmethod
     def get_file_changes_by_repo_and_revision_api_url(cls, repo_name: str, revision: int):
         return f'{cls.api_url}svn/repositories/{repo_name}/commits/{revision}/file_changes/'
+
+    @classmethod
+    def get_maya_file_changes_by_repo_and_revision_api_url(
+            cls,
+            repo_name: str,
+            revision: int,
+            maya_client_version: str
+    ):
+        return f'{cls.api_url}maya/{repo_name}/{revision}/file_changes/?maya_client_version={maya_client_version}'
