@@ -34,10 +34,11 @@ class MayaFileSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def create(self, validated_data):
+        print(f'---MayaFileSerializer--- {"create"*20}')
+
         scene_info_data = validated_data.pop('scene_info', None)
         transform_nodes_data = validated_data.pop('transform_nodes', [])
         shape_nodes_data = validated_data.pop('shape_nodes', [])
-        print(scene_info_data)
 
         maya_file, created = MayaFile.objects.get_or_create(
             changed_file=validated_data.get('changed_file'),
@@ -62,6 +63,7 @@ class MayaFileSerializer(serializers.ModelSerializer):
         return maya_file
 
     def update(self, instance, validated_data):
+        print(f'---MayaFileSerializer--- {"update"*20}')
         scene_info_data = validated_data.pop('scene_info', None)
 
         client_version = validated_data.get('client_version') or '0.0.0'

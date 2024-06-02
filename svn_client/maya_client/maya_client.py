@@ -5,6 +5,7 @@ import maya_client_manager
 import maya_data
 
 from classes import SVNChangedFileDC
+from endpoints import Endpoints
 from maya_client_maya_data_getter import MayaDataGetter
 from svn_utils import get_local_last_changed_revision
 
@@ -34,10 +35,8 @@ if __name__ == '__main__':
                 file_path_list.append(i)
 
         for i in file_path_list:
-            print(i)
             md = maya_data.CheckMayaData(i.local_path, i.change_file_id)
             data = md.get_data()
-            url = r'http://127.0.0.1:8000/api/maya/mayafilesview/'
-
+            url = Endpoints.get_api_url(Endpoints.maya_sceneinfos)
             ps = client.session.post(url, data=json.dumps(data), headers=client.headers)
             print(ps.json())
