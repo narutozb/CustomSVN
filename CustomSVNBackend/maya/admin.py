@@ -11,12 +11,12 @@ class MayaFileAdmin(admin.ModelAdmin):
 
 @admin.register(TransformNode)
 class TransformNodeAdmin(admin.ModelAdmin):
-    list_display = ['node_name', 'transform_property', 'scene']
+    list_display = ['node_name', 'scene']
 
 
 @admin.register(ShapeNode)
 class ShapeNodeAdmin(admin.ModelAdmin):
-    list_display = ['node_name', 'shape_property', 'scene']
+    list_display = ['node_name',  'scene']
 
 
 @admin.register(SceneInfo)
