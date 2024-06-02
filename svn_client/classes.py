@@ -14,5 +14,4 @@ class SVNFileSimpleDC:
 @dataclasses.dataclass
 class SVNChangedFileDC(SVNFileSimpleDC):
     change_type: str = None
-
-
+    change_file_id: int = None

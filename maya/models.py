@@ -75,10 +75,10 @@ class MayaFile(models.Model):
     status = models.CharField(max_length=50, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     local_path = models.CharField(max_length=255, null=True, blank=True)
-    scene_info = models.OneToOneField(SceneInfo, on_delete=models.CASCADE, related_name='maya_file', blank=True,
+    scene_info = models.OneToOneField(SceneInfo, on_delete=models.CASCADE, related_name='related_maya_file', blank=True,
                                       null=True)
-    transform_nodes = models.ManyToManyField(TransformNode, related_name='maya_files', null=True, blank=True)
-    shape_nodes = models.ManyToManyField(ShapeNode, related_name='maya_files', null=True, blank=True)
+    transform_nodes = models.ManyToManyField(TransformNode, related_name='maya_files',  blank=True)
+    shape_nodes = models.ManyToManyField(ShapeNode, related_name='maya_files',  blank=True)
     client_version = models.CharField(max_length=10, null=True, blank=True)
 
     def __str__(self):

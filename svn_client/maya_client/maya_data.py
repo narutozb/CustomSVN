@@ -1,12 +1,11 @@
-import json
-import os
-import tempfile
 from dataclasses import dataclass
 from pprint import pprint
 
 from custom_maya.custom_maya_class.scene_property import CMFileOptions
 from custom_maya.custom_maya_class.scenefile_application import CMApplication
 from custom_maya.tools.custom_maya_client.scene_utilities import SceneInformation
+
+from maya_client_config import MayaClientConfig
 
 
 @dataclass
@@ -61,7 +60,7 @@ class SceneFileInformation:
             'transforms': scene_info.scene_counter.get_transform_counter().get('transforms'),
             'groups': scene_info.scene_counter.get_transform_counter().get('groups'),
             'empty_groups': scene_info.scene_counter.get_transform_counter().get('empty_groups'),
-            'meshes': scene_info.scene_counter.get_poly_counter().get('mesh'),
+            'meshes': scene_info.scene_counter.get_poly_counter().get('meshes'),
             'verts': scene_info.scene_counter.get_poly_counter().get('verts'),
             'edges': scene_info.scene_counter.get_poly_counter().get('edges'),
             'faces': scene_info.scene_counter.get_poly_counter().get('faces'),
@@ -91,7 +90,7 @@ class SceneFileInformation:
 
 class CheckMayaData:
 
-    def __init__(self, file_path: str, changed_file: str):
+    def __init__(self, file_path: str, changed_file: str | int):
         self.changed_file = changed_file  # url of the changed file
         self.file_path = file_path  # 需要检查的文件路径
         self.fo = CMFileOptions()
@@ -105,8 +104,10 @@ class CheckMayaData:
             'changed_file': self.changed_file,
             'opened_successfully': self.scene_file_information.opened_file_status.opened_successfully,
             'local_path': self.file_path,
-            'client_version': '0.0.1',
-            'scene_info': {}
+            'client_version': MayaClientConfig.version,
+            'scene_info': {},
+            "transform_nodes": [],
+            "shape_nodes": [],
         }
         if self.scene_file_information.opened_file_status.opened_successfully:
             data['scene_info'] = self.scene_file_information.get_scene_info()

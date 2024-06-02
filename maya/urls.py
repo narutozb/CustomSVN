@@ -12,6 +12,6 @@ router.register(r'shapenodes', ShapeNodeViewSet)
 urlpatterns = [
     path('', include(router.urls)),
     path('<str:repo_name>/<str:revision>/file_changes/', list_maya_file_changes),
-    path('mayafiles/', MayaFileView.as_view())
+    path('mayafilesview/', MayaFileView.as_view())
 
 ]

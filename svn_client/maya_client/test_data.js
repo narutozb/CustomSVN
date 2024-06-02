@@ -1,4 +1,4 @@
-{
+var a = {
     "scene_info": {
         "transforms": 1,
         "groups": 1,
@@ -35,5 +35,5 @@
     "description": "",
     "local_path": "",
     "client_version": "0.0.1",
-    "changed_file": 366
+    "changed_file": 391
 }
