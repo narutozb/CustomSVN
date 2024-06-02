@@ -1,42 +1,13 @@
-import os.path
+import json
 
 import maya_client_config
 import maya_client_manager
+import maya_data
+
 from classes import SVNChangedFileDC
+from endpoints import Endpoints
 from maya_client_maya_data_getter import MayaDataGetter
 from svn_utils import get_local_last_changed_revision
-
-scene_info_data = {
-    "transforms": 10,
-    "groups": 5,
-    "empty_groups": 2,
-    "meshes": 3,
-    "verts": 1000,
-    "edges": 2000,
-    "faces": 1500,
-    "tris": 3000,
-    "uvs": 400,
-    "ngons": 0,
-    "materials": 10,
-    "textures": 15,
-    "cameras": 2,
-    "joints": 8,
-    "lights": 4,
-    "blend_shapes": 0,
-    "morph_targets": 1,
-    "nurbs_curves": 3,
-    "root_nodes": 1,
-    "up_axis": "Y",
-    "linear": "cm",
-    "angular": "deg",
-    "current_time": 24.0,
-    "anim_start_time": 0.0,
-    "anim_end_time": 100.0,
-    "play_back_start_time": 0.0,
-    "play_back_end_time": 100.0,
-    "frame_rate": 24.0
-
-}
 
 if __name__ == '__main__':
     client = maya_client_manager.MayaClientManager()
@@ -44,21 +15,28 @@ if __name__ == '__main__':
     local_last_changed_rev = int(get_local_last_changed_revision(maya_client_config.MayaClientConfig.local_svn_path))
 
     response = client.get_maya_changed_maya_files(local_last_changed_rev)
+    print('results')
+    print(response.json().get('results'))
+    if response.json().get('results'):
+        results = [SVNChangedFileDC(
+            revision=local_last_changed_rev,
+            change_type=_.get('change_type'),
+            url=_.get('file_path'),
+            change_file_id=_.get('id')
+        ) for _ in response.json().get('results')]
 
-    results = [SVNChangedFileDC(
-        revision=local_last_changed_rev,
-        change_type=_.get('change_type'),
-        url=_.get('file_path'),
-    ) for _ in response.json().get('results')]
+        maya_data_getter = MayaDataGetter()
+        local_svn_files = maya_data_getter.get_local_changed_files()
 
-    maya_data_getter = MayaDataGetter()
-    local_svn_files = maya_data_getter.get_local_changed_files()
+        # 获取自定义svn服务器非同步文件。也就是需要上传数据的文件
+        file_path_list: [SVNChangedFileDC] = []
+        for i in results:
+            if i in local_svn_files:
+                file_path_list.append(i)
 
-    # 获取自定义svn服务器非同步文件。也就是需要上传数据的文件
-    file_path_list = []
-    for i in local_svn_files:
-        if i in results:
-            file_path_list.append(i)
-
-    for i in file_path_list:
-        print(os.path.exists(i.local_path))
+        for i in file_path_list:
+            md = maya_data.CheckMayaData(i.local_path, i.change_file_id)
+            data = md.get_data()
+            url = Endpoints.get_api_url(Endpoints.maya_sceneinfos)
+            ps = client.session.post(url, data=json.dumps(data), headers=client.headers)
+            print(ps.json())
