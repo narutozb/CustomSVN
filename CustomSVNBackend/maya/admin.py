@@ -1,5 +1,7 @@
 from django.contrib import admin
+from django.shortcuts import redirect
 
+from svn.models import Repository
 # Register your models here.
 from .models import MayaFile, TransformNode, ShapeNode, SceneInfo
 
@@ -7,21 +9,35 @@ from .models import MayaFile, TransformNode, ShapeNode, SceneInfo
 @admin.register(MayaFile)
 class MayaFileAdmin(admin.ModelAdmin):
     list_display = ['changed_file', 'scene_info', ]
+    search_fields = ['changed_file__file_path', ]
+    list_filter = ['changed_file__commit__repository', ]
 
 
 @admin.register(TransformNode)
 class TransformNodeAdmin(admin.ModelAdmin):
-    list_display = ['node_name', 'transform_property', 'scene']
+    list_display = ['node_name', 'scene', ]
 
 
 @admin.register(ShapeNode)
 class ShapeNodeAdmin(admin.ModelAdmin):
-    list_display = ['node_name', 'shape_property', 'scene']
+    list_display = ['node_name', 'scene']
 
 
 @admin.register(SceneInfo)
 class SceneInfoAdmin(admin.ModelAdmin):
-    list_display = ['transforms', 'groups', 'empty_groups', 'meshes', 'verts', 'edges', 'faces', 'tris', 'uvs', 'ngons',
-                    'materials', 'textures', 'cameras', 'joints', 'lights', 'blend_shapes', 'morph_targets',
-                    'nurbs_curves', 'root_nodes', 'up_axis', 'linear', 'angular', 'current_time', 'anim_start_time',
-                    'anim_end_time', 'play_back_start_time', 'play_back_end_time', 'frame_rate']
+    list_display = [
+        'id', 'related_maya_file', 'display_revision',
+        'transforms', 'groups', 'empty_groups', 'meshes', 'verts', 'edges', 'faces', 'tris', 'uvs', 'ngons',
+        'materials', 'textures', 'cameras', 'joints', 'lights', 'blend_shapes', 'morph_targets',
+        'nurbs_curves', 'root_nodes', 'up_axis', 'linear', 'angular', 'current_time', 'anim_start_time',
+        'anim_end_time', 'play_back_start_time', 'play_back_end_time', 'frame_rate'
+    ]
+    search_fields = (
+        'related_maya_file__changed_file__file_path',
+    )
+    list_filter = ['related_maya_file__changed_file__commit__repository__name', ]
+
+    def display_revision(self, obj):
+        return obj.related_maya_file.changed_file.commit.revision
+
+    display_revision.short_description = 'Revision'

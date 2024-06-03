@@ -1,7 +1,7 @@
 import os
 import subprocess
 
-from classes import SVNFileSimpleDC
+from classes import SVNFileSimpleDC, SVNChangedFileDC
 from config import Config
 from maya_client_config import MayaClientConfig
 
@@ -80,5 +80,5 @@ class MayaDataGetter:
             if any(i.get('Path').endswith(suffix) for suffix in MayaClientConfig.MAYA_FILE_SUFFIXES):
                 latest_changed_rev = int(i.get('Last Changed Rev'))
                 result.append(
-                    SVNFileSimpleDC(local_path=i.get('Path'), url=i.get('URL'), revision=latest_changed_rev))
+                    SVNChangedFileDC(local_path=i.get('Path'), url=i.get('URL'), revision=latest_changed_rev))
         return result
