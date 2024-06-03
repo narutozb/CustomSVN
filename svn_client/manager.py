@@ -26,6 +26,7 @@ class SVNManager:
 
     def update_svn_data(self):
         self.status_manager.start_upload()
+
         try:
             if Config.FORCE_UPDATE:
                 start_revision = 1
@@ -37,14 +38,14 @@ class SVNManager:
                     start_revision += 1
                 else:
                     start_revision = 1
-            end_revision = Config.END_REVISION or get_latest_svn_revision(Config.REPO_URL)
+
+            end_revision = Config.END_REVISION or get_latest_svn_revision(Config.LOCAL_REPO_URL)
             if start_revision > end_revision:
                 print(f"No new revisions to update. Current latest revision is {end_revision}.")
                 return
 
             log_data = get_svn_log(Config.LOCAL_REPO_URL, start_revision=start_revision)
             commits = parse_svn_log(log_data)
-
             if not commits:
                 print("No new commits to upload.")
                 return
