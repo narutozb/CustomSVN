@@ -28,9 +28,8 @@ class SVNManager:
         self.status_manager.start_upload()
 
         try:
-            if Config.FORCE_UPDATE:
-                start_revision = 1
-            elif Config.START_REVISION is not None:
+
+            if Config.START_REVISION is not None:
                 start_revision = Config.START_REVISION
             else:
                 start_revision = self.get_existing_revision()
