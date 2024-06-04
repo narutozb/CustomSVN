@@ -1,4 +1,6 @@
-import json
+import os
+
+os.environ['LC_ALL'] = 'en_US.UTF-8'
 
 from maya_client import maya_client_manager
 
