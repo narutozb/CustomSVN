@@ -1,13 +1,16 @@
+from config import Config
+
+
 class Endpoints:
     '''
     APP_ENDPOINT = ''
     '''
-    root_url = 'http://127.0.0.1:8000'
+    root_url = Config.ROOT_URL
     api_url = f'{root_url}/api/'
     svn_commits = 'svn/commits/'
     svn_receive_svn_data = 'svn/receive_svn_data/'
 
-    token_auth = 'api-token-auth/' # 验证用户
+    token_auth = 'api-token-auth/'  # 验证用户
 
     maya_sceneinfos = 'maya/mayafilesview/'  # 上传maya数据
 
