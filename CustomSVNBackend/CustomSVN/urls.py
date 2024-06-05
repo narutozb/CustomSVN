@@ -17,12 +17,14 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
+from CustomSVN.views import home
 from users.views import CustomAuthToken
 
 urlpatterns = [
+    path('', home, name='home'),
     path('admin/', admin.site.urls),
     path('api/api-token-auth/', CustomAuthToken.as_view(), name='api_token_auth'),  # 添加api-token-auth路径
     path('api/svn/', include('svn.urls')),
     path('api/maya/', include('maya.urls')),
-    path('api/users/', include('users.urls')),
+    path('user/', include('users.urls')),
 ]
