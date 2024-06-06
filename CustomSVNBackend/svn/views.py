@@ -1,5 +1,7 @@
+from urllib.parse import unquote
+
+from django.core.paginator import Paginator
 from django.shortcuts import render
-from django.views import View
 from rest_framework import viewsets, status
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.pagination import PageNumberPagination
@@ -191,3 +193,45 @@ class FileChangeListLatestExistView(APIView):
         result_page = paginator.paginate_queryset(data, request)
         return paginator.get_paginated_response(result_page)
 
+
+def svn_latest_existed_view(request):
+    repo_name = request.GET.get('repo_name', Repository.objects.all().first().name)  # 获取仓库名称参数
+    file_paths = FileChange.objects.values_list('file_path', flat=True).distinct()
+    data = []
+    for file_path in file_paths:
+        # 如果提供了仓库名称，就添加一个过滤条件
+        if repo_name:
+            latest_commit = FileChange.objects.filter(file_path=file_path,
+                                                      commit__repository__name=repo_name).order_by(
+                '-commit__revision').first()
+        else:
+            latest_commit = FileChange.objects.filter(file_path=file_path).order_by('-commit__revision').first()
+        if latest_commit and latest_commit.change_type != 'D':
+            data.append({
+                'id': latest_commit.id,
+                'file_path': unquote(latest_commit.file_path),
+                'change_type': latest_commit.change_type,
+                'commit': {
+                    'revision': latest_commit.commit.revision,
+                    'repository': latest_commit.commit.repository.name,
+                }
+            })
+
+    # 创建一个Paginator实例
+    paginator = Paginator(data, 20)  # 每页显示10条数据
+
+    # 获取页码参数
+    page_number = request.GET.get('page')
+
+    # 获取当前页的数据
+    page_obj = paginator.get_page(page_number)
+
+    # 将当前页的数据和分页的其他信息传递给模板
+    return render(
+        request, 'svn/svn_latest_existed.html',
+        {
+            'page_obj': page_obj,
+            'repo_name': repo_name
+
+        }
+    )
