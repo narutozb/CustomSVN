@@ -8,6 +8,7 @@ from status_manager import StatusManager
 # 标志位，用于控制程序是否正在运行
 running = True
 
+
 def main():
     global running
     status_manager = StatusManager()
@@ -19,6 +20,10 @@ def main():
         while running:
             try:
                 manager.update_svn_data()
+                # Check if the current revision has reached or exceeded Config.END_REVISION
+                if Config.END_REVISION is not None and manager.get_existing_revision() >= Config.END_REVISION:
+                    print(f"Current revision has reached or exceeded END_REVISION ({Config.END_REVISION}). Stopping...")
+                    break
                 if Config.RUN_ONCE:
                     break
             except Exception as e:
@@ -49,6 +54,7 @@ def main():
         upload_thread.join()
 
     print("Program terminated.")
+
 
 if __name__ == '__main__':
     main()
