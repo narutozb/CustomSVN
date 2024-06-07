@@ -28,9 +28,7 @@ class SVNManager:
         self.status_manager.start_upload()
 
         try:
-            if Config.FORCE_UPDATE:
-                start_revision = 1
-            elif Config.START_REVISION is not None:
+            if Config.START_REVISION is not None:
                 start_revision = Config.START_REVISION
             else:
                 start_revision = self.get_existing_revision()
@@ -50,8 +48,12 @@ class SVNManager:
                 print("No new commits to upload.")
                 return
 
+            # Get file changes for all commits at once
+            all_file_changes = get_svn_changes(Config.LOCAL_REPO_URL, [commit['revision'] for commit in commits])
+
             for commit in commits:
-                commit['file_changes'] = get_svn_changes(Config.LOCAL_REPO_URL, commit['revision'])
+                # Use the pre-fetched file changes
+                commit['file_changes'] = all_file_changes[commit['revision']]
 
             data = {
                 'repository': {

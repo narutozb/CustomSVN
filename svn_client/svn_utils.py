@@ -48,14 +48,17 @@ def parse_svn_log(xml_data):
     return commits
 
 
-def get_svn_changes(repo_url, revision):
-    result = subprocess.run(['svn', 'diff', repo_url, '-c', revision, '--summarize'], stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
-    changes = []
-    for line in handle_encoding(result.stdout).splitlines():
-        change_type, file_path = line.split()[:2]
-        changes.append({'file_path': file_path, 'change_type': change_type})
-    return changes
+def get_svn_changes(repo_url, revisions):
+    all_changes = {}
+    for revision in revisions:
+        result = subprocess.run(['svn', 'diff', repo_url, '-c', str(revision), '--summarize'], stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
+        changes = []
+        for line in handle_encoding(result.stdout).splitlines():
+            change_type, file_path = line.split()[:2]
+            changes.append({'file_path': file_path, 'change_type': change_type})
+        all_changes[revision] = changes
+    return all_changes
 
 
 def get_latest_svn_revision(repo_url):
