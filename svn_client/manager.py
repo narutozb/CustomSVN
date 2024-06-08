@@ -61,6 +61,7 @@ class SVNManager:
                     'url': Config.REPO_URL,
                     # 'description': 'Test repository'
                 },
+                'branch_name': Config.BRANCH_NAME,
                 'commits': []
             }
 

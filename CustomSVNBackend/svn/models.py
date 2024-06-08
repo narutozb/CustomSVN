@@ -16,8 +16,17 @@ class Repository(models.Model):
         ordering = ['name']
 
 
+class Branch(models.Model):
+    name = models.CharField(max_length=100)
+    repository = models.ForeignKey(Repository, related_name='branches', on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f'{self.name}'
+
+
 class Commit(models.Model):
     repository = models.ForeignKey(Repository, related_name='commits', on_delete=models.CASCADE)
+    branch = models.ForeignKey(Branch, related_name='commits', on_delete=models.CASCADE)
     revision = models.IntegerField()
     author = models.CharField(max_length=100)
     message = models.TextField()

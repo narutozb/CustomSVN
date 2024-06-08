@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db.models import OuterRef, Subquery, F
 
-from .models import Repository, Commit, FileChange
+from .models import Repository, Commit, FileChange, Branch
 from .serializers import RepositorySerializer, CommitSerializer, FileChangeSerializer
 from django.db.models import IntegerField, Count
 from django.db.models.functions import Cast
@@ -69,6 +69,7 @@ def receive_svn_data(request):
         try:
             data = request.data
             repo_data = data['repository']
+            branch_name = data.get('branch_name')  # 获取分支名
             commits_data = data['commits']
 
             # 检查仓库是否存在
@@ -78,9 +79,13 @@ def receive_svn_data(request):
                 return Response({'status': 'error', 'message': 'Repository does not exist'},
                                 status=status.HTTP_400_BAD_REQUEST)
 
+            # 检查Branch是否存在，如果不存在则创建
+            branch, created = Branch.objects.get_or_create(name=branch_name, repository=repository)
+
             for commit_data in commits_data:
                 commit, created = Commit.objects.get_or_create(
                     repository=repository,
+                    branch=branch,  # 添加branch到commit
                     revision=commit_data['revision'],
                     defaults={
                         'author': commit_data['author'],
