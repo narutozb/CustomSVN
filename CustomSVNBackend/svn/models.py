@@ -26,7 +26,7 @@ class Branch(models.Model):
 
 class Commit(models.Model):
     repository = models.ForeignKey(Repository, related_name='commits', on_delete=models.CASCADE)
-    branch = models.ForeignKey(Branch, related_name='commits', on_delete=models.CASCADE)
+    branch = models.ForeignKey(Branch, related_name='commits', on_delete=models.CASCADE, null=True, blank=True)
     revision = models.IntegerField()
     author = models.CharField(max_length=100)
     message = models.TextField()

@@ -1,3 +1,6 @@
+import os.path
+from urllib.parse import unquote
+
 import requests
 from config import Config
 from endpoints import Endpoints
@@ -23,6 +26,9 @@ class SVNManager:
     def get_existing_revision(self):
         latest_revision = get_latest_revision(self.session, Config.REPO_NAME, self.headers)
         return int(latest_revision) if latest_revision is not None else None
+
+    def decode_url(self, url):
+        return unquote(url)
 
     def update_svn_data(self):
         self.status_manager.start_upload()
@@ -55,18 +61,31 @@ class SVNManager:
                 # Use the pre-fetched file changes
                 commit['file_changes'] = all_file_changes[commit['revision']]
 
+                # Add branch name to commit
+                if commit['file_changes']:
+                    file_path: str = commit['file_changes'][0]['file_path']
+                    branch_name = None
+                    file_path_replaced = file_path.replace(Config.LOCAL_REPO_URL, '')
+                    if file_path_replaced.startswith('trunk'):
+                        branch_name = 'trunk'
+
+                    elif file_path_replaced.startswith('branches'):
+                        split_file_path_replaced = file_path_replaced.split('/')
+                        if len(split_file_path_replaced) > 2:
+                            branch_name = split_file_path_replaced[1]
+
+                    commit['branch_name'] = branch_name
+
             data = {
                 'repository': {
                     'name': Config.REPO_NAME,
                     'url': Config.REPO_URL,
-                    # 'description': 'Test repository'
                 },
-                'branch_name': Config.BRANCH_NAME,
+
                 'commits': []
             }
 
             current_size = calculate_size(data)
-
             for commit in commits:
                 commit_size = calculate_size(commit)
                 if current_size + commit_size > Config.MAX_UPLOAD_SIZE:
@@ -78,6 +97,7 @@ class SVNManager:
                         print(response.status_code, response.text)  # 打印非JSON响应
                     data['commits'] = []
                     current_size = calculate_size(data)
+                print(commit)
                 data['commits'].append(commit)
                 current_size += commit_size
 

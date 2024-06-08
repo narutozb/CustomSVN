@@ -1,5 +1,20 @@
 {% extends 'home.html' %}
 
 {% block content %}
-	
+    <div class="container">
+        <h3 class="border-bottom">{{ repo.name }}</h3>
+        <p>{{ repo.description }}</p>
+    </div>
+
+    {% if recent_commits|length == 0 %}
+        <p>最近几天没有上传记录</p>
+    {% else %}
+        {% regroup recent_commits by date_str as commits_by_date %}
+        {% for date_commits in commits_by_date %}
+            <h3>{{ date_commits.grouper }}</h3>
+            {% for commit in date_commits.list %}
+                <p>{{ commit.date }} {{ commit.branch.name }} {{ commit.revision }} {{ commit.message }} by {{ commit.author }}</p>
+            {% endfor %}
+        {% endfor %}
+    {% endif %}
 {% endblock %}

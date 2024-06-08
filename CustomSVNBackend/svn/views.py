@@ -1,5 +1,3 @@
-from urllib.parse import unquote
-
 from django.core.paginator import Paginator
 from django.shortcuts import render
 from rest_framework import viewsets, status
@@ -14,6 +12,8 @@ from .models import Repository, Commit, FileChange, Branch
 from .serializers import RepositorySerializer, CommitSerializer, FileChangeSerializer
 from django.db.models import IntegerField, Count
 from django.db.models.functions import Cast
+from django.utils import timezone
+from datetime import timedelta
 
 
 class CustomPagination(PageNumberPagination):
@@ -69,7 +69,6 @@ def receive_svn_data(request):
         try:
             data = request.data
             repo_data = data['repository']
-            branch_name = data.get('branch_name')  # 获取分支名
             commits_data = data['commits']
 
             # 检查仓库是否存在
@@ -79,10 +78,15 @@ def receive_svn_data(request):
                 return Response({'status': 'error', 'message': 'Repository does not exist'},
                                 status=status.HTTP_400_BAD_REQUEST)
 
-            # 检查Branch是否存在，如果不存在则创建
-            branch, created = Branch.objects.get_or_create(name=branch_name, repository=repository)
-
             for commit_data in commits_data:
+                branch_name = commit_data.get('branch_name')  # 获取分支名
+
+                # 如果branch_name不为None，检查Branch是否存在，如果不存在则创建
+                if branch_name is not None:
+                    branch, created = Branch.objects.get_or_create(name=branch_name, repository=repository)
+                else:
+                    branch = None
+
                 commit, created = Commit.objects.get_or_create(
                     repository=repository,
                     branch=branch,  # 添加branch到commit
@@ -250,5 +254,18 @@ def svn_latest_existed_view(request):
     )
 
 
-def svn_repository_home(request):
-    return render(request, 'svn/home.html', {})
+def svn_repository_home(request, repository_name):
+    days = request.GET.get('days', 10)
+    days = int(days)
+    repo = Repository.objects.get(name=repository_name)
+    now = timezone.now()
+    five_days_ago = now - timedelta(days=days)
+    recent_commits = Commit.objects.filter(repository=repo, date__gte=five_days_ago)
+    return render(
+        request, 'svn/home.html',
+        {
+            'repo': repo,
+            'recent_commits': recent_commits
+
+        }
+    )

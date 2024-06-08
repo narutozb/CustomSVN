@@ -20,9 +20,10 @@
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                         {% for repository in repositories %}
-                            <li><a class="dropdown-item" href="/svn/file_changes/list_latest_exit_file_changes_data/?repo_name={{ repository }}">{{ repository.name }}</a></li>
+                            <li><a class="dropdown-item"
+                                   href="/svn/repository/{{ repository.name }}">{{ repository.name }}</a></li>
                         {% endfor %}
-                        
+
 
                     </ul>
                 </li>

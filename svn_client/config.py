@@ -3,9 +3,8 @@
 class Config:
     ROOT_URL = 'http://127.0.0.1:8000'  # 'http://127.0.0.1:8000'
 
-    REPO_URL = 'MyDataSVNMyDataSVN'  # 自定义服务器端的url标识
-    BRANCH_NAME = 'trunk'
-    LOCAL_REPO_URL = f'https://QIAOYUANZHEN/svn/MyDataSVN/{BRANCH_NAME}/'  # 实际的本地客户端需要上传的仓库
+    REPO_URL = 'https://qiaoyuanzhen/svn/MyDataSVN/'  # 自定义服务器端的url标识
+    LOCAL_REPO_URL = f'https://qiaoyuanzhen/svn/MyDataSVN/'  # 实际的本地客户端需要上传的仓库
     REPO_NAME = 'MyDataSVN'
     USERNAME = 'admin'
     PASSWORD = 'adminadmin'
