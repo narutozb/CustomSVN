@@ -14,6 +14,7 @@ from django.db.models import IntegerField, Count
 from django.db.models.functions import Cast
 from django.utils import timezone
 from datetime import timedelta
+from django.template.defaultfilters import date as _date
 
 
 class CustomPagination(PageNumberPagination):
@@ -261,11 +262,15 @@ def svn_repository_home(request, repository_name):
     now = timezone.now()
     five_days_ago = now - timedelta(days=days)
     recent_commits = Commit.objects.filter(repository=repo, date__gte=five_days_ago)
+    for commit in recent_commits:
+        commit.date_str = _date(commit.date, "Y-m-d")  # 将日期转换为字符串
+        commit.file_changes_count = commit.file_changes.count()  # 计算FileChange的个数
     return render(
         request, 'svn/home.html',
         {
             'repo': repo,
-            'recent_commits': recent_commits
+            'recent_commits': recent_commits,
+
 
         }
     )

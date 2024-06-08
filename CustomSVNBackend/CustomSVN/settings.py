@@ -122,7 +122,7 @@ LANGUAGE_CODE = 'ja-JP'  # 默认语言 zh-Hans en-US ja-JP
 USE_I18N = True  # 启用国际化
 USE_L10N = True  # 启用本地化
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Tokyo'
 
 USE_TZ = True
 

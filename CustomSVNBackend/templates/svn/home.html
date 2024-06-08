@@ -10,10 +10,24 @@
         <p>最近几天没有上传记录</p>
     {% else %}
         {% regroup recent_commits by date_str as commits_by_date %}
+
         {% for date_commits in commits_by_date %}
-            <h3>{{ date_commits.grouper }}</h3>
+            <p class="h6 bg-light border-bottom "><strong>{{ date_commits.grouper }}</strong>
+                <span class="position-relative translated badge text-bg-secondary">{{ date_commits.list|length }}</span>
+            </p>
             {% for commit in date_commits.list %}
-                <p>{{ commit.date }} {{ commit.branch.name }} {{ commit.revision }} {{ commit.message }} by {{ commit.author }}</p>
+                <div class="container small mb-0">
+                    <span class="text-muted">{{ commit.date|time }}</span>  <!-- 修改这里 -->
+                    <span class="text-danger">[{{ commit.revision }}]</span>
+                    <span class="text-bg-light border">{{ commit.branch.name }}</span>
+                    <span class=" border"><strong class="text-danger">{{ commit.file_changes_count }}</strong>FileChanged</span>
+                    <!-- 显示FileChange的个数 -->
+                    <span class="text-muted">-{{ commit.author }}&lt;dummy@dummy.com&gt;</span>
+                    <p class="mb-0"><span class="d-inline-block text-truncate text-muted"
+                                          style="max-width: 300px;">{{ commit.message }}</span></p>
+
+                </div>
+
             {% endfor %}
         {% endfor %}
     {% endif %}
