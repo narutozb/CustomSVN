@@ -37,4 +37,4 @@ class FileChange(models.Model):
     change_type = models.CharField(max_length=10, choices=[('A', 'Added'), ('M', 'Modified'), ('D', 'Deleted')])
 
     def __str__(self):
-        return f"{self.file_path} ({self.change_type})"
+        return f"{self.id}-{self.file_path} ({self.change_type})"

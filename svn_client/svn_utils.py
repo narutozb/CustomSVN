@@ -81,7 +81,6 @@ def handle_encoding(output):
     return output.decode('utf-8', errors='ignore')
 
 
-
 def run_svn_command(command, cwd):
     """Run a given SVN command in the specified working directory."""
     result = subprocess.run(command, cwd=cwd, text=True, capture_output=True, check=True)

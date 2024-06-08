@@ -1,3 +1,4 @@
+from django.shortcuts import render, get_object_or_404
 from packaging.version import parse
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, permission_classes
@@ -82,3 +83,8 @@ class MayaFileView(APIView):
                 serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+def maya_file_view(request, file_change_id):
+    maya_file = get_object_or_404(MayaFile, changed_file_id=file_change_id)
+    return render(request, 'maya/maya_file_details.html', {'maya_file': maya_file})

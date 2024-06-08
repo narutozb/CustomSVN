@@ -7,16 +7,12 @@ class FileChangeInline(admin.TabularInline):
     extra = 0
 
 
-class CommitInline(admin.TabularInline):
-    model = Commit
-    extra = 0
 
 
 @admin.register(Repository)
 class RepositoryAdmin(admin.ModelAdmin):
     list_display = ('id','name', 'url', 'created_at')
     search_fields = ('name', 'url')
-    inlines = [CommitInline]
 
 
 @admin.register(Commit)
