@@ -16,19 +16,22 @@
                 <span class="position-relative translated badge text-bg-secondary">{{ date_commits.list|length }}</span>
             </p>
             {% for commit in date_commits.list %}
-                <div class="container small mb-0">
-                    <span class="text-muted">{{ commit.date|time }}</span>  <!-- 修改这里 -->
-                    <span class="text-danger">[{{ commit.revision }}]</span>
-                    <span class="text-bg-light border">{{ commit.branch.name }}</span>
-                    <span class=" border"><strong class="text-danger">{{ commit.file_changes_count }}</strong>FileChanged</span>
-                    <!-- 显示FileChange的个数 -->
-                    <span class="text-muted">-{{ commit.author }}&lt;dummy@dummy.com&gt;</span>
-                    <p class="mb-0"><span class="d-inline-block text-truncate text-muted"
-                                          style="max-width: 300px;">{{ commit.message }}</span></p>
 
-                </div>
+                <a href="#" class="small">
+                    <button href="#" class="btn btn-light">
+                        <span>{{ commit.date|time }}</span>  <!-- 修改这里 -->
+                        <em class="text-danger">[{{ commit.revision }}]</em>
+                        <span class="border"><strong class="text-danger">{{ commit.file_changes_count }}</strong>FileChanged</span>
+                        <!-- 显示FileChange的个数 -->
+                        <span>-{{ commit.author }}&lt;dummy@dummy.com&gt;</span>
+                    </button>
+                    <a class="text text-bg-light text-decoration-none" href="#">{{ commit.branch.name }}</a>
+                </a>
+                <p class="mb-0"><span class="d-inline-block text-truncate text-muted"
+                                      style="max-width: 500px;">{{ commit.message }}</span></p>
 
             {% endfor %}
         {% endfor %}
     {% endif %}
 {% endblock %}
+

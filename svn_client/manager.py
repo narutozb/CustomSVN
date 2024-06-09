@@ -65,14 +65,14 @@ class SVNManager:
                 if commit['file_changes']:
                     file_path: str = commit['file_changes'][0]['file_path']
                     branch_name = None
-                    file_path_replaced = file_path.replace(Config.LOCAL_REPO_URL, '')
+                    file_path_replaced = file_path.replace(Config.REPO_ROOT_URL, '')
                     if file_path_replaced.startswith('trunk'):
                         branch_name = 'trunk'
 
-                    elif file_path_replaced.startswith('branches'):
+                    elif file_path_replaced.startswith('branches') or file_path_replaced.startswith('tags'):
                         split_file_path_replaced = file_path_replaced.split('/')
                         if len(split_file_path_replaced) > 2:
-                            branch_name = split_file_path_replaced[1]
+                            branch_name = '/'.join(split_file_path_replaced[:2])
 
                     commit['branch_name'] = branch_name
 
