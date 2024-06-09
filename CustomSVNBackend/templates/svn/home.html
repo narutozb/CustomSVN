@@ -17,10 +17,11 @@
             </p>
             {% for commit in date_commits.list %}
 
-                <a href="#" class="small">
+                <a href="/svn/commit/{{ commit.id }}" class="small">
                     <button href="#" class="btn btn-light">
-                        <span>{{ commit.date|time }}</span>  <!-- 修改这里 -->
                         <em class="text-danger">[{{ commit.revision }}]</em>
+                        <span>{{ commit.date|time }}</span>  <!-- 修改这里 -->
+
                         <span class="border"><strong class="text-danger">{{ commit.file_changes_count }}</strong>FileChanged</span>
                         <!-- 显示FileChange的个数 -->
                         <span>-{{ commit.author }}&lt;dummy@dummy.com&gt;</span>

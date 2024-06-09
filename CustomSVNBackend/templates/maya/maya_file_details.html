@@ -1,7 +1,21 @@
 {% extends 'home.html' %}
 
 {% block content %}
-    <p class="h1">MayaFileDetails</p>
-    {{ maya_file }}
-    {{ maya_file.scene_info.angular }}
+    {% with commit=maya_file.changed_file.commit %}
+        {% include "svn/_base_revision_summary.html" %}
+    {% endwith %}
+
+    <dl class="row">
+        <dt class="col-sm-3">Revision</dt>
+        <dd class="col-sm-9">{{ commit.revision }}</dd>
+
+        <dt class="col-sm-3">Auth</dt>
+        <dd class="col-sm-9"></dd>
+
+        <dt class="col-sm-3 text-truncate">Date</dt>
+        <dd class="col-sm-9">{{ commit.date }}</dd>
+
+        <dt class="col-sm-3">Message</dt>
+        <dd class="col-sm-9">{{ commit.message }}</dd>
+    </dl>
 {% endblock %}

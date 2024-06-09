@@ -1,0 +1,31 @@
+{#Revision概要的基础模板#}
+{% load common_custom_filters %}
+
+<h1>Repo:{{ commit.repository.name }}</h1>
+<dl class="row">
+    <dt class="col-sm-3">Revision</dt>
+    <dd class="col-sm-9">{{ commit.revision }}</dd>
+
+    <dt class="col-sm-3">Auth</dt>
+    <dd class="col-sm-9">
+        {{ commit.author }}
+    </dd>
+
+    <dt class="col-sm-3 text-truncate">Date</dt>
+    <dd class="col-sm-9">{{ commit.date }}</dd>
+
+    <dt class="col-sm-3">BranchName</dt>
+    <dd class="col-sm-9">
+        {% if  commit.branch.name|startswith:'trunk' %}
+            <button class="btn btn-outline-primary">{{ commit.branch.name }}</button>
+        {% elif commit.branch.name|startswith:'tags' %}
+            <button class="btn btn-outline-info">{{ commit.branch.name }}</button>
+        {% elif commit.branch.name|startswith:'branches' %}
+            <button class="btn btn-outline-secondary">{{ commit.branch.name }}</button>
+        {% endif %}
+    </dd>
+
+
+    <dt class="col-sm-3">Message</dt>
+    <dd class="col-sm-9">{{ commit.message }}</dd>
+</dl>

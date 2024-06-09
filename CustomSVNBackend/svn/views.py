@@ -1,5 +1,5 @@
 from django.core.paginator import Paginator
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from rest_framework import viewsets, status
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.pagination import PageNumberPagination
@@ -271,6 +271,18 @@ def svn_repository_home(request, repository_name):
             'repo': repo,
             'recent_commits': recent_commits,
 
+        }
+    )
 
+
+def svn_commit_details(request, commit_id):
+    commit = get_object_or_404(Commit, id=commit_id)
+    file_changes = FileChange.objects.filter(commit=commit)
+    return render(
+        request,
+        'svn/commit_details.html',
+        {
+            'commit': commit,
+            'file_changes': file_changes
         }
     )
