@@ -1,0 +1,38 @@
+{% extends 'home.html' %}
+
+{% block content %}
+    <div class="container">
+        <h3 class="border-bottom">{{ repo.name }}</h3>
+        <p>{{ repo.description }}</p>
+    </div>
+
+    {% if recent_commits|length == 0 %}
+        <p>最近几天没有上传记录</p>
+    {% else %}
+        {% regroup recent_commits by date_str as commits_by_date %}
+
+        {% for date_commits in commits_by_date %}
+            <p class="h6 bg-light border-bottom "><strong>{{ date_commits.grouper }}</strong>
+                <span class="position-relative translated badge text-bg-secondary">{{ date_commits.list|length }}</span>
+            </p>
+            {% for commit in date_commits.list %}
+
+                <a href="/svn/commit/{{ commit.id }}" class="small">
+                    <button href="#" class="btn btn-light">
+                        <em class="text-danger">[{{ commit.revision }}]</em>
+                        <span>{{ commit.date|time }}</span>  <!-- 修改这里 -->
+
+                        <span class="border"><strong class="text-danger">{{ commit.file_changes_count }}</strong>FileChanged</span>
+                        <!-- 显示FileChange的个数 -->
+                        <span>-{{ commit.author }}&lt;dummy@dummy.com&gt;</span>
+                    </button>
+                    <a class="text text-bg-light text-decoration-none" href="#">{{ commit.branch.name }}</a>
+                </a>
+                <p class="mb-0"><span class="d-inline-block text-truncate text-muted"
+                                      style="max-width: 500px;">{{ commit.message }}</span></p>
+
+            {% endfor %}
+        {% endfor %}
+    {% endif %}
+{% endblock %}
+
