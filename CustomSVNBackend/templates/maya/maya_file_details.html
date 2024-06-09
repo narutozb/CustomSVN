@@ -1,0 +1,30 @@
+{% extends 'home.html' %}
+
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                {% with commit=maya_file.changed_file.commit %}
+                    {% include "svn/_base_revision_summary.html" %}
+                {% endwith %}
+            </div>
+            <div class="col maya-file-scene-summary">
+                <p class="h3">FilePath:</p>
+                <p class="lead">{{ maya_file.changed_file.file_path }}</p>
+                <dl class="row">
+                    <dt class="col-sm-3">OpenedSuccessfully</dt>
+                    <dd class="col-sm-9">{{ maya_file.opened_successfully }}</dd>
+
+                    <dt class="col-sm-3">LocalPath</dt>
+                    <dd class="col-sm-9">{{ maya_file.local_path }}</dd>
+
+                    <dt class="col-sm-3">Description</dt>
+                    <dd class="col-sm-9">{{ maya_file.description }}</dd>
+
+                    <dt class="col-sm-3">MayaClientVersion</dt>
+                    <dd class="col-sm-9">{{ maya_file.client_version }}</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -26,6 +26,7 @@ urlpatterns = [
     path('api/api-token-auth/', CustomAuthToken.as_view(), name='api_token_auth'),  # 添加api-token-auth路径
     path('svn/', include('svn.urls')),
     path('api/svn/', include('svn.urls_api')),
-    path('api/maya/', include('maya.urls')),
+    path('api/maya/', include('maya.urls_api')),
+    path('maya/', include('maya.urls')),
     path('user/', include('users.urls')),
 ]

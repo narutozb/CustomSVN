@@ -1,6 +1,7 @@
-import os
+import subprocess
 
-os.environ['LC_ALL'] = 'en_US.UTF-8'
+# # 设置命令行代码页为 437
+# subprocess.run('chcp 437', shell=True)
 
 from maya_client import maya_client_manager
 

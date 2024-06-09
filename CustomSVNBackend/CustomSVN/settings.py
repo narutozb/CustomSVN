@@ -63,6 +63,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
 ]
 
 ROOT_URLCONF = 'CustomSVN.urls'
@@ -118,11 +119,15 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
-
-TIME_ZONE = 'UTC'
-
-USE_I18N = True
+LANGUAGE_CODE = 'ja-JP'  # 默认语言 zh-Hans en-US ja-JP
+USE_I18N = True  # 启用国际化
+USE_L10N = True  # 启用本地化
+LANGUAGES = [
+    ('zh-Hans', '简体中文'),
+    ('ja', '日本語'),
+    ('en', 'English'),
+]
+TIME_ZONE = 'Asia/Tokyo'
 
 USE_TZ = True
 

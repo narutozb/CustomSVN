@@ -1,6 +1,7 @@
 import subprocess
 import json
 import sys
+from urllib.parse import unquote
 
 from endpoints import Endpoints
 
@@ -56,7 +57,7 @@ def get_svn_changes(repo_url, revisions):
         changes = []
         for line in handle_encoding(result.stdout).splitlines():
             change_type, file_path = line.split()[:2]
-            changes.append({'file_path': file_path, 'change_type': change_type})
+            changes.append({'file_path': unquote(file_path), 'change_type': change_type})
         all_changes[revision] = changes
     return all_changes
 
@@ -79,7 +80,6 @@ def handle_encoding(output):
         except UnicodeDecodeError:
             continue
     return output.decode('utf-8', errors='ignore')
-
 
 
 def run_svn_command(command, cwd):

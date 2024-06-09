@@ -1,18 +1,20 @@
-from urllib.parse import unquote
-
 from django.core.paginator import Paginator
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from rest_framework import viewsets, status
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.db.models import OuterRef, Subquery, F
 
-from .models import Repository, Commit, FileChange
+from .models import Repository, Commit, FileChange, Branch
 from .serializers import RepositorySerializer, CommitSerializer, FileChangeSerializer
 from django.db.models import IntegerField, Count
 from django.db.models.functions import Cast
+from django.utils import timezone
+from datetime import timedelta
+from django.template.defaultfilters import date as _date
 
 
 class CustomPagination(PageNumberPagination):
@@ -78,8 +80,17 @@ def receive_svn_data(request):
                                 status=status.HTTP_400_BAD_REQUEST)
 
             for commit_data in commits_data:
+                branch_name = commit_data.get('branch_name')  # 获取分支名
+
+                # 如果branch_name不为None，检查Branch是否存在，如果不存在则创建
+                if branch_name is not None:
+                    branch, created = Branch.objects.get_or_create(name=branch_name, repository=repository)
+                else:
+                    branch = None
+
                 commit, created = Commit.objects.get_or_create(
                     repository=repository,
+                    branch=branch,  # 添加branch到commit
                     revision=commit_data['revision'],
                     defaults={
                         'author': commit_data['author'],
@@ -164,30 +175,32 @@ def list_file_changes(request, repo_name, revision, ):
 
 class FileChangeListLatestExistView(APIView):
     def get(self, request, *args, **kwargs):
-        '''
-        只显示已存在的最新的FileChange
-        可以通过仓库名进行过滤
-        '''
         repo_name = request.query_params.get('repo_name', None)  # 获取仓库名称参数
-        file_paths = FileChange.objects.values_list('file_path', flat=True).distinct()
-        data = []
-        for file_path in file_paths:
-            # 如果提供了仓库名称，就添加一个过滤条件
-            if repo_name:
-                latest_commit = FileChange.objects.filter(file_path=file_path,
-                                                          commit__repository__name=repo_name).order_by(
-                    '-commit__revision').first()
-            else:
-                latest_commit = FileChange.objects.filter(file_path=file_path).order_by('-commit__revision').first()
-            if latest_commit and latest_commit.change_type != 'D':
-                data.append({
-                    'file_path': latest_commit.file_path,
-                    'change_type': latest_commit.change_type,
-                    'commit': {
-                        'revision': latest_commit.commit.revision,
-                        'repository': latest_commit.commit.repository.name,
-                    }
-                })
+
+        # 创建一个Subquery，找到每个file_path的最大revision
+        latest_revisions = FileChange.objects.filter(file_path=OuterRef('file_path')).order_by('-commit__revision')
+
+        # 使用annotate将Subquery添加到查询集中
+        file_changes = FileChange.objects.annotate(
+            latest_revision=Subquery(latest_revisions.values('commit__revision')[:1])
+        )
+
+        # 过滤查询集，只保留那些revision等于其最大revision的FileChange对象
+        file_changes = file_changes.filter(commit__revision=F('latest_revision'))
+
+        # 如果提供了仓库名称，就添加一个过滤条件
+        if repo_name:
+            file_changes = file_changes.filter(commit__repository__name=repo_name)
+
+        # 过滤掉已删除的文件
+        file_changes = file_changes.exclude(change_type='D')
+
+        data = file_changes.values(
+            'file_path',
+            'change_type',
+            'commit__revision',
+            'commit__repository__name',
+        )
 
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(data, request)
@@ -196,29 +209,35 @@ class FileChangeListLatestExistView(APIView):
 
 def svn_latest_existed_view(request):
     repo_name = request.GET.get('repo_name', Repository.objects.all().first().name)  # 获取仓库名称参数
-    file_paths = FileChange.objects.values_list('file_path', flat=True).distinct()
-    data = []
-    for file_path in file_paths:
-        # 如果提供了仓库名称，就添加一个过滤条件
-        if repo_name:
-            latest_commit = FileChange.objects.filter(file_path=file_path,
-                                                      commit__repository__name=repo_name).order_by(
-                '-commit__revision').first()
-        else:
-            latest_commit = FileChange.objects.filter(file_path=file_path).order_by('-commit__revision').first()
-        if latest_commit and latest_commit.change_type != 'D':
-            data.append({
-                'id': latest_commit.id,
-                'file_path': unquote(latest_commit.file_path),
-                'change_type': latest_commit.change_type,
-                'commit': {
-                    'revision': latest_commit.commit.revision,
-                    'repository': latest_commit.commit.repository.name,
-                }
-            })
+
+    # 创建一个Subquery，找到每个file_path的最大revision
+    latest_revisions = FileChange.objects.filter(file_path=OuterRef('file_path')).order_by('-commit__revision')
+
+    # 使用annotate将Subquery添加到查询集中
+    file_changes = FileChange.objects.annotate(
+        latest_revision=Subquery(latest_revisions.values('commit__revision')[:1])
+    )
+
+    # 过滤查询集，只保留那些revision等于其最大revision的FileChange对象
+    file_changes = file_changes.filter(commit__revision=F('latest_revision'))
+
+    # 如果提供了仓库名称，就添加一个过滤条件
+    if repo_name:
+        file_changes = file_changes.filter(commit__repository__name=repo_name)
+
+    # 过滤掉已删除的文件
+    file_changes = file_changes.exclude(change_type='D')
+
+    data = file_changes.values(
+        'id',
+        'commit',
+        'change_type',
+        'file_path',
+        # 'commit__repository__name',
+    )
 
     # 创建一个Paginator实例
-    paginator = Paginator(data, 20)  # 每页显示10条数据
+    paginator = Paginator(data, 20)  # 每页显示20条数据
 
     # 获取页码参数
     page_number = request.GET.get('page')
@@ -232,6 +251,38 @@ def svn_latest_existed_view(request):
         {
             'page_obj': page_obj,
             'repo_name': repo_name
+        }
+    )
 
+
+def svn_repository_home(request, repository_name):
+    days = request.GET.get('days', 10)
+    days = int(days)
+    repo = Repository.objects.get(name=repository_name)
+    now = timezone.now()
+    five_days_ago = now - timedelta(days=days)
+    recent_commits = Commit.objects.filter(repository=repo, date__gte=five_days_ago)
+    for commit in recent_commits:
+        commit.date_str = _date(commit.date, "Y-m-d")  # 将日期转换为字符串
+        commit.file_changes_count = commit.file_changes.count()  # 计算FileChange的个数
+    return render(
+        request, 'svn/home.html',
+        {
+            'repo': repo,
+            'recent_commits': recent_commits,
+
+        }
+    )
+
+
+def svn_commit_details(request, commit_id):
+    commit = get_object_or_404(Commit, id=commit_id)
+    file_changes = FileChange.objects.filter(commit=commit)
+    return render(
+        request,
+        'svn/commit_details.html',
+        {
+            'commit': commit,
+            'file_changes': file_changes
         }
     )

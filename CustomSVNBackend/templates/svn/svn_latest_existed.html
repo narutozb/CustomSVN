@@ -15,7 +15,7 @@
         {% for item in page_obj %}
             <tr>
                 <th scope="row">{{ item.id }}</th>
-                <th scope="row">{{ item.commit.revision }}</th>
+                <th scope="row">{{ item.commit }}</th>
                 <th scope="row">{{ item.change_type }}</th>
                 <th scope="row">{{ item.file_path }}</th>
             </tr>
