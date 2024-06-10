@@ -99,7 +99,6 @@ def get_local_current_revision(svn_path):
     """Get the current revision of the SVN repository."""
     command = ["svn", "info"]
     info_output = run_svn_command(command, cwd=svn_path)
-    print(info_output)
     for line in info_output.splitlines():
         if line.startswith("Revision:"):
             return line.split()[1]
@@ -111,6 +110,8 @@ def get_local_last_changed_revision(svn_path):
     command = ["svn", "info"]
     info_output = run_svn_command(command, cwd=svn_path)
     for line in info_output.splitlines():
+        print(line)
         if line.startswith("Last Changed Rev:"):
             return line.split()[-1]
     return None
+

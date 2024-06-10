@@ -25,6 +25,11 @@
         {% endif %}
     </dd>
 
+    {% if file_changes %}
+        <dt class="col-sm-3 text-truncate">FileChangedCount</dt>
+        <dd class="col-sm-9">{{ file_changes|length }}</dd>
+    {% endif %}
+
 
     <dt class="col-sm-3">Message</dt>
     <dd class="col-sm-9">{{ commit.message }}</dd>

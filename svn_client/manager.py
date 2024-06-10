@@ -48,65 +48,78 @@ class SVNManager:
                 print(f"No new revisions to update. Current latest revision is {end_revision}.")
                 return
 
-            log_data = get_svn_log(Config.LOCAL_REPO_URL, start_revision=start_revision, end_revision=end_revision)
-            commits = parse_svn_log(log_data)
-            if not commits:
-                print("No new commits to upload.")
-                return
+            # Calculate the number of iterations needed
+            iterations = (end_revision - start_revision) // Config.COMMITS_SPLIT_NUM + 1
 
-            # Get file changes for all commits at once
-            all_file_changes = get_svn_changes(Config.LOCAL_REPO_URL, [commit['revision'] for commit in commits])
+            for i in range(iterations):
+                current_start_revision = start_revision + i * Config.COMMITS_SPLIT_NUM
+                current_end_revision = min(start_revision + (i + 1) * Config.COMMITS_SPLIT_NUM - 1, end_revision)
 
-            for commit in commits:
-                # Use the pre-fetched file changes
-                commit['file_changes'] = all_file_changes[commit['revision']]
+                log_data = get_svn_log(Config.LOCAL_REPO_URL, start_revision=current_start_revision,
+                                       end_revision=current_end_revision)
+                commits = parse_svn_log(log_data)
+                if not commits:
+                    print("No new commits to upload.")
+                    continue
 
-                # Add branch name to commit
-                if commit['file_changes']:
-                    file_path: str = commit['file_changes'][0]['file_path']
-                    branch_name = None
-                    file_path_replaced = file_path.replace(Config.REPO_ROOT_URL, '')
-                    if file_path_replaced.startswith('trunk'):
-                        branch_name = 'trunk'
+                # Get file changes for all commits at once
+                all_file_changes = get_svn_changes(Config.LOCAL_REPO_URL, [commit['revision'] for commit in commits])
 
-                    elif file_path_replaced.startswith('branches') or file_path_replaced.startswith('tags'):
-                        split_file_path_replaced = file_path_replaced.split('/')
-                        if len(split_file_path_replaced) > 2:
-                            branch_name = '/'.join(split_file_path_replaced[:2])
+                for commit in commits:
+                    # Use the pre-fetched file changes
+                    commit['file_changes'] = all_file_changes[commit['revision']]
 
-                    commit['branch_name'] = branch_name
+                    # Add branch name to commit
+                    if commit['file_changes']:
+                        file_path: str = commit['file_changes'][0]['file_path'].lower()
 
-            data = {
-                'repository': {
-                    'name': Config.REPO_NAME,
-                    'url': Config.REPO_URL,
-                },
+                        branch_name = None
+                        file_path_replaced = file_path.replace(Config.get_repo_root_url(), '')
+                        if file_path_replaced.startswith('trunk'):
+                            branch_name = 'trunk'
+                        elif file_path_replaced.startswith('branches') or file_path_replaced.startswith('tags'):
+                            split_file_path_replaced = file_path_replaced.split('/')
+                            if len(split_file_path_replaced) > 2:
+                                branch_name = '/'.join(split_file_path_replaced[:2])
 
-                'commits': []
-            }
+                        commit['branch_name'] = branch_name
 
-            current_size = calculate_size(data)
-            for commit in commits:
-                commit_size = calculate_size(commit)
-                if current_size + commit_size > Config.MAX_UPLOAD_SIZE:
-                    response = self.session.post(Endpoints.get_api_url(Endpoints.svn_receive_svn_data), json=data,
-                                                 headers=self.headers)
-                    try:
-                        print(response.status_code, response.json())
-                    except requests.exceptions.JSONDecodeError:
-                        print(response.status_code, response.text)  # 打印非JSON响应
-                    data['commits'] = []
-                    current_size = calculate_size(data)
-                print(commit)
-                data['commits'].append(commit)
-                current_size += commit_size
 
-            if data['commits']:
+                self.upload_commits(commits)
+
+        finally:
+            self.status_manager.end_upload()
+
+    def upload_commits(self, commits):
+        data = {
+            'repository': {
+                'name': Config.REPO_NAME,
+                'url': Config.REPO_URL,
+            },
+
+            'commits': []
+        }
+
+        current_size = calculate_size(data)
+        for commit in commits:
+            commit_size = calculate_size(commit)
+            if current_size + commit_size > Config.MAX_UPLOAD_SIZE:
                 response = self.session.post(Endpoints.get_api_url(Endpoints.svn_receive_svn_data), json=data,
                                              headers=self.headers)
                 try:
                     print(response.status_code, response.json())
                 except requests.exceptions.JSONDecodeError:
                     print(response.status_code, response.text)  # 打印非JSON响应
-        finally:
-            self.status_manager.end_upload()
+                data['commits'] = []
+                current_size = calculate_size(data)
+
+            data['commits'].append(commit)
+            current_size += commit_size
+
+        if data['commits']:
+            response = self.session.post(Endpoints.get_api_url(Endpoints.svn_receive_svn_data), json=data,
+                                         headers=self.headers)
+            try:
+                print(response.status_code, response.json())
+            except requests.exceptions.JSONDecodeError:
+                print(response.status_code, response.text)  # 打印非JSON响应

@@ -1,0 +1,23 @@
+/* commit添加色 */
+.text-svn-add {
+    color: purple;
+}
+
+/* commit删除色 */
+.text-svn-delete {
+    color: gray;
+}
+
+/* commit修改色 */
+.text-svn-modified {
+    color: blue;
+}
+
+/*a标签继承颜色*/
+a {
+    color: inherit;
+}
+
+a.inherit-color {
+    color: inherit;
+}
