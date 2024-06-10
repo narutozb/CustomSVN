@@ -48,7 +48,7 @@ class SVNManager:
                 print(f"No new revisions to update. Current latest revision is {end_revision}.")
                 return
 
-            log_data = get_svn_log(Config.LOCAL_REPO_URL, start_revision=start_revision)
+            log_data = get_svn_log(Config.LOCAL_REPO_URL, start_revision=start_revision, end_revision=end_revision)
             commits = parse_svn_log(log_data)
             if not commits:
                 print("No new commits to upload.")
