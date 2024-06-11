@@ -10,11 +10,12 @@
     {% for comment in comments %}
         <div>
             <p>{{ comment.user.username }}: {{ comment.content }}</p>
-            {% if comment.image %}
-                <a href="{{ comment.image.url }}" target="_blank">
-                    <img src="{{ comment.image.url }}" alt="Comment Image" style="max-width: 100px; max-height: 100px;">
+            {% for image in comment.images.all %}
+                <a href="{{ image.image.url }}" target="_blank">
+                    <img src="{{ image.image.url }}" alt="{{ image.description }}"
+                         style="max-width: 100px; max-height: 100px;">
                 </a>
-            {% endif %}
+            {% endfor %}
         </div>
     {% endfor %}
 
@@ -27,49 +28,61 @@
         </div>
         <button type="submit">Add Comment</button>
     </form>
-
+    <div id="preview"></div>
     <script>
-        Dropzone.options.commentForm = {
-            init: function () {
-                this.on("thumbnail", function (file) {
-                    // Display thumbnail in dropzone area
-                });
+    document.addEventListener('DOMContentLoaded', function () {
+        var dropzone = document.getElementById('dropzone');
+        var preview = document.getElementById('preview');
+        var form = document.getElementById('comment-form');
+        var files = [];
+
+        dropzone.addEventListener('dragover', function (e) {
+            e.preventDefault();
+        });
+
+        dropzone.addEventListener('drop', function (e) {
+            e.preventDefault();
+
+            files = e.dataTransfer.files;
+
+            // Clear the preview div
+            while (preview.firstChild) {
+                preview.removeChild(preview.firstChild);
             }
-        };
-    </script>
-    <script>
-        // JavaScript
-document.addEventListener('DOMContentLoaded', function () {
-    var dropzone = document.getElementById('dropzone');
 
-    dropzone.addEventListener('dragover', function (e) {
-        e.preventDefault();
-    });
-
-    dropzone.addEventListener('drop', function (e) {
-        e.preventDefault();
-
-        var files = e.dataTransfer.files;
-        var formData = new FormData(document.getElementById('comment-form'));
-
-        for (var i = 0; i < files.length; i++) {
-            formData.append('image', files[i]);
-        }
-
-        fetch('{% url "task_detail" task_id=task.id %}', {
-            method: 'POST',
-            body: formData
-        }).then(response => {
-            if (response.ok) {
-                console.log('Upload successful');
-            } else {
-                console.error('Upload failed');
+            // Create a new image element for each file
+            for (var i = 0; i < files.length; i++) {
+                var img = document.createElement('img');
+                img.src = URL.createObjectURL(files[i]);
+                img.height = 100;
+                img.onload = function () {
+                    URL.revokeObjectURL(this.src);
+                }
+                preview.appendChild(img);
             }
-        }).catch(error => {
-            console.error('Error:', error);
+        });
+
+        form.addEventListener('submit', function (e) {
+            var formData = new FormData(form);
+            for (var i = 0; i < files.length; i++) {
+                formData.append('images', files[i]);
+            }
+
+            e.preventDefault();
+            fetch('{% url "task_detail" task_id=task.id %}', {
+                method: 'POST',
+                body: formData
+            }).then(response => {
+                if (response.ok) {
+                    console.log('Upload successful');
+                } else {
+                    console.error('Upload failed');
+                }
+            }).catch(error => {
+                console.error('Error:', error);
+            });
         });
     });
-});
-    </script>
+</script>
 
 {% endblock %}
