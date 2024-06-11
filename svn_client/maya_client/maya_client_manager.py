@@ -12,7 +12,7 @@ from login import ClientBase
 import maya_client_config
 from maya_client.maya_client_utils import MayaDataGetter
 from maya_client.maya_standalone.scene_data import CheckMayaData
-from svn_utils import get_local_last_changed_revision
+from svn_utils import get_local_last_changed_revision, get_local_current_revision
 
 
 class MayaClientManager(ClientBase):
@@ -33,7 +33,7 @@ class MayaClientManager(ClientBase):
 
     def get_diff_local_maya_files(self, ):
         local_last_changed_rev = int(
-            get_local_last_changed_revision(maya_client_config.MayaClientConfig.local_svn_path))
+            get_local_current_revision(maya_client_config.MayaClientConfig.local_svn_path))
         response = self.get_changed_maya_files(local_last_changed_rev)
         if response.json().get('results'):
             results = [SVNChangedFileDC(
@@ -76,8 +76,10 @@ class MayaClientManager(ClientBase):
 
         # Step 2: Check if the local repository's revision is older than the server's
         local_last_changed_rev = int(
-            get_local_last_changed_revision(maya_client_config.MayaClientConfig.local_svn_path))
+            get_local_current_revision(maya_client_config.MayaClientConfig.local_svn_path))
 
+        print(local_last_changed_rev)
+        print(latest_server_revision)
         if local_last_changed_rev < latest_server_revision:
             # Step 3: Update the local repository and send the changed_file data to the server for each new revision
             for revision in range(local_last_changed_rev + 1, latest_server_revision + 1):
