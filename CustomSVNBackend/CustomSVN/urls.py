@@ -17,6 +17,8 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
+from django.conf.urls.static import static
+from django.conf import settings
 from CustomSVN.views import home
 from users.views import CustomAuthToken
 
@@ -29,4 +31,8 @@ urlpatterns = [
     path('api/maya/', include('maya.urls_api')),
     path('maya/', include('maya.urls')),
     path('user/', include('users.urls')),
+    path('task/', include('task.urls')),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

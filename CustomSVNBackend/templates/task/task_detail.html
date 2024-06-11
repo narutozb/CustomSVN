@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+
+    <h1>{{ task.name }}</h1>
+    <p>{{ task.description }}</p>
+
+    <h2>Comments</h2>
+    {% for comment in comments %}
+        <div>
+            <p>{{ comment.user.username }}: {{ comment.content }}</p>
+            {% if comment.image %}
+                <a href="{{ comment.image.url }}" target="_blank">
+                    <img src="{{ comment.image.url }}" alt="Comment Image" style="max-width: 100px; max-height: 100px;">
+                </a>
+            {% endif %}
+        </div>
+    {% endfor %}
+
+    <h3>Add a comment</h3>
+    <form id="comment-form" method="post" enctype="multipart/form-data" class="dropzone">
+        {% csrf_token %}
+        {{ comment_form.as_p }}
+        <div id="dropzone" style="width: 200px; height: 200px; border: 1px solid black;">
+            Drop files here
+        </div>
+        <button type="submit">Add Comment</button>
+    </form>
+
+    <script>
+        Dropzone.options.commentForm = {
+            init: function () {
+                this.on("thumbnail", function (file) {
+                    // Display thumbnail in dropzone area
+                });
+            }
+        };
+    </script>
+    <script>
+        // JavaScript
+document.addEventListener('DOMContentLoaded', function () {
+    var dropzone = document.getElementById('dropzone');
+
+    dropzone.addEventListener('dragover', function (e) {
+        e.preventDefault();
+    });
+
+    dropzone.addEventListener('drop', function (e) {
+        e.preventDefault();
+
+        var files = e.dataTransfer.files;
+        var formData = new FormData(document.getElementById('comment-form'));
+
+        for (var i = 0; i < files.length; i++) {
+            formData.append('image', files[i]);
+        }
+
+        fetch('{% url "task_detail" task_id=task.id %}', {
+            method: 'POST',
+            body: formData
+        }).then(response => {
+            if (response.ok) {
+                console.log('Upload successful');
+            } else {
+                console.error('Upload failed');
+            }
+        }).catch(error => {
+            console.error('Error:', error);
+        });
+    });
+});
+    </script>
+
+{% endblock %}
