@@ -1,14 +1,16 @@
 import os
 import random
 import subprocess
+import time
 
 # 全局参数
-REPO_URL = r'https://QIAOYUANZHEN/svn/TESTREPO1/'
-CHECKOUT_PATH = r'D:\test_repo\testrepo1'
+REPO_URL = r'https://QIAOYUANZHEN/svn/TestRepoMany/trunk'
+CHECKOUT_PATH = r'D:\svn_project_test\TestRepoMany'
 GENERATE_MAX_FILE = 200
-GENERATE_MAX_COMMITS = 10
+GENERATE_MAX_COMMITS = 100
 MAX_MODIFICATIONS = 50
 MAX_FILES_PER_COMMIT = 200  # 每次提交的最大文件数量
+SLEEP = True
 
 
 def checkout_svn_repository(repo_url, checkout_path):
@@ -34,9 +36,13 @@ def delete_file(file_path):
     subprocess.run(['svn', 'delete', '--force', file_path], check=True)
 
 
-def create_and_commit_files(checkout_path, max_files, max_commits, max_modifications, max_files_per_commit):
+def create_and_commit_files(checkout_path, max_files, max_commits, max_modifications, max_files_per_commit, sleep=None):
     files = [os.path.join(checkout_path, f'test_file_{i}.txt') for i in range(1, max_files + 1)]
     for commit_number in range(max_commits):
+
+        if sleep:
+            time.sleep(random.randint(1, 10))
+
         files_in_commit = random.randint(1, max_files_per_commit)
         commit_files = random.sample(files, files_in_commit)
         commit_message = []
@@ -61,9 +67,11 @@ def create_and_commit_files(checkout_path, max_files, max_commits, max_modificat
             commit_changes(checkout_path, '; '.join(commit_message))
 
 
-def generate_test_svn_data(repo_url, checkout_path, max_files, max_commits, max_modifications, max_files_per_commit):
+def generate_test_svn_data(repo_url, checkout_path, max_files, max_commits, max_modifications, max_files_per_commit,
+                           sleep=None):
     checkout_svn_repository(repo_url, checkout_path)
-    create_and_commit_files(checkout_path, max_files, max_commits, max_modifications, max_files_per_commit)
+
+    create_and_commit_files(checkout_path, max_files, max_commits, max_modifications, max_files_per_commit, sleep=sleep)
 
 
 if __name__ == '__main__':
@@ -74,5 +82,6 @@ if __name__ == '__main__':
     max_modifications = MAX_MODIFICATIONS
     max_files_per_commit = MAX_FILES_PER_COMMIT
 
-    generate_test_svn_data(repo_url, checkout_path, max_files, max_commits, max_modifications, max_files_per_commit)
+    generate_test_svn_data(repo_url, checkout_path, max_files, max_commits, max_modifications, max_files_per_commit,
+                           sleep=SLEEP)
     print(f"Generated test data in the SVN repository.")

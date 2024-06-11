@@ -1,34 +1,51 @@
 {% extends 'home.html' %}
 {% load common_custom_filters %}
 
+{% block title %}
+    {{ commit.repository }} - {{ commit.revision }}
+{% endblock %}
+
 {% block content %}
     {% include "svn/_base_revision_summary.html" %}
 
-
-    <table class="table">
+    <table class="table table-hover table-sm">
         <thead>
         <tr>
             <th scope="col">ChangeType</th>
+            <th scope="col">Ext</th>
             <th scope="col">FileChanged</th>
         </tr>
         </thead>
         <tbody>
         {% for file_change in file_changes %}
             <tr>
-
                 <td>{{ file_change.change_type }}</td>
-                {% if file_change.change_type == 'D' %}
-                    <td class="text text-secondary">{{ file_change.file_path }}</td>
-                {% elif file_change.file_path|endswith:".mb" or file_change.file_path|endswith:".ma" %}
-                    <td><a href="/maya/maya_file/{{ file_change.id }}/">{{ file_change.file_path }}</a></td>
-                {% else %}
-                    <td>{{ file_change.file_path }}</td>
-                {% endif %}
+                <td>
+                    {% if file_change.file_path|endswith:".mb" or file_change.file_path|endswith:".ma" %}
+                        <a href="/maya/maya_file/{{ file_change.id }}/">
+                            {{ file_change.file_extension }}
+                        </a>
+                    {% endif %}
 
+                </td>
+                <td>
+                    {% if file_change.change_type == 'D' %}
+                        <span class="text text-svn-delete">{{ file_change.file_path }}</span>
+                    {% elif file_change.change_type == 'A' %}
+                        <span class="text text-svn-add">
+                    {% elif file_change.change_type == 'M' %}
+                        <span class="text text-svn-modified">
+                    {% else %}
+                        <span>
+                    {% endif %}
+
+
+                    {{ file_change.file_path }}
+
+                    </span>
+                </td>
             </tr>
         {% endfor %}
-
-
         </tbody>
     </table>
 {% endblock %}

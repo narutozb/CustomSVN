@@ -21,10 +21,17 @@ def get_latest_revision(session, repo_name, headers):
     return None
 
 
-def get_svn_log(repo_url, start_revision=None):
+def get_svn_log(repo_url, start_revision=None, end_revision=None):
+    if not start_revision:
+        start_revision = 1
+
+    if not end_revision:
+        end_revision = 'HEAD'
+
     cmd = ['svn', 'log', repo_url, '--xml']
-    if start_revision:
-        cmd.extend(['-r', f'{start_revision}:HEAD'])
+
+    cmd.extend(['-r', f'{start_revision}:{end_revision}'])
+
     result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     return handle_encoding(result.stdout)
 
@@ -92,7 +99,6 @@ def get_local_current_revision(svn_path):
     """Get the current revision of the SVN repository."""
     command = ["svn", "info"]
     info_output = run_svn_command(command, cwd=svn_path)
-    print(info_output)
     for line in info_output.splitlines():
         if line.startswith("Revision:"):
             return line.split()[1]
@@ -104,6 +110,8 @@ def get_local_last_changed_revision(svn_path):
     command = ["svn", "info"]
     info_output = run_svn_command(command, cwd=svn_path)
     for line in info_output.splitlines():
+        print(line)
         if line.startswith("Last Changed Rev:"):
             return line.split()[-1]
     return None
+

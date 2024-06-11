@@ -1,3 +1,5 @@
+import os
+
 from django.core.paginator import Paginator
 from django.shortcuts import render, get_object_or_404
 from rest_framework import viewsets, status
@@ -278,6 +280,9 @@ def svn_repository_home(request, repository_name):
 def svn_commit_details(request, commit_id):
     commit = get_object_or_404(Commit, id=commit_id)
     file_changes = FileChange.objects.filter(commit=commit)
+    # 添加文件后缀的变量
+    for file_change in file_changes:
+        _, file_change.file_extension = os.path.splitext(file_change.file_path)
     return render(
         request,
         'svn/commit_details.html',
