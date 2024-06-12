@@ -38,8 +38,12 @@
 
         {% endfor %}
     {% endif %}
-    {% block content %}
-    {% endblock %}
+    {% if user.is_authenticated %}
+        {% block content %}
+        {% endblock %}
+    {% else %}
+        {% include 'user/_login.html' %}
+    {% endif %}
 
     {% include "footer.html" %}
 </div>
