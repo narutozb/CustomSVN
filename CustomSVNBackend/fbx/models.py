@@ -21,6 +21,37 @@ class Fbx(models.Model):
         return f'FBX for {self.changed_file.file_path}'
 
 
+class FbxDetail(models.Model):
+    fbx = models.OneToOneField(Fbx, on_delete=models.CASCADE, related_name='details')
+    fps = models.FloatField()
+
+
+class Character(models.Model):
+    name = models.CharField(max_length=255)
+    fbx_detail = models.ForeignKey(FbxDetail, on_delete=models.CASCADE, related_name='characters')
+
+
+class FbxTake(models.Model):
+    fbx_detail = models.ForeignKey(FbxDetail, on_delete=models.CASCADE, related_name='takes')
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return f'FBX Take {self.name}'
+
+
+class FbxAnimLayer(models.Model):
+    '''
+    Take 001: BaseAnimation
+    Take 001: AnimLayer1
+
+    '''
+    fbx_detail = models.ForeignKey(FbxTake, on_delete=models.CASCADE, related_name='layers')
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return f'FBX AnimLayer {self.name}'
+
+
 class NodeAttribute(models.Model):
     node_name = models.CharField(max_length=255)
     parent = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='children')
