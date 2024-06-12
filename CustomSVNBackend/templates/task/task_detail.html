@@ -19,57 +19,65 @@
     {% endfor %}
 
     <h3>Add a comment</h3>
-    <form id="comment-form" method="post" enctype="multipart/form-data" class="dropzone">
+    <form id="comment-form" method="post" enctype="multipart/form-data">
         {% csrf_token %}
         {{ comment_form.as_p }}
-        <div id="dropzone" style="width: 200px; height: 200px; border: 1px solid black;">
-            Drop files here
-        </div>
         <button type="submit">Add Comment</button>
     </form>
-
+    <div id="preview"></div>
     <script>
-        Dropzone.options.commentForm = {
-            init: function () {
-                this.on("thumbnail", function (file) {
-                    // Display thumbnail in dropzone area
+        document.addEventListener('DOMContentLoaded', function () {
+            var form = document.getElementById('comment-form');
+            var preview = document.getElementById('preview');
+            var files = [];
+
+            form.addEventListener('dragover', function (e) {
+                e.preventDefault();
+            });
+
+            form.addEventListener('drop', function (e) {
+                e.preventDefault();
+
+                files = e.dataTransfer.files;
+
+                // Clear the preview div
+                while (preview.firstChild) {
+                    preview.removeChild(preview.firstChild);
+                }
+
+                // Create a new image element for each file
+                for (var i = 0; i < files.length; i++) {
+                    var img = document.createElement('img');
+                    img.src = URL.createObjectURL(files[i]);
+                    img.height = 100;
+                    img.onload = function () {
+                        URL.revokeObjectURL(this.src);
+                    }
+                    preview.appendChild(img);
+                }
+            });
+
+            form.addEventListener('submit', function (e) {
+                var formData = new FormData(form);
+                for (var i = 0; i < files.length; i++) {
+                    formData.append('images[]', files[i]);  // Add [] to the name parameter
+                }
+
+                e.preventDefault();
+                fetch('{% url "task_detail" task_id=task.id %}', {
+                    method: 'POST',
+                    body: formData
+                }).then(response => {
+                    if (response.ok) {
+                        console.log('Upload successful');
+                        location.reload();  // Add this line to reload the page
+                    } else {
+                        console.error('Upload failed');
+                    }
+                }).catch(error => {
+                    console.error('Error:', error);
                 });
-            }
-        };
-    </script>
-    <script>
-        // JavaScript
-document.addEventListener('DOMContentLoaded', function () {
-    var dropzone = document.getElementById('dropzone');
-
-    dropzone.addEventListener('dragover', function (e) {
-        e.preventDefault();
-    });
-
-    dropzone.addEventListener('drop', function (e) {
-        e.preventDefault();
-
-        var files = e.dataTransfer.files;
-        var formData = new FormData(document.getElementById('comment-form'));
-
-        for (var i = 0; i < files.length; i++) {
-            formData.append('image', files[i]);
-        }
-
-        fetch('{% url "task_detail" task_id=task.id %}', {
-            method: 'POST',
-            body: formData
-        }).then(response => {
-            if (response.ok) {
-                console.log('Upload successful');
-            } else {
-                console.error('Upload failed');
-            }
-        }).catch(error => {
-            console.error('Error:', error);
+            });
         });
-    });
-});
     </script>
-
 {% endblock %}

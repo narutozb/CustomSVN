@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Task, Project, Comment
+from .models import Task, Project, Comment, Status, Priority
 
 
 # Register your models here.
@@ -28,3 +28,17 @@ class CommentAdmin(admin.ModelAdmin):
     search_fields = ['content']
     date_hierarchy = 'created_at'
     ordering = ['-created_at']
+
+
+@admin.register(Status)
+class StatusAdmin(admin.ModelAdmin):
+    list_display = ['name', 'desc']
+    search_fields = ['name', 'desc']
+    ordering = ['name']
+
+
+@admin.register(Priority)
+class PriorityAdmin(admin.ModelAdmin):
+    list_display = ['name', 'value']
+    search_fields = ['name', 'value']
+    ordering = ['value']
