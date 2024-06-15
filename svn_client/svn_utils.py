@@ -3,6 +3,7 @@ import json
 import sys
 from urllib.parse import unquote
 
+from config import SUBPROCESS_ENV
 from endpoints import Endpoints
 
 
@@ -70,9 +71,10 @@ def get_svn_changes(repo_url, revisions):
 
 
 def get_latest_svn_revision(repo_url):
-    result = subprocess.run(['svn', 'info', '--show-item', 'revision', repo_url], stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
-    return int(handle_encoding(result.stdout).strip())
+    commands = ['svn', 'info', '--show-item', 'revision', repo_url]
+    result = subprocess.run(commands, stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE, env=SUBPROCESS_ENV)
+    return int(result.stdout.strip())
 
 
 def calculate_size(data):
@@ -114,4 +116,3 @@ def get_local_last_changed_revision(svn_path):
         if line.startswith("Last Changed Rev:"):
             return line.split()[-1]
     return None
-

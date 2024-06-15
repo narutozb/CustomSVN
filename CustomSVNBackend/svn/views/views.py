@@ -1,38 +1,20 @@
 import os
-
 from django.core.paginator import Paginator
 from django.shortcuts import render, get_object_or_404
 from rest_framework import viewsets, status
 from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.views import APIView
 from django.db.models import OuterRef, Subquery, F
-
-from .models import Repository, Commit, FileChange, Branch
-from .serializers import RepositorySerializer, CommitSerializer, FileChangeSerializer
+from svn.models import Repository, Commit, FileChange, Branch
+from svn.serializers import RepositorySerializer, CommitSerializer, FileChangeSerializer
 from django.db.models import IntegerField, Count
 from django.db.models.functions import Cast
 from django.utils import timezone
 from datetime import timedelta
 from django.template.defaultfilters import date as _date
 
-
-class CustomPagination(PageNumberPagination):
-    page_size = 200  # 每页显示的记录数，可以在此调整
-
-    def get_paginated_response(self, data):
-        return Response({
-            'count': self.page.paginator.count,
-            'next': self.get_next_link(),
-            'previous': self.get_previous_link(),
-            'page_size': self.page_size,  # 自定义返回值
-            'page_count': self.page.paginator.num_pages,  # 自定义返回值
-            'current_page': self.page.number,  # 自定义返回值
-            'last_page': self.page.paginator.num_pages,  # 自定义返回值
-            'results': data,
-        })
+from svn.views.custom_class import CustomPagination
 
 
 class RepositoryViewSet(viewsets.ModelViewSet):
@@ -127,7 +109,7 @@ def get_latest_revision(request, repo_name):
         if latest_commit:
             latest_revision = latest_commit.revision
         else:
-            latest_revision = None
+            latest_revision = 0
         return Response({'latest_revision': latest_revision}, status=status.HTTP_200_OK)
     except Repository.DoesNotExist:
         return Response({'status': 'error', 'message': 'Repository does not exist'}, status=status.HTTP_404_NOT_FOUND)
@@ -149,6 +131,9 @@ def list_commits(request, repo_name):
         return paginator.get_paginated_response(commit_list)
     except Repository.DoesNotExist:
         return Response({'status': 'error', 'message': 'Repository does not exist'}, status=status.HTTP_404_NOT_FOUND)
+
+
+
 
 
 @api_view(['GET'])
@@ -175,38 +160,7 @@ def list_file_changes(request, repo_name, revision, ):
                         status=status.HTTP_404_NOT_FOUND)
 
 
-class FileChangeListLatestExistView(APIView):
-    def get(self, request, *args, **kwargs):
-        repo_name = request.query_params.get('repo_name', None)  # 获取仓库名称参数
 
-        # 创建一个Subquery，找到每个file_path的最大revision
-        latest_revisions = FileChange.objects.filter(file_path=OuterRef('file_path')).order_by('-commit__revision')
-
-        # 使用annotate将Subquery添加到查询集中
-        file_changes = FileChange.objects.annotate(
-            latest_revision=Subquery(latest_revisions.values('commit__revision')[:1])
-        )
-
-        # 过滤查询集，只保留那些revision等于其最大revision的FileChange对象
-        file_changes = file_changes.filter(commit__revision=F('latest_revision'))
-
-        # 如果提供了仓库名称，就添加一个过滤条件
-        if repo_name:
-            file_changes = file_changes.filter(commit__repository__name=repo_name)
-
-        # 过滤掉已删除的文件
-        file_changes = file_changes.exclude(change_type='D')
-
-        data = file_changes.values(
-            'file_path',
-            'change_type',
-            'commit__revision',
-            'commit__repository__name',
-        )
-
-        paginator = CustomPagination()
-        result_page = paginator.paginate_queryset(data, request)
-        return paginator.get_paginated_response(result_page)
 
 
 def svn_latest_existed_view(request):
@@ -272,7 +226,6 @@ def svn_repository_home(request, repository_name):
         {
             'repo': repo,
             'recent_commits': recent_commits,
-
         }
     )
 
