@@ -36,3 +36,15 @@ python .\manage.py runserver
 - 客户端只获取从自定义 SVN 服务器中现有最高 revision 开始的后续数据。
 - 提供一个选项强制从 revision 1 开始更新所有数据。
 - 用户可以指定更新某个区间的 SVN 数据。
+
+
+## API
+
+### SVN
+
+根路径:
+
+api/svn/
+
+#### 
+

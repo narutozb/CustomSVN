@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from svn.models import Repository, Commit, FileChange
-from svn.views import CustomPagination
+from svn.views.views import CustomPagination
 from .models import MayaFile, SceneInfo, TransformNode, ShapeNode
 from .serializers import MayaFileSerializer, SceneInfoSerializer, TransformNodeSerializer, ShapeNodeSerializer
 

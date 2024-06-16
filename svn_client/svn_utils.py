@@ -3,6 +3,8 @@ import json
 import sys
 from urllib.parse import unquote
 
+from config import SUBPROCESS_ENV
+from dc import SVNInfoLocalDC
 from endpoints import Endpoints
 
 
@@ -70,9 +72,15 @@ def get_svn_changes(repo_url, revisions):
 
 
 def get_latest_svn_revision(repo_url):
-    result = subprocess.run(['svn', 'info', '--show-item', 'revision', repo_url], stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
-    return int(handle_encoding(result.stdout).strip())
+    commands = ['svn', 'info', '--show-item', 'revision', repo_url]
+    result = subprocess.run(commands, stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE, env=SUBPROCESS_ENV)
+    print(f'{" ".join(commands)}')
+    if result.stdout.strip():
+        return int(result.stdout.strip())
+    else:
+        print("Error: SVN command did not return a result.")
+        return None
 
 
 def calculate_size(data):
@@ -91,7 +99,7 @@ def handle_encoding(output):
 
 def run_svn_command(command, cwd):
     """Run a given SVN command in the specified working directory."""
-    result = subprocess.run(command, cwd=cwd, text=True, capture_output=True, check=True)
+    result = subprocess.run(command, cwd=cwd, text=True, capture_output=True, check=True, env=SUBPROCESS_ENV)
     return result.stdout
 
 
@@ -115,3 +123,38 @@ def get_local_last_changed_revision(svn_path):
             return line.split()[-1]
     return None
 
+
+def get_local_file_svn_info(local_path: str):
+    commands = ['svn', 'info', local_path]
+    result = subprocess.run(commands, stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE, text=True, check=True, env=SUBPROCESS_ENV)
+
+    svn_info = SVNInfoLocalDC()
+
+    for line in result.stdout.splitlines():
+        if line.startswith('URL:'):
+            svn_info.url = line.split()[1]
+        if line.startswith('Revision:'):
+            svn_info.revision = line.split()[1]
+        if line.startswith('Node Kind:'):
+            svn_info.node_kind = line.split()[-1]
+        if line.startswith('Schedule:'):
+            svn_info.schedule = line.split()[-1]
+        if line.startswith('Last Changed Author:'):
+            svn_info.last_changed_author = line.split()[-1]
+        if line.startswith('Last Changed Rev:'):
+            svn_info.last_change_rev = line.split()[-1]
+        if line.startswith('Last Changed Date:'):
+            svn_info.last_changed_date = line.split(':', 1)[1].strip()
+
+    return svn_info
+
+
+def is_svn_repository(path):
+    '''
+    检查指定路径是否是svn仓库
+    :param path:
+    :return:
+    '''
+    result = subprocess.run(['svn', 'info', path], stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=SUBPROCESS_ENV)
+    return result.returncode == 0
