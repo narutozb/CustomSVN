@@ -58,6 +58,11 @@ def get_fbx_data(file_path: str):
     return data
 
 
+# 计算耗时
+import time
+
+now = time.time()
+
 fbx_client = FBXClient()
 fbx_path_list = get_fbx_paths(root_dir)  # [:1]  # TODO:测试1个FBX文件
 for path in fbx_path_list:
@@ -69,3 +74,5 @@ for path in fbx_path_list:
     # pprint(data)
     response = fbx_client.post_data(data=json.dumps(data))
     pprint(response.text)
+
+print(f'耗时:{time.time() - now}')

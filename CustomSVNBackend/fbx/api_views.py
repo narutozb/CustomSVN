@@ -47,6 +47,28 @@ class TakeModelSkeletonList(generics.ListCreateAPIView):
     serializer_class = TakeModelSkeletonSerializer
 
 
+def save_model_skeletons(model_skeletons, fbx_file):
+    parent_map = {}
+
+    # First pass: create all skeletons without setting the parent field
+    for skeleton_data in model_skeletons:
+        parent_name = skeleton_data.pop('parent', None)
+        skeleton, created = ModelSkeleton.objects.get_or_create(name=skeleton_data['name'], fbx_file=fbx_file)
+
+        if parent_name:
+            parent_map[skeleton.name] = parent_name
+
+    # Refresh the saved_skeletons dictionary from the database
+    saved_skeletons = {skeleton.name: skeleton for skeleton in ModelSkeleton.objects.filter(fbx_file=fbx_file)}
+
+    # Second pass: set the parent field for all skeletons
+    for skeleton_name, parent_name in parent_map.items():
+        skeleton = saved_skeletons[skeleton_name]
+        parent = saved_skeletons[parent_name]
+        skeleton.parent = parent
+        skeleton.save()
+
+
 class ReceiveFbxFileData(APIView):
     '''
     返回所有FBXFile的serializer数据
@@ -106,15 +128,17 @@ class ReceiveFbxFileData(APIView):
                 # 3. 储存skeleton数据
                 print('开始储存skeleton数据')
                 # 创建根节点
-                ModelSkeleton.objects.get_or_create(name='RootNode', fbx_file=fbx_file)
-
-                for skeleton_data in model_skeletons:
-                    skeleton_data['fbx_file'] = fbx_file
-                    parent = skeleton_data.pop('parent')
-                    if parent:
-                        parent = ModelSkeleton.objects.get(name=parent, fbx_file=fbx_file)
-                        skeleton_data['parent'] = parent
-                    ModelSkeleton.objects.get_or_create(**skeleton_data)
+                ModelSkeleton.objects.get_or_create(name='RootNode', fbx_file=fbx_file, parent=None)
+                # 储存ModelSkeleton
+                save_model_skeletons(model_skeletons, fbx_file)
+                # 下面的方法与上面的方法耗时不同
+                # for skeleton_data in model_skeletons:
+                #     skeleton_data['fbx_file'] = fbx_file
+                #     parent = skeleton_data.pop('parent')
+                #     if parent:
+                #         parent = ModelSkeleton.objects.get(name=parent, fbx_file=fbx_file)
+                #         skeleton_data['parent'] = parent
+                #     ModelSkeleton.objects.get_or_create(**skeleton_data)
 
             serializer = ReceiveFBXFileSerializer(fbx_file)
             return Response({'success': 'FBXFile created successfully', 'data': serializer.data})
