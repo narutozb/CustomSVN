@@ -74,7 +74,12 @@ def get_latest_svn_revision(repo_url):
     commands = ['svn', 'info', '--show-item', 'revision', repo_url]
     result = subprocess.run(commands, stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE, env=SUBPROCESS_ENV)
-    return int(result.stdout.strip())
+    print(f'{" ".join(commands)}')
+    if result.stdout.strip():
+        return int(result.stdout.strip())
+    else:
+        print("Error: SVN command did not return a result.")
+        return None
 
 
 def calculate_size(data):
