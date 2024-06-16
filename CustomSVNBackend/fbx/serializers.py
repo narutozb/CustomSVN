@@ -36,3 +36,9 @@ class ReceiveTakeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Take
         fields = ['fbx_file', 'name', 'start_frame', 'end_frame']
+
+
+class ReceiveModelSkeleton(serializers.ModelSerializer):
+    class Meta:
+        mode = ModelSkeleton
+        fields = ['name', 'fbx_file']

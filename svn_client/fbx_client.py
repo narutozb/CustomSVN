@@ -1,16 +1,18 @@
 import dataclasses
 import json
 import os
+from pprint import pprint
 
 from config import Config
+from dc import SVNInfoLocalExtDC
 from endpoints import Endpoints
-from fbx_client.fbx_tools._dc import SVNInfoLocalExtDC
-from fbx_client.fbx_tools.custom_layer import CustomLayer
-from fbx_client.fbx_tools.custom_scene_data import DataManager
-from fbx_client.fbx_tools.reader import CustomFbxReader
+from fbx_client.fbx_client_manager import DataManager
+
 from fbx_client_config import FBXClientConfig
+
+from fbx_client.reader import CustomFbxReader
 from login import ClientBase
-from svn_utils import get_local_current_revision, get_local_file_svn_info, is_svn_repository
+from svn_utils import get_local_file_svn_info, is_svn_repository
 
 root_dir = FBXClientConfig.local_svn_path
 
@@ -51,15 +53,19 @@ def get_fbx_data(file_path: str):
         'change_file': dataclasses.asdict(svn_info_local_ext),
         'fbx_data': data_manager.get_scene_data(),
         'takes': data_manager.get_takes(),
+        'skeletons': [dataclasses.asdict(_) for _ in data_manager.get_skeletons()]
     }
     return data
 
 
 fbx_client = FBXClient()
-fbx_path_list = get_fbx_paths(root_dir)
+fbx_path_list = get_fbx_paths(root_dir)  # [:1]  # TODO:测试1个FBX文件
 for path in fbx_path_list:
     # 判断是否是svn仓库
     if not is_svn_repository(path):
         continue
-    response = fbx_client.post_data(data=json.dumps(get_fbx_data(path)))
-    print(response.text)
+
+    data = get_fbx_data(path)
+    # pprint(data)
+    response = fbx_client.post_data(data=json.dumps(data))
+    pprint(response.text)

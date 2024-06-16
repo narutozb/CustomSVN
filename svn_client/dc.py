@@ -2,20 +2,10 @@ import dataclasses
 
 
 @dataclasses.dataclass
-class CustomTakeDC:
-    name: str
-    start_frame: float
-    end_frame: float
-
-
-@dataclasses.dataclass
-class CustomSkeletonDC:
-    name: str
-    parent: str
-
-
-@dataclasses.dataclass
 class SVNInfoLocalDC:
+    '''
+    本地SVN信息
+    '''
     url: str = None
     revision: int = None
     schedule: str = None

@@ -9,7 +9,7 @@ from svn.serializers import QueryFileChangeSerializer
 from .models import FBXFile, Take, ModelSkeleton, TakeModelSkeleton
 from rest_framework import generics, permissions, viewsets
 from .serializers import FBXFileSerializer, TakeSerializer, ModelSkeletonSerializer, TakeModelSkeletonSerializer, \
-    ReceiveFBXFileSerializer, ReceiveTakeSerializer
+    ReceiveFBXFileSerializer, ReceiveTakeSerializer, ReceiveModelSkeleton
 
 
 class FBXFileList(generics.ListCreateAPIView):
@@ -69,6 +69,7 @@ class ReceiveFbxFileData(APIView):
         change_file_data = data.get('change_file')
         fbx_data = data.get('fbx_data')
         takes: list[dict] = data.get('takes')
+        model_skeletons: list[dict] = data.get('skeletons')
         # print(takes)
         file_change = FileChange.objects.get(
             commit__repository__name=change_file_data.get('repo_name'),
@@ -89,18 +90,31 @@ class ReceiveFbxFileData(APIView):
 
             if parse(fbx_file.client_version) < client_version or fbx_file_created:
                 print('新建数据或者服务器版本过低...')
-                # 更新fbx_file数据
+                # 1. 更新fbx_file数据
 
                 serializer = ReceiveFBXFileSerializer(fbx_file, data=fbx_data)
                 if serializer.is_valid():
                     serializer.save()
 
-                # 创建 Take数据
+                # 2. 创建 Take数据
                 for i in takes:
                     i['fbx_file'] = fbx_file
                 for take_data in takes:
                     Take.objects.get_or_create(**take_data)
                 print('Takes创建完成...')
+
+                # 3. 储存skeleton数据
+                print('开始储存skeleton数据')
+                # 创建根节点
+                ModelSkeleton.objects.get_or_create(name='RootNode', fbx_file=fbx_file)
+
+                for skeleton_data in model_skeletons:
+                    skeleton_data['fbx_file'] = fbx_file
+                    parent = skeleton_data.pop('parent')
+                    if parent:
+                        parent = ModelSkeleton.objects.get(name=parent, fbx_file=fbx_file)
+                        skeleton_data['parent'] = parent
+                    ModelSkeleton.objects.get_or_create(**skeleton_data)
 
             serializer = ReceiveFBXFileSerializer(fbx_file)
             return Response({'success': 'FBXFile created successfully', 'data': serializer.data})

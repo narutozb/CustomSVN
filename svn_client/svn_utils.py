@@ -4,8 +4,8 @@ import sys
 from urllib.parse import unquote
 
 from config import SUBPROCESS_ENV
+from dc import SVNInfoLocalDC
 from endpoints import Endpoints
-from fbx_client.fbx_tools._dc import SVNInfoLocalDC
 
 
 def get_token(session, username, password):

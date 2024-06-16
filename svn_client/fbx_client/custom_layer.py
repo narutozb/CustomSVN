@@ -1,6 +1,6 @@
 import fbx
 
-from fbx_client.fbx_tools._dc import CustomTakeDC
+from fbx_client._dc import CustomTakeDC
 
 
 class CustomLayer:

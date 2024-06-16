@@ -2,7 +2,9 @@ import dataclasses
 
 import fbx
 
-from fbx_client.fbx_tools.custom_layer import CustomLayer
+from fbx_client._dc import FBSkeletonDC
+from fbx_client.custom_layer import CustomLayer
+from fbx_client.custom_skeleton import CustomFBSkeletonUtils
 from fbx_client_config import FBXClientConfig
 
 
@@ -26,3 +28,7 @@ class DataManager:
         # 获取该时间模式的帧率
         frame_rate = fbx.FbxTime.GetFrameRate(time_mode)
         return frame_rate
+
+    def get_skeletons(self):
+        return [FBSkeletonDC(_.GetName(), _.GetParent().GetName()) for _ in
+                CustomFBSkeletonUtils.get_fbx_node_attributes(self.scene)]
