@@ -40,5 +40,9 @@ class ReceiveTakeSerializer(serializers.ModelSerializer):
 
 class ReceiveModelSkeleton(serializers.ModelSerializer):
     class Meta:
-        mode = ModelSkeleton
+        model = ModelSkeleton
         fields = ['name', 'fbx_file']
+
+# class ReceiveTakeModelSkeleton(serializers.ModelSerializer):
+#     class Meta:
+#         pass
