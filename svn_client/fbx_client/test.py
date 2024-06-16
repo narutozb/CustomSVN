@@ -1,8 +1,15 @@
+import dataclasses
+import json
 import os
 
+from config import Config
+from endpoints import Endpoints
+from fbx_client.fbx_tools._dc import SVNInfoLocalExtDC
 from fbx_client.fbx_tools.custom_layer import CustomLayer
+from fbx_client.fbx_tools.custom_scene_data import DataManager
 from fbx_client.fbx_tools.reader import CustomFbxReader
-from svn_utils import get_local_current_revision, get_local_file_svn_info
+from login import ClientBase
+from svn_utils import get_local_current_revision, get_local_file_svn_info, is_svn_repository
 
 root_dir = r'D:\svn_project_test\MyDataSVN\trunk\RootFolder'
 
@@ -16,15 +23,41 @@ def get_fbx_paths(root_dir: str):
     return result
 
 
+class FBXClient(ClientBase):
+    def __str__(self):
+        pass
 
+    def send_data(self, data):
+        response = self.session.post(Endpoints.get_api_url(Endpoints.receive_fbx_file), headers=self.headers, data=data)
+        print(f'post to:{Endpoints.get_api_url(Endpoints.receive_fbx_file)}')
+        print(response.status_code)
+        return response
+
+
+def get_fbx_data(file_path: str):
+    # file_path = fbx_path_list[0]
+    reader = CustomFbxReader()
+    reader.load_scene(file_path=file_path)
+    data_manager = DataManager(reader.scene)
+
+    svn_info_local = get_local_file_svn_info(file_path)
+    svn_info_local_ext = SVNInfoLocalExtDC(
+        file_path=svn_info_local.url,
+        revision=svn_info_local.revision,
+        repo_name=Config.REPO_NAME
+    )
+    data = {
+        'change_file': dataclasses.asdict(svn_info_local_ext),
+        'fbx_data': data_manager.get_scene_data(),
+        'takes': data_manager.get_takes(),
+    }
+    return data
+
+
+fbx_client = FBXClient()
 fbx_path_list = get_fbx_paths(root_dir)
-
-reader = CustomFbxReader()
-
-file_path = fbx_path_list[0]
-print(get_local_file_svn_info(file_path))
-
-# reader.load_scene(file_path=file_path)
-# takes = CustomLayer.get_all_takes_custom_data(reader.scene)
-# for i in takes:
-#     print(i)
+for path in fbx_path_list:
+    # 判断是否是svn仓库
+    if not is_svn_repository(path):
+        continue
+    print(fbx_client.send_data(data=json.dumps(get_fbx_data(path))))

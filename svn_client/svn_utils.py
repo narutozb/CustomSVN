@@ -148,3 +148,13 @@ def get_local_file_svn_info(local_path: str):
             svn_info.last_changed_date = line.split(':', 1)[1].strip()
 
     return svn_info
+
+
+def is_svn_repository(path):
+    '''
+    检查指定路径是否是svn仓库
+    :param path:
+    :return:
+    '''
+    result = subprocess.run(['svn', 'info', path], stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=SUBPROCESS_ENV)
+    return result.returncode == 0

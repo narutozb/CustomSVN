@@ -29,4 +29,6 @@ urlpatterns = [
     path('api/maya/', include('maya.urls_api')),
     path('maya/', include('maya.urls')),
     path('user/', include('users.urls')),
+    path('api/fbx/', include('fbx.urls_api')),
+
 ]

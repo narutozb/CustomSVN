@@ -14,6 +14,9 @@ class Endpoints:
 
     maya_sceneinfos = 'maya/mayafilesview/'  # 上传maya数据
 
+    # FBX API
+    receive_fbx_file = 'fbx/receive_fbx_file_data/'  # 接收并储存fbx_file数据
+
     @classmethod
     def get_api_url(cls, endpoint):
         '''

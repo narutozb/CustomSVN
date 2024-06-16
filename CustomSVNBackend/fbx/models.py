@@ -17,8 +17,8 @@ class FBXFile(models.Model):
 class Take(models.Model):
     fbx_file = models.ForeignKey(FBXFile, on_delete=models.CASCADE, related_name='takes')
     name = models.CharField(max_length=256, )
-    start_frame = models.IntegerField()
-    end_frame = models.IntegerField()
+    start_frame = models.FloatField()
+    end_frame = models.FloatField()
     model_skeleton_keys = models.ManyToManyField('ModelSkeleton', through='TakeModelSkeleton', related_name='takes')
 
     def __str__(self):
