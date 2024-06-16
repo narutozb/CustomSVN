@@ -15,7 +15,7 @@ class CustomLayer:
         frame_rate = fbx.FbxTime.GetFrameRate(time_mode)
         for i in range(anim_stack_count):
             anim_stack = scene.GetSrcObject(fbx.FbxCriteria.ObjectType(fbx.FbxAnimStack.ClassId), i)
-            print(anim_stack.GetName())
+            # print(anim_stack.GetName())
             custom_take = CustomTakeDC(
                 name=anim_stack.GetName(),
                 start_frame=anim_stack.GetLocalTimeSpan().GetStart().GetSecondDouble() * frame_rate,

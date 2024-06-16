@@ -3,6 +3,7 @@ import dataclasses
 import fbx
 
 from fbx_client.fbx_tools.custom_layer import CustomLayer
+from fbx_client_config import FBXClientConfig
 
 
 class DataManager:
@@ -10,8 +11,10 @@ class DataManager:
         self.scene = scene
 
     def get_scene_data(self):
+        print(FBXClientConfig.version)
         return {
-            'fps': self._get_fps()
+            'fps': self._get_fps(),
+            'client_version': FBXClientConfig.version,
         }
 
     def get_takes(self):

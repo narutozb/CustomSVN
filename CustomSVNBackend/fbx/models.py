@@ -8,7 +8,9 @@ from svn.models import FileChange
 
 class FBXFile(models.Model):
     file_change = models.OneToOneField(FileChange, on_delete=models.CASCADE, null=True, blank=True)
-    fps = models.FloatField()
+    fps = models.FloatField(blank=True, null=True)
+
+    client_version = models.CharField(default='0.0.0', max_length=64, null=True, blank=True)
 
     def __str__(self):
         return f'FBX for {self.file_change.file_path}'

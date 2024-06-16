@@ -29,7 +29,7 @@ class TakeModelSkeletonSerializer(serializers.ModelSerializer):
 class ReceiveFBXFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = FBXFile
-        fields = ['fps', 'file_change']
+        fields = ['fps', 'file_change', 'client_version']
 
 
 class ReceiveTakeSerializer(serializers.ModelSerializer):

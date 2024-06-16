@@ -4,7 +4,7 @@ from .models import FBXFile, Take, ModelSkeleton, TakeModelSkeleton
 
 @admin.register(FBXFile)
 class FBXFileAdmin(admin.ModelAdmin):
-    list_display = ('id', 'fps', 'file_change',)
+    list_display = ('id', 'fps', 'file_change', 'client_version',)
 
 
 @admin.register(Take)
@@ -20,8 +20,3 @@ class ModelSkeletonAdmin(admin.ModelAdmin):
 @admin.register(TakeModelSkeleton)
 class ModelSkeletonKeyAdmin(admin.ModelAdmin):
     list_display = ('id', 'take', 'model_skeleton', 'ws_location', 'ws_rotation', 'ws_scale', 'frame',)
-
-
-
-
-

@@ -8,10 +8,11 @@ from fbx_client.fbx_tools._dc import SVNInfoLocalExtDC
 from fbx_client.fbx_tools.custom_layer import CustomLayer
 from fbx_client.fbx_tools.custom_scene_data import DataManager
 from fbx_client.fbx_tools.reader import CustomFbxReader
+from fbx_client_config import FBXClientConfig
 from login import ClientBase
 from svn_utils import get_local_current_revision, get_local_file_svn_info, is_svn_repository
 
-root_dir = r'D:\svn_project_test\MyDataSVN\trunk\RootFolder'
+root_dir = FBXClientConfig.local_svn_path
 
 
 def get_fbx_paths(root_dir: str):
@@ -27,7 +28,7 @@ class FBXClient(ClientBase):
     def __str__(self):
         pass
 
-    def send_data(self, data):
+    def post_data(self, data):
         response = self.session.post(Endpoints.get_api_url(Endpoints.receive_fbx_file), headers=self.headers, data=data)
         print(f'post to:{Endpoints.get_api_url(Endpoints.receive_fbx_file)}')
         print(response.status_code)
@@ -60,4 +61,5 @@ for path in fbx_path_list:
     # 判断是否是svn仓库
     if not is_svn_repository(path):
         continue
-    print(fbx_client.send_data(data=json.dumps(get_fbx_data(path))))
+    response = fbx_client.post_data(data=json.dumps(get_fbx_data(path)))
+    print(response.text)

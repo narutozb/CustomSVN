@@ -1,4 +1,5 @@
-from django.shortcuts import render
+from packaging.version import parse
+
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -77,19 +78,31 @@ class ReceiveFbxFileData(APIView):
         print('-' * 50)
         try:
             print('创建或者更新fbx_file')
+
+            #  获取client_version
+            client_version = fbx_data.get('client_version')
+            client_version = parse(client_version)
+
             # 创建FBXFile
-            fbx_file, fbx_file_created = FBXFile.objects.get_or_create(file_change_id=file_change.id, **fbx_data)
+            fbx_file, fbx_file_created = FBXFile.objects.get_or_create(file_change_id=file_change.id, )
             print('FBXFile创建完成...')
+
+            if parse(fbx_file.client_version) < client_version or fbx_file_created:
+                print('新建数据或者服务器版本过低...')
+                # 更新fbx_file数据
+
+                serializer = ReceiveFBXFileSerializer(fbx_file, data=fbx_data)
+                if serializer.is_valid():
+                    serializer.save()
+
+                # 创建 Take数据
+                for i in takes:
+                    i['fbx_file'] = fbx_file
+                for take_data in takes:
+                    Take.objects.get_or_create(**take_data)
+                print('Takes创建完成...')
+
             serializer = ReceiveFBXFileSerializer(fbx_file)
-
-            # 创建 Take数据
-            print('*' * 50)
-            for i in takes:
-                i['fbx_file'] = fbx_file
-            for take_data in takes:
-                Take.objects.get_or_create(**take_data)
-            print('Takes创建完成...')
-
             return Response({'success': 'FBXFile created successfully', 'data': serializer.data})
 
         except Exception as e:

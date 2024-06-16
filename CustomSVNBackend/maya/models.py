@@ -78,7 +78,7 @@ class MayaFile(models.Model):
                                       null=True)
     transform_nodes = models.ManyToManyField(TransformNode, related_name='maya_files', blank=True)
     shape_nodes = models.ManyToManyField(ShapeNode, related_name='maya_files', blank=True)
-    client_version = models.CharField(max_length=10, null=True, blank=True)
+    client_version = models.CharField(max_length=64, null=True, blank=True)
 
     def __str__(self):
         return f"MayaFile for {self.changed_file.file_path}"
