@@ -50,9 +50,13 @@ class Float3Field(models.Field):
 class ModelSkeleton(models.Model):
     name = models.CharField(max_length=256)
     parent = models.ForeignKey('self', on_delete=models.CASCADE, related_name='children', null=True, blank=True)
+    fbx_file = models.ForeignKey(FBXFile, on_delete=models.CASCADE, related_name='model_skeletons')
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        unique_together = ('name', 'fbx_file',)
 
 
 class TakeModelSkeleton(models.Model):

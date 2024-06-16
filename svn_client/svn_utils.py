@@ -5,6 +5,7 @@ from urllib.parse import unquote
 
 from config import SUBPROCESS_ENV
 from endpoints import Endpoints
+from fbx_client.fbx_tools._dc import SVNInfoLocalDC
 
 
 def get_token(session, username, password):
@@ -98,7 +99,7 @@ def handle_encoding(output):
 
 def run_svn_command(command, cwd):
     """Run a given SVN command in the specified working directory."""
-    result = subprocess.run(command, cwd=cwd, text=True, capture_output=True, check=True)
+    result = subprocess.run(command, cwd=cwd, text=True, capture_output=True, check=True, env=SUBPROCESS_ENV)
     return result.stdout
 
 
@@ -121,3 +122,29 @@ def get_local_last_changed_revision(svn_path):
         if line.startswith("Last Changed Rev:"):
             return line.split()[-1]
     return None
+
+
+def get_local_file_svn_info(local_path: str):
+    commands = ['svn', 'info', local_path]
+    result = subprocess.run(commands, stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE, text=True, check=True, env=SUBPROCESS_ENV)
+
+    svn_info = SVNInfoLocalDC()
+
+    for line in result.stdout.splitlines():
+        if line.startswith('URL:'):
+            svn_info.url = line.split()[1]
+        if line.startswith('Revision:'):
+            svn_info.revision = line.split()[1]
+        if line.startswith('Node Kind:'):
+            svn_info.node_kind = line.split()[-1]
+        if line.startswith('Schedule:'):
+            svn_info.schedule = line.split()[-1]
+        if line.startswith('Last Changed Author:'):
+            svn_info.last_changed_author = line.split()[-1]
+        if line.startswith('Last Changed Rev:'):
+            svn_info.last_change_rev = line.split()[-1]
+        if line.startswith('Last Changed Date:'):
+            svn_info.last_changed_date = line.split(':', 1)[1].strip()
+
+    return svn_info
