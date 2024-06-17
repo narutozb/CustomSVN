@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'users',
     'svn.apps.SvnConfig',
     'maya.apps.MayaConfig',
+    'fbx.apps.FbxConfig',
 ]
 
 REST_FRAMEWORK = {

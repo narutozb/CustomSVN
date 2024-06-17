@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Custom Form</title>
+</head>
+<body>
+    <form method="post" action="">
+        {% csrf_token %}
+        {{ serializer.as_p }}
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html>

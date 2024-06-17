@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <h1>FBX File</h1>
+                <p>File: {{ fbx_file.file }}</p>
+                <p>Created: {{ fbx_file.created }}</p>
+                <p>Updated: {{ fbx_file.updated }}</p>
+                <p>Size: {{ fbx_file.size }}</p>
+                <p>Path: {{ fbx_file.path }}</p>
+                <p>URL: <a href="{{ fbx_file.url }}">{{ fbx_file.url }}</a></p>
+                <p>Thumbnail: <img src="{{ fbx_file.thumbnail }}" alt="Thumbnail"></p>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+

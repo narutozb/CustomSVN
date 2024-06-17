@@ -43,7 +43,9 @@ class SVNManager:
                 else:
                     start_revision = 1
 
+            print('*' * 50)
             end_revision = Config.END_REVISION or get_latest_svn_revision(Config.LOCAL_REPO_URL)
+            print(end_revision)
             if start_revision > end_revision:
                 print(f"No new revisions to update. Current latest revision is {end_revision}.")
                 return

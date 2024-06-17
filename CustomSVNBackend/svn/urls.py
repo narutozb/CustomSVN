@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import svn_latest_existed_view, svn_repository_home, svn_commit_details
+from svn.views.views import svn_latest_existed_view, svn_repository_home, svn_commit_details
 
 urlpatterns = [
 
