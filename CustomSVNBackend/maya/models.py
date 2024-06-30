@@ -81,7 +81,7 @@ class MayaFile(models.Model):
     client_version = models.CharField(max_length=64, null=True, blank=True)
 
     def __str__(self):
-        return f"MayaFile for {self.changed_file.file_path}"
+        return f"MayaFile for {self.changed_file.path}"
 
 
 @receiver(post_delete, sender=MayaFile)

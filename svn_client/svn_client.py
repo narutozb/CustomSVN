@@ -41,7 +41,6 @@ def main():
         while running:
             if Config.RUN_ONCE and not upload_thread.is_alive():
                 running = False
-                print('not running...')
             print('sleep1...')
             time.sleep(1)
     except KeyboardInterrupt:

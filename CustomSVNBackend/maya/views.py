@@ -54,7 +54,7 @@ def list_maya_file_changes(request, repo_name, revision, ):
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(result_file_changes, request)
 
-        file_change_list = [{'file_path': change.file_path, 'change_type': change.change_type, 'id': change.id} for
+        file_change_list = [{'file_path': change.path, 'change_type': change.action, 'id': change.id} for
                             change in
                             result_page]
         return paginator.get_paginated_response(file_change_list)

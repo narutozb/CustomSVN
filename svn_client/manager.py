@@ -52,6 +52,7 @@ class SVNManager:
 
             # Calculate the number of iterations needed
             iterations = (end_revision - start_revision) // Config.COMMITS_SPLIT_NUM + 1
+            print(f'iterations: {iterations}')
 
             for i in range(iterations):
                 current_start_revision = start_revision + i * Config.COMMITS_SPLIT_NUM
@@ -59,6 +60,8 @@ class SVNManager:
 
                 log_data = get_svn_log(Config.LOCAL_REPO_URL, start_revision=current_start_revision,
                                        end_revision=current_end_revision)
+
+
                 commits = parse_svn_log(log_data)
                 if not commits:
                     print("No new commits to upload.")
@@ -85,8 +88,6 @@ class SVNManager:
                                 branch_name = '/'.join(split_file_path_replaced[:2])
 
                         commit['branch_name'] = branch_name
-
-
                 self.upload_commits(commits)
 
         finally:

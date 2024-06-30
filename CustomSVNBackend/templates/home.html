@@ -1,1 +1,47 @@
 {% extends 'base.html' %}
+
+{% block content %}
+    <p>111</p>
+    <button id="myButton">FFFFF</button>
+    <div id="result"></div>
+
+    <select id="com" class="form-select" aria-label="Default select example">
+    </select>
+
+
+    <script>
+        function getData1() {
+            $.ajax({
+                url: "/api/svn/repositories/", // 这里填写后端处理请求的 URL
+                type: "GET", // 请求类型
+                success: function (result) {
+                    let content = '';
+                    for (let i = 0; i < (result.results).length; i++) {
+                        content += `<option value=${i}>${result.results[i].name}</option>`;
+                    }
+                    $("#com").html(content); // 将结果显示在 id 为 result 的元素中
+                },
+                error: function (xhr, status, error) {
+                    console.error("An error occurred: " + error); // 错误时的回调函数
+                }
+            });
+        }
+
+        getData1();
+    </script>
+
+    <script>
+        function getData() {
+            $('#myButton').change(function () {
+                let selectedValue = $(this).val(); // 获取选中的值
+                let selectedText = $(this).find('option:selected').text(); // 获取选中的文本内容
+                console.log('Selected value: ' + selectedValue);
+                console.log('Selected text: ' + selectedText);
+            });
+        }
+        $(document).ready(function () {
+            $("#myButton").click(getData);
+        });
+    </script>
+{% endblock %}
+
