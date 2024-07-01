@@ -5,16 +5,16 @@ from .models import Repository, Commit, FileChange
 class QueryFileChangeSerializer(serializers.ModelSerializer):
     class Meta:
         model = FileChange
-        fields = ['file_path', 'change_type', 'id', 'commit']
+        fields = ['path', 'action', 'id', 'commit']
 
     def get_view_file_path(self, obj):
-        return f"File: {obj.file_path}"
+        return f"File: {obj.path}"
 
 
 class FileChangeSerializer(serializers.ModelSerializer):
     class Meta:
         model = FileChange
-        fields = ['file_path', 'change_type']
+        fields = ['path', 'action', 'kind']
 
 
 class CommitSerializer(serializers.ModelSerializer):
@@ -22,7 +22,7 @@ class CommitSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Commit
-        fields = ['revision', 'author', 'message', 'date', 'file_changes_count']
+        fields = ['id', 'revision', 'author', 'message', 'date', 'file_changes_count']
 
 
 class RepositorySerializer(serializers.ModelSerializer):
@@ -30,4 +30,4 @@ class RepositorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Repository
-        fields = ['name', 'url', 'description', 'created_at', 'commits_count']
+        fields = ['id', 'name', 'url', 'description', 'created_at', 'commits_count']

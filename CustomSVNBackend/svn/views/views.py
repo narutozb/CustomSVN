@@ -50,6 +50,10 @@ class CommitViewSet(viewsets.ModelViewSet):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def receive_svn_data(request):
+    '''
+    此接收commits数据并且储存的方法已经被弃用
+    '''
+
     if request.method == 'POST':
         try:
             data = request.data
@@ -133,9 +137,6 @@ def list_commits(request, repo_name):
         return Response({'status': 'error', 'message': 'Repository does not exist'}, status=status.HTTP_404_NOT_FOUND)
 
 
-
-
-
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def list_file_changes(request, repo_name, revision, ):
@@ -151,16 +152,13 @@ def list_file_changes(request, repo_name, revision, ):
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(file_changes, request)
 
-        file_change_list = [{'file_path': change.file_path, 'change_type': change.change_type, 'id': change.id} for
+        file_change_list = [{'file_path': change.path, 'change_type': change.action, 'id': change.id} for
                             change in
                             result_page]
         return paginator.get_paginated_response(file_change_list)
     except (Repository.DoesNotExist, Commit.DoesNotExist):
         return Response({'status': 'error', 'message': 'Repository or Commit does not exist'},
                         status=status.HTTP_404_NOT_FOUND)
-
-
-
 
 
 def svn_latest_existed_view(request):
@@ -187,8 +185,8 @@ def svn_latest_existed_view(request):
     data = file_changes.values(
         'id',
         'commit',
-        'change_type',
-        'file_path',
+        'action',
+        'path',
         # 'commit__repository__name',
     )
 
@@ -235,7 +233,7 @@ def svn_commit_details(request, commit_id):
     file_changes = FileChange.objects.filter(commit=commit)
     # 添加文件后缀的变量
     for file_change in file_changes:
-        _, file_change.file_extension = os.path.splitext(file_change.file_path)
+        _, file_change.file_extension = os.path.splitext(file_change.path)
     return render(
         request,
         'svn/commit_details.html',

@@ -11,7 +11,7 @@
     <table class="table table-hover table-sm">
         <thead>
         <tr>
-            <th scope="col">ChangeType</th>
+            <th scope="col">Action</th>
             <th scope="col">Ext</th>
             <th scope="col">FileChanged</th>
         </tr>
@@ -19,9 +19,9 @@
         <tbody>
         {% for file_change in file_changes %}
             <tr>
-                <td>{{ file_change.change_type }}</td>
+                <td>{{ file_change.action }}</td>
                 <td>
-                    {% if file_change.file_path|endswith:".mb" or file_change.file_path|endswith:".ma" %}
+                    {% if file_change.path|endswith:".mb" or file_change.path|endswith:".ma" %}
                         <a href="/maya/maya_file/{{ file_change.id }}/">
                             {{ file_change.file_extension }}
                         </a>
@@ -29,18 +29,18 @@
 
                 </td>
                 <td>
-                    {% if file_change.change_type == 'D' %}
-                        <span class="text text-svn-delete">{{ file_change.file_path }}</span>
-                    {% elif file_change.change_type == 'A' %}
+                    {% if file_change.action == 'D' %}
+                        <span class="text text-svn-delete">{{ file_change.path }}</span>
+                    {% elif file_change.action == 'A' %}
                         <span class="text text-svn-add">
-                    {% elif file_change.change_type == 'M' %}
+                    {% elif file_change.action == 'M' %}
                         <span class="text text-svn-modified">
                     {% else %}
                         <span>
                     {% endif %}
 
 
-                    {{ file_change.file_path }}
+                    {{ file_change.path }}
 
                     </span>
                 </td>
