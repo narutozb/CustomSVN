@@ -26,8 +26,9 @@ class CommitAdmin(admin.ModelAdmin):
     list_filter = ('repository', 'author', 'date', 'branch',)
     inlines = [FileChangeInline]
 
-# @admin.register(FileChange)
-# class FileChangeAdmin(admin.ModelAdmin):
-#     list_display = ('id','commit', 'file_path', 'change_type')
-#     search_fields = ('commit__revision', 'file_path')
-#     list_filter = ('change_type',)
+
+@admin.register(FileChange)
+class FileChangeAdmin(admin.ModelAdmin):
+    list_display = ('id', 'commit', 'path', 'action')
+    search_fields = ('commit__revision', 'path')
+    list_filter = ('action',)

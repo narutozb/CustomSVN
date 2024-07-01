@@ -40,8 +40,8 @@ class FileChangeListLatestExistView(APIView):
         file_changes = file_changes.exclude(change_type='D')
 
         data = file_changes.values(
-            'file_path',
-            'change_type',
+            'path',
+            'action',
             'commit__revision',
             'commit__repository__name',
         )

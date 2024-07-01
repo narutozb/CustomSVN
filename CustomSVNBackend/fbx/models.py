@@ -13,7 +13,7 @@ class FBXFile(models.Model):
     client_version = models.CharField(default='0.0.0', max_length=64, null=True, blank=True)
 
     def __str__(self):
-        return f'FBX for {self.file_change.file_path}'
+        return f'FBX for {self.file_change.path}'
 
 
 class Take(models.Model):

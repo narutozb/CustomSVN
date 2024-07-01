@@ -1,10 +1,12 @@
 import subprocess
 import json
 import sys
+import xml.etree.ElementTree
 from urllib.parse import unquote
+import xml.etree.ElementTree as ET
 
 from config import SUBPROCESS_ENV
-from dc import SVNInfoLocalDC
+from dc import SVNInfoLocalDC, CommitLogDC, FileChangeDC
 from endpoints import Endpoints
 
 
@@ -33,13 +35,28 @@ def get_svn_log(repo_url, start_revision=None, end_revision=None):
     cmd = ['svn', 'log', repo_url, '--xml']
 
     cmd.extend(['-r', f'{start_revision}:{end_revision}'])
+    print(' '.join(cmd))
+
+    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    return handle_encoding(result.stdout)
+
+
+def get_svn_log2(repo_url, start_revision=None, end_revision=None):
+    if not start_revision:
+        start_revision = 1
+
+    if not end_revision:
+        end_revision = 'HEAD'
+
+    cmd = ['svn', 'log', repo_url, '--verbose', '--xml', ]
+
+    cmd.extend(['-r', f'{start_revision}:{end_revision}'])
 
     result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     return handle_encoding(result.stdout)
 
 
 def parse_svn_log(xml_data):
-    import xml.etree.ElementTree as ET
     root = ET.fromstring(xml_data)
     commits = []
     for entry in root.findall('logentry'):
@@ -58,6 +75,50 @@ def parse_svn_log(xml_data):
     return commits
 
 
+def get_commit_branch_name(file_path: str, revision: int):
+    '''
+    从changed path 获取其分支名称
+    :param commit:
+    :return:
+    '''
+    if int(revision) == 1:
+        return 'root'
+
+    split_path = file_path.split('/')
+    if file_path.startswith('/trunk'):
+        return '/trunk'
+    else:
+        return '/'.join(split_path[:3])
+
+
+def parse_svn_log2(xml_data):
+    root = ET.fromstring(xml_data)
+    commits: list[CommitLogDC] = []
+    for entry in root.findall('logentry'):
+        revision = entry.get('revision')
+        author = entry.find('author').text
+        date = entry.find('date').text
+        msg = entry.find('msg').text
+        paths = entry.find('paths')
+        file_changes = []
+        for i in paths:
+            file_changes.append(FileChangeDC(
+                path=i.text,
+                action=i.get('action'),
+                kind=i.get('kind')
+            ))
+
+        commits.append(CommitLogDC(
+            revision=revision,
+            author=author,
+            date=date,
+            message=msg,
+            branch_name=get_commit_branch_name(file_changes[0].path, revision=revision),
+            file_changes=file_changes
+        ))
+    return commits
+
+
 def get_svn_changes(repo_url, revisions):
     all_changes = {}
     for revision in revisions:
@@ -72,10 +133,16 @@ def get_svn_changes(repo_url, revisions):
 
 
 def get_latest_svn_revision(repo_url):
+    '''
+    获取svn服务器最后的revision
+    :param repo_url:
+    :return:
+    '''
     commands = ['svn', 'info', '--show-item', 'revision', repo_url]
     result = subprocess.run(commands, stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE, env=SUBPROCESS_ENV)
-    print(f'{" ".join(commands)}')
+
+    # print(f'{" ".join(commands)}')
     if result.stdout.strip():
         return int(result.stdout.strip())
     else:
