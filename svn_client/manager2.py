@@ -9,7 +9,7 @@ from dc import CommitLogToServerDC
 from endpoints import Endpoints
 from status_manager import StatusManager
 from svn_utils import get_latest_svn_revision, parse_svn_log2, get_svn_log2, \
-    get_token, calculate_size
+    get_token, calculate_size, get_latest_revision
 
 
 class SVNManager:
@@ -34,13 +34,12 @@ class SVNManager:
         :return:
         '''
         start_revision = self.config.START_REVISION
-        svn_latest_revision = get_latest_svn_revision(self.config.REPO_ROOT_URL)
-        if start_revision and 0 < start_revision < svn_latest_revision:
+        existing_latest_revision = self.get_existing_revision()
+
+        if start_revision and 0 < start_revision <= existing_latest_revision and self.config.FORCE_UPDATE:
             return self.config.START_REVISION
-        elif start_revision and start_revision >= svn_latest_revision:
-            return svn_latest_revision
         else:
-            return 1
+            return existing_latest_revision
 
     def get_end_revision(self) -> int:
         '''
@@ -48,15 +47,28 @@ class SVNManager:
         由配置选项传入结束revision,如果指定了特定的结束revision，则检查是否存在此revision。如果存在则返回，如果不存在则返回当前svn服务器端最大revision
         :return:
         '''
-        svn_latest_revision = get_latest_svn_revision(self.config.REPO_ROOT_URL)
+        svn_latest_revision = self.get_existing_revision()
+
         if self.config.END_REVISION and self.config.END_REVISION < svn_latest_revision:
             return self.config.END_REVISION
         else:
-            return svn_latest_revision
+            return get_latest_svn_revision(self.config.REPO_ROOT_URL)
 
     def get_commits_data(self):
 
-        data = get_svn_log2(self.config.REPO_ROOT_URL, self.get_start_revision(), self.get_end_revision())
+        if self.get_end_revision() - self.get_start_revision() > self.config.COMMITS_SPLIT_NUM:
+            update_to_end_revision = self.get_start_revision() + self.config.COMMITS_SPLIT_NUM - 1
+        else:
+            update_to_end_revision = self.get_end_revision()
+        print(self.get_start_revision(), update_to_end_revision)
+        # 当自定义服务器上的revision版本号大于等于SVN服务器上的revision时，无需上传数据到自定义服务器。也就是此时自定义服务器版本为最新
+        if self.get_start_revision() >= update_to_end_revision:
+            self.config.increment_svn_update_interval()
+            return []
+
+        print(f'获取SVN数据-{self.get_start_revision()}~{update_to_end_revision}')
+        self.config.set_default_svn_update_interval()
+        data = get_svn_log2(self.config.REPO_ROOT_URL, self.get_start_revision(), update_to_end_revision)
         result = []
         for d in parse_svn_log2(data):
             result.append(
@@ -74,32 +86,37 @@ class SVNManager:
         '''
         self.status_manager.start_upload()
         try:
-
             commits_data = self.get_commits_data()
-            print([_.get('revision') for _ in commits_data])
             __div_data_size = 0
-            for i in commits_data:
-                div_data = []
+            div_data = []
+            for idx, i in enumerate(commits_data):
                 __div_data_size += calculate_size(i)
-                if __div_data_size < 1024*1024*512
-
-
-            # response = self.session.post(Endpoints.get_api_url(Endpoints.receive_commits), json=commits_data,
-        #                              headers=self.headers)
+                div_data.append(i)
+                if idx == len(commits_data) - 1 or __div_data_size > self.config.MAX_UPDATE_PER_COMMITS_DATA_SIZE:
+                    print(f'上传数据-{div_data[0].get("revision")}~{div_data[-1].get("revision")}')
+                    # 上传数据
+                    response = self.session.post(Endpoints.get_api_url(Endpoints.receive_commits), json=div_data,
+                                                 headers=self.headers)
+                    # 重置分割数据
+                    div_data = []
+                    __div_data_size = 0
 
         finally:
             self.status_manager.end_upload()
+
+    def get_existing_revision(self):
+        latest_revision = get_latest_revision(self.session, Config.REPO_NAME, self.headers)
+        return int(latest_revision) if latest_revision is not None else None
 
 
 def main():
     global running
     config = SVNClientConfig(
-        # REPO_NAME_CUSTOM_SERVER='MyDataSVN',
-        # REPO_ROOT_URL='https://QIAOYUANZHEN/svn/MyDataSVN/',
         REPO_NAME_CUSTOM_SERVER='TestRepoMany',
         REPO_ROOT_URL='https://QIAOYUANZHEN/svn/TestRepoMany/',
         START_REVISION=None,
-        END_REVISION=30,
+        END_REVISION=None,
+        FORCE_UPDATE=True
     )
     status_manager = StatusManager()
     manager = SVNManager(config, status_manager=status_manager)
@@ -111,8 +128,8 @@ def main():
                 manager.update_commits_data()
                 if config.RUN_ONCE:
                     break  # 完成一次更新后退出循环
-                print(f'开始休眠:{Config.SVN_UPDATE_INTERVAL}秒')
-                time.sleep(Config.SVN_UPDATE_INTERVAL)
+                print(f'开始休眠:{config.SVN_UPDATE_INTERVAL}秒')
+                time.sleep(config.SVN_UPDATE_INTERVAL)
 
             except Exception as e:
                 print(f'Error:{e}')

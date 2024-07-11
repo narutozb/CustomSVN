@@ -18,8 +18,8 @@ class ReceiveCommitSerializer(serializers.ModelSerializer):
         print('create..')
         file_changes_data = validated_data.pop('file_changes', [])
         commit = Commit.objects.create(**validated_data)
-        for change_data in file_changes_data:
-            FileChange.objects.create(commit=commit, **change_data)
+        file_changes_instances = [FileChange(commit=commit, **change_data) for change_data in file_changes_data]
+        FileChange.objects.bulk_create(file_changes_instances)
 
         return commit
 
@@ -29,19 +29,39 @@ class ReceiveCommitSerializer(serializers.ModelSerializer):
         new_version = version.parse(validated_data.get('svn_client_version', '0.0.0'))
 
         # 比较版本号
-        if new_version >= current_version:  # TODO: 测试时为>= 。commit时更改为>
-            print('update...')
+        if new_version > current_version:  # TODO: 测试时为>= 。commit时更改为>
+            # print('update...')
             for k, v in validated_data.items():
                 setattr(instance, k, v)
             instance.save()
 
+            file_changes_to_update = []  # 准备更新的列表
+            file_changes_to_create = []  # 准备创建的列表
+            update_fields = set()  # 使用集合来避免重复字段名
+            existing_file_changes = FileChange.objects.filter(
+                commit=instance,
+                path__in=[_['path'] for _ in file_changes_data]
+            )
+            existing_file_changes_dict = {_.path: _ for _ in existing_file_changes}
+            for i in file_changes_data:
+                file_change = existing_file_changes_dict.get(i['path'])
+                if file_change:
+                    # 如果存在则更新
+                    for k, v in i.items():
+                        if hasattr(file_change, k):
+                            setattr(file_change, k, v)
+                            update_fields.add(k)
+                    file_changes_to_update.append(file_change)
+                else:
+                    # 如果不存在则创建新对象
+                    file_changes_to_create.append(FileChange(commit=instance, **i))
+
             # 更新或创建 file changes
-            for change_data in file_changes_data:
-                file_change, created = FileChange.objects.update_or_create(
-                    commit=instance,
-                    path=change_data['path'],
-                    defaults=change_data
-                )
+            FileChange.objects.bulk_update(file_changes_to_update, list(update_fields))
+            FileChange.objects.bulk_create(file_changes_to_create)
+
+            # print(f"Updated {len(file_changes_to_update)} records with fields {list(update_fields)}.")
+            # print(f"Created {len(file_changes_to_create)} new records.")
 
         return instance
 
