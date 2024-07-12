@@ -1,59 +1,61 @@
 import sys
-import time
 import threading
-from config import Config
+import time
+
+from config import SVNClientConfig
 from manager import SVNManager
 from status_manager import StatusManager
-
-# 标志位，用于控制程序是否正在运行
-running = True
 
 
 def main():
     global running
+    config = SVNClientConfig(
+        REPO_NAME_CUSTOM_SERVER='TestRepoMany',
+        REPO_ROOT_URL='https://QIAOYUANZHEN/svn/TestRepoMany/',
+        START_REVISION=None,
+        END_REVISION=None,
+        FORCE_UPDATE=False,
+        DEFAULT_SVN_UPDATE_MAX_INTERVAL=60  # TODO: 测试代码,默认为60
+    )
     status_manager = StatusManager()
-    manager = SVNManager(status_manager)
-    print('manager finished')
+    manager = SVNManager(config, status_manager=status_manager)
 
     def upload_data():
-        print('run upload_data')
         while running:
             try:
-                manager.update_svn_data()
-                # Check if the current revision has reached or exceeded Config.END_REVISION
-                if Config.END_REVISION is not None and manager.get_existing_revision() >= Config.END_REVISION:
-                    print(f"Current revision has reached or exceeded END_REVISION ({Config.END_REVISION}). Stopping...")
-                    break
-                if Config.RUN_ONCE:
-                    break
+                # 主要处理
+                manager.update_commits_data()
+                if config.RUN_ONCE:
+                    break  # 完成一次更新后退出循环
+                print(f'开始休眠:{config.SVN_UPDATE_INTERVAL}秒')
+                time.sleep(config.SVN_UPDATE_INTERVAL)
+
             except Exception as e:
-                print(f"Error: {e}")
-                # 如果报错的话，则退出程序
+                print(f'Error:{e}')
                 sys.exit(1)
 
-            time.sleep(Config.SVN_UPDATE_INTERVAL)
-
-    # 创建并启动上传数据的线程
     upload_thread = threading.Thread(target=upload_data)
     upload_thread.start()
 
     try:
         while running:
-            if Config.RUN_ONCE and not upload_thread.is_alive():
+            if config.RUN_ONCE and not upload_thread.is_alive():
+                print('触发停止')
                 running = False
-            print('sleep1...')
             time.sleep(1)
     except KeyboardInterrupt:
-        print("Exiting program...")
+        print('Exiting program....')
         running = False
         while status_manager.is_uploading():
-            print("Waiting for upload to finish...")
+            print('手动终止，is_uploading{status_manager.is_uploading()}')
             time.sleep(1)
+
         # 等待上传线程完成
+        print('等待上传线程完成')
         upload_thread.join()
+        print('Program terminated')
 
-    print("Program terminated.")
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
+    running = True
     main()
