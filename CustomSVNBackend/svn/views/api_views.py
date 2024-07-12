@@ -22,7 +22,7 @@ class FileChangeListLatestExistView(APIView):
         branch_name = request.query_params.get('branch_name', 'trunk')  # 获取分支名字
 
         # 创建一个Subquery，找到每个file_path的最大revision
-        latest_revisions = FileChange.objects.filter(file_path=OuterRef('file_path')).order_by('-commit__revision')
+        latest_revisions = FileChange.objects.filter(path=OuterRef('path')).order_by('-commit__revision')
 
         # 使用annotate将Subquery添加到查询集中
         file_changes = FileChange.objects.annotate(
@@ -37,7 +37,7 @@ class FileChangeListLatestExistView(APIView):
             file_changes = file_changes.filter(commit__repository__name=repo_name)
 
         # 过滤掉已删除的文件
-        file_changes = file_changes.exclude(change_type='D')
+        file_changes = file_changes.exclude(action='D')
 
         data = file_changes.values(
             'path',
@@ -55,14 +55,14 @@ class GetFileChangesByFilePath(APIView):
     '''
     通过特定file_path获取其以往数据
     {
-        "file_path":"https://qiaoyuanzhen/svn/MyDataSVN/trunk/RootFolder/fbx_files/animation_test1.fbx"
+        "path":"https://qiaoyuanzhen/svn/MyDataSVN/trunk/RootFolder/fbx_files/animation_test1.fbx"
     }
     '''
 
     def put(self, request, repo_name: str):
         try:
-            file_path = request.data.get('file_path')
-            queryset = FileChange.objects.filter(commit__repository__name=repo_name, file_path=file_path).order_by(
+            path = request.data.get('path')
+            queryset = FileChange.objects.filter(commit__repository__name=repo_name, path=path).order_by(
                 '-commit__revision')
             serializer = QueryFileChangeSerializer(queryset, many=True)
 
@@ -85,15 +85,15 @@ class GetFileChangeByRevisionView(APIView):
     "file_changes":
     [
         {
-            "file_path": "https://qiaoyuanzhen/svn/MyDataSVN/trunk/RootFolder/fbx_files/animation_test1.fbx",
+            "path": "https://qiaoyuanzhen/svn/MyDataSVN/trunk/RootFolder/fbx_files/animation_test1.fbx",
             "revision": 17,
             "repo_name": "MyDataSVN"},
         {
-            "file_path": "https://qiaoyuanzhen/svn/MyDataSVN/trunk/RootFolder/fbx_files/animation_test2.fbx",
+            "path": "https://qiaoyuanzhen/svn/MyDataSVN/trunk/RootFolder/fbx_files/animation_test2.fbx",
             "revision": 17,
             "repo_name": "MyDataSVN"},
         {
-            "file_path": "https://qiaoyuanzhen/svn/MyDataSVN/tags/release-1.0/RootFolder/_test_file.mb",
+            "path": "https://qiaoyuanzhen/svn/MyDataSVN/tags/release-1.0/RootFolder/_test_file.mb",
             "revision": 13,
             "repo_name": "MyDataSVN"}
         ]
@@ -115,7 +115,7 @@ class GetFileChangeByRevisionView(APIView):
             data = []
             for i in file_change_summaries:
                 file_change = FileChange.objects.get(
-                    commit__repository__name=i.repo_name, commit__revision=i.revision, file_path=i.file_path
+                    commit__repository__name=i.repo_name, commit__revision=i.revision, path=i.path
                 )
                 data.append(file_change)
             serializer = QueryFileChangeSerializer(data, many=True)

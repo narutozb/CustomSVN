@@ -47,58 +47,6 @@ class CommitViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def receive_svn_data(request):
-    '''
-    此接收commits数据并且储存的方法已经被弃用
-    '''
-
-    if request.method == 'POST':
-        try:
-            data = request.data
-            repo_data = data['repository']
-            commits_data = data['commits']
-
-            # 检查仓库是否存在
-            try:
-                repository = Repository.objects.get(name=repo_data['name'], url=repo_data['url'])
-            except Repository.DoesNotExist:
-                return Response({'status': 'error', 'message': 'Repository does not exist'},
-                                status=status.HTTP_400_BAD_REQUEST)
-
-            for commit_data in commits_data:
-                branch_name = commit_data.get('branch_name')  # 获取分支名
-
-                # 如果branch_name不为None，检查Branch是否存在，如果不存在则创建
-                if branch_name is not None:
-                    branch, created = Branch.objects.get_or_create(name=branch_name, repository=repository)
-                else:
-                    branch = None
-
-                commit, created = Commit.objects.get_or_create(
-                    repository=repository,
-                    branch=branch,  # 添加branch到commit
-                    revision=commit_data['revision'],
-                    defaults={
-                        'author': commit_data['author'],
-                        'message': commit_data['message'],
-                        'date': commit_data['date']
-                    }
-                )
-
-                if created:
-                    for file_change_data in commit_data['file_changes']:
-                        FileChange.objects.get_or_create(
-                            commit=commit,
-                            file_path=file_change_data['file_path'],
-                            change_type=file_change_data['change_type']
-                        )
-
-            return Response({'status': 'success'}, status=status.HTTP_201_CREATED)
-        except Exception as e:
-            return Response({'status': 'error', 'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-    return Response({'status': 'invalid request'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET'])

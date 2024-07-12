@@ -8,8 +8,6 @@ class Endpoints:
     root_url = Config.ROOT_URL
     api_url = f'{root_url}/api/'
     svn_commits = 'svn/commits/'
-    svn_receive_svn_data = 'svn/receive_svn_data/'
-
     receive_commits = 'svn/receive_commits/'  # 接收commits数据并且创建或更新commits数据
 
     token_auth = 'api-token-auth/'  # 验证用户

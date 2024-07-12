@@ -119,7 +119,7 @@ def parse_svn_log2(xml_data):
     return commits
 
 
-def get_svn_changes(repo_url, revisions):
+def __get_svn_changes(repo_url, revisions):
     all_changes = {}
     for revision in revisions:
         result = subprocess.run(['svn', 'diff', repo_url, '-c', str(revision), '--summarize'], stdout=subprocess.PIPE,

@@ -66,7 +66,7 @@ class ReceiveCommitSerializer(serializers.ModelSerializer):
         return instance
 
 
-@api_view(['POST'])
+@api_view(['POST', 'GET'])
 @permission_classes([IsAuthenticated])
 def receive_commits(request):
     '''
