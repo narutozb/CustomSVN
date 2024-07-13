@@ -105,7 +105,5 @@ class SVNManager:
             self.status_manager.end_upload()
 
     def get_existing_revision(self):
-        latest_revision = get_latest_revision(self.session, Config.REPO_NAME, self.headers)
+        latest_revision = get_latest_revision(self.session, self.config.REPO_NAME_CUSTOM_SERVER, self.headers)
         return int(latest_revision) if latest_revision is not None else None
-
-
