@@ -2,24 +2,20 @@
 import dataclasses
 import os
 
+# 设置英语为环境语言
+SUBPROCESS_ENV = os.environ.copy()
+SUBPROCESS_ENV["LANG"] = "en_US.UTF-8"
+SUBPROCESS_ENV["LC_ALL"] = "en_US.UTF-8"
+
 
 class Config:
     ROOT_URL = 'http://127.0.0.1:8000'  # 'http://127.0.0.1:8000'
-    REPO_ROOT_URL = 'https://QIAOYUANZHEN/svn/TestRepoMany/'
     REPO_NAME = 'TestRepoMany'
-
     USERNAME = 'admin'
     PASSWORD = 'adminadmin'
     IGNORED_PATHS = [
         '.svn',
     ]  # 忽略的路径，在此列表中的路径不会被SVNManager处理
-
-
-
-# 设置英语为环境语言
-SUBPROCESS_ENV = os.environ.copy()
-SUBPROCESS_ENV["LANG"] = "en_US.UTF-8"
-SUBPROCESS_ENV["LC_ALL"] = "en_US.UTF-8"
 
 
 @dataclasses.dataclass

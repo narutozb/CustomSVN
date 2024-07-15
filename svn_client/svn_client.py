@@ -8,14 +8,10 @@ from status_manager import StatusManager
 
 
 def main():
-    global running
+    running = True
     config = SVNClientConfig(
         REPO_NAME_CUSTOM_SERVER='TestRepoMany',
         REPO_ROOT_URL='https://QIAOYUANZHEN/svn/TestRepoMany/',
-        START_REVISION=None,
-        END_REVISION=None,
-        FORCE_UPDATE=False,
-        DEFAULT_SVN_UPDATE_MAX_INTERVAL=60  # TODO: 测试代码,默认为60
     )
     status_manager = StatusManager()
     manager = SVNManager(config, status_manager=status_manager)
@@ -57,5 +53,4 @@ def main():
 
 
 if __name__ == "__main__":
-    running = True
     main()

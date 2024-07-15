@@ -7,25 +7,17 @@ import requests
 from config import SVNClientConfig, Config
 from dc import CommitLogToServerDC
 from endpoints import Endpoints
+from login import ClientBase
 from status_manager import StatusManager
-from svn_utils import get_latest_svn_revision, parse_svn_log2, get_svn_log2, \
-    get_token, calculate_size, get_latest_revision
+from svn_utils import get_latest_svn_revision, parse_svn_log2, get_svn_log2, calculate_size, get_latest_revision
 
 
-class SVNManager:
+class SVNManager(ClientBase):
 
     def __init__(self, svn_client_config: SVNClientConfig, status_manager: StatusManager):
+        super().__init__()
         self.config = svn_client_config
-        self.session = requests.Session()
-        self.token = get_token(self.session, Config.USERNAME, Config.PASSWORD)
-        if not self.token:
-            raise Exception("Failed to get token")
-        self.headers = {
-            'Authorization': f'Token {self.token}',
-            'Content-Type': 'application/json'
-        }
         self.status_manager = status_manager
-        self.__DIV_COMMITS_NUM = 5
 
     def get_start_revision(self) -> int:
         '''

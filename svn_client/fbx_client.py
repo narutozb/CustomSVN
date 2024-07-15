@@ -71,8 +71,7 @@ for path in fbx_path_list:
         continue
 
     data = get_fbx_data(path)
-    # pprint(data)
-    response = fbx_client.post_data(data=json.dumps(data))
-    pprint(response.text)
+    print(data)
+    # response = fbx_client.post_data(data=json.dumps(data))
 
 print(f'耗时:{time.time() - now}')
