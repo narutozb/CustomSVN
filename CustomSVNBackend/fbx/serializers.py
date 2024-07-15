@@ -43,6 +43,3 @@ class ReceiveModelSkeleton(serializers.ModelSerializer):
         model = ModelSkeleton
         fields = ['name', 'fbx_file']
 
-# class ReceiveTakeModelSkeleton(serializers.ModelSerializer):
-#     class Meta:
-#         pass

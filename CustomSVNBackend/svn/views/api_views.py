@@ -1,3 +1,5 @@
+import re
+
 from django.db.models import OuterRef, Subquery, F
 from rest_framework import status
 from rest_framework.response import Response
@@ -5,9 +7,18 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from svn._dc import FileChangeSummaryDC
-from svn.models import FileChange
+from svn.models import FileChange, Repository
 from svn.serializers import QueryFileChangeSerializer
 from svn.views.custom_class import CustomPagination
+
+
+def replace_case_insensitive(text, old, new):
+    # 定义一个函数，用于替换所有匹配的子串，不考虑大小写
+    pattern = re.compile(re.escape(old), re.IGNORECASE)
+    result = pattern.sub(new, text)
+    if not result.startswith('/'):
+        result = '/' + result
+    return result
 
 
 class FileChangeListLatestExistView(APIView):
@@ -100,26 +111,32 @@ class GetFileChangeByRevisionView(APIView):
     }
     """
 
-    def put(self, request):
+    def get(self, request, *args, **kwargs):
+        data = {'msg': 12121212}
+        return Response(data, status=status.HTTP_200_OK)
+
+    def post(self, request):
         # 检查请求数据是否包含file_changes
+
         try:
             file_changes: list[dict] = request.data['file_changes']
-            # 将上面的列表反序列化为list[FileChangeSummaryDC]
-            file_change_summaries = [FileChangeSummaryDC(**_) for _ in file_changes]
-        except (KeyError, TypeError):
-            return Response({
-                'status': 'error', 'message': 'Invalid request data.file_changes数据格式错误',
-            },
-                status=status.HTTP_400_BAD_REQUEST)
-        try:
             data = []
-            for i in file_change_summaries:
-                file_change = FileChange.objects.get(
-                    commit__repository__name=i.repo_name, commit__revision=i.revision, path=i.path
-                )
-                data.append(file_change)
-            serializer = QueryFileChangeSerializer(data, many=True)
-            return Response(serializer.data)
+            for i in file_changes:
+                repo_name = i.get('repo_name')
+                revision = i.get('revision')
+                path = i.get('path')
+
+                # file_change = FileChange.objects.get(
+                #     commit__repository__name=repo_name, commit__revision=revision, path=path
+                # )
+                repo = Repository.objects.get(name=repo_name)
+                print(path)
+                print(FileChange.objects.get(path__icontains=path, commit__repository__name=repo_name, commit__revision=revision))
+                # data.append(file_change)
+            # serializer = QueryFileChangeSerializer(data, many=True)
+            # return Response(serializer.data)
+            return Response({'a': 123}, status=status.HTTP_200_OK)
+
 
         except FileChange.DoesNotExist:
             return Response({

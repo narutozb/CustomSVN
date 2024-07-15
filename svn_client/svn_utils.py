@@ -193,9 +193,10 @@ def get_local_last_changed_revision(svn_path):
 
 def get_local_file_svn_info(local_path: str):
     commands = ['svn', 'info', local_path]
+    print(' '.join(commands))
+
     result = subprocess.run(commands, stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE, text=True, check=True, env=SUBPROCESS_ENV)
-
     svn_info = SVNInfoLocalDC()
 
     for line in result.stdout.splitlines():
@@ -213,6 +214,8 @@ def get_local_file_svn_info(local_path: str):
             svn_info.last_change_rev = line.split()[-1]
         if line.startswith('Last Changed Date:'):
             svn_info.last_changed_date = line.split(':', 1)[1].strip()
+        if line.startswith('Relative URL'):
+            svn_info.relative_url = line.split(':', 1)[1].strip().replace('^', '', 1)
 
     return svn_info
 

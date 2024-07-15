@@ -9,9 +9,13 @@ from status_manager import StatusManager
 
 def main():
     running = True
+    # config = SVNClientConfig(
+    #     REPO_NAME_CUSTOM_SERVER='TestRepoMany',
+    #     REPO_ROOT_URL='https://QIAOYUANZHEN/svn/TestRepoMany/',
+    # )
     config = SVNClientConfig(
-        REPO_NAME_CUSTOM_SERVER='TestRepoMany',
-        REPO_ROOT_URL='https://QIAOYUANZHEN/svn/TestRepoMany/',
+        REPO_NAME_CUSTOM_SERVER='MyDataSVN',
+        REPO_ROOT_URL='https://QIAOYUANZHEN/svn/MyDataSVN/',
     )
     status_manager = StatusManager()
     manager = SVNManager(config, status_manager=status_manager)

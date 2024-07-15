@@ -1,7 +1,6 @@
 import dataclasses
 import json
 import os
-from pprint import pprint
 
 from config import Config
 from dc import SVNInfoLocalExtDC
@@ -27,14 +26,8 @@ def get_fbx_paths(root_dir: str):
 
 
 class FBXClient(ClientBase):
-    def __str__(self):
-        pass
-
-    def post_data(self, data):
-        response = self.session.post(Endpoints.get_api_url(Endpoints.receive_fbx_file), headers=self.headers, data=data)
-        print(f'post to:{Endpoints.get_api_url(Endpoints.receive_fbx_file)}')
-        print(response.status_code)
-        return response
+    def __init__(self):
+        super().__init__()
 
 
 def get_fbx_data(file_path: str):
@@ -58,20 +51,42 @@ def get_fbx_data(file_path: str):
     return data
 
 
-# 计算耗时
-import time
+if __name__ == '__main__1':
+    # 计算耗时
+    import time
 
-now = time.time()
+    now = time.time()
 
-fbx_client = FBXClient()
-fbx_path_list = get_fbx_paths(root_dir)  # [:1]  # TODO:测试1个FBX文件
-for path in fbx_path_list:
-    # 判断是否是svn仓库
-    if not is_svn_repository(path):
-        continue
+    fbx_client = FBXClient()
+    fbx_path_list = get_fbx_paths(root_dir)  # [:1]  # TODO:测试1个FBX文件
+    for path in fbx_path_list:
+        # 判断是否是svn仓库
+        if not is_svn_repository(path):
+            continue
 
-    data = get_fbx_data(path)
-    print(data)
-    # response = fbx_client.post_data(data=json.dumps(data))
+        data = get_fbx_data(path)
+        print(data)
+        # response = fbx_client.post_data(data=json.dumps(data))
 
-print(f'耗时:{time.time() - now}')
+    print(f'耗时:{time.time() - now}')
+
+if __name__ == '__main__':
+    fbx_client = FBXClient()
+    fbx_path_list = get_fbx_paths(root_dir)  # [:1]  # TODO:测试1个FBX文件
+    for path in fbx_path_list[:1]:
+        svn_info_local = get_local_file_svn_info(path)
+        # print(svn_info_local)
+        d = {
+            'file_changes': [
+                {
+                    'path': svn_info_local.relative_url,
+                    'revision': svn_info_local.revision,
+                    'repo_name': 'MyDataSVN'
+                }
+            ]
+        }
+        print(d)
+
+        response = fbx_client.session.post(Endpoints.get_api_url('svn/get_file_change_by_revision/', print_url=True),
+                                           headers=fbx_client.headers, data=json.dumps(d))
+        print(response.json())

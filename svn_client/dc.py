@@ -13,6 +13,7 @@ class SVNInfoLocalDC:
     last_change_rev: str = None
     last_changed_date: str = None
     node_kind: str = None
+    relative_url: str = None
 
 
 @dataclasses.dataclass
