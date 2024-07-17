@@ -50,9 +50,6 @@ def main():
             print('手动终止，is_uploading{status_manager.is_uploading()}')
             time.sleep(1)
 
-        # 等待上传线程完成
-        print('等待上传线程完成')
-        upload_thread.join()
         print('Program terminated')
 
 

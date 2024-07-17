@@ -191,14 +191,18 @@ def get_local_last_changed_revision(svn_path):
     return None
 
 
-def get_local_file_svn_info(local_path: str):
+def get_local_file_svn_info(local_path: str, print_command=False):
     commands = ['svn', 'info', local_path]
-    print(' '.join(commands))
+    if print_command:
+        print(' '.join(commands))
 
-    result = subprocess.run(commands, stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE, text=True, check=True, env=SUBPROCESS_ENV)
+    try:
+        result = subprocess.run(commands, stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE, text=True, check=True, env=SUBPROCESS_ENV)
+    except Exception as e:
+        return None
+
     svn_info = SVNInfoLocalDC()
-
     for line in result.stdout.splitlines():
         if line.startswith('URL:'):
             svn_info.url = line.split()[1]

@@ -3,8 +3,9 @@ from packaging.version import parse
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from svn.models import FileChange
-from svn.serializers import QueryFileChangeSerializer
+from svn.models import FileChange, Repository
+from svn.query_functions.functions import verify_repo, verify_svn_data
+from svn.serializers import QueryFileChangeSerializer, VerifyRepositorySerializer
 # Create your views here.
 from .models import FBXFile, Take, ModelSkeleton, TakeModelSkeleton
 from rest_framework import generics, permissions, viewsets
@@ -90,57 +91,48 @@ class ReceiveFbxFileData(APIView):
         data = request.data
         change_file_data = data.get('change_file')
         fbx_data = data.get('fbx_data')
+        repo_data = data.get('repo_data')
         takes: list[dict] = data.get('takes')
         model_skeletons: list[dict] = data.get('skeletons')
-        # print(takes)
-        file_change = FileChange.objects.get(
-            commit__repository__name=change_file_data.get('repo_name'),
-            commit__revision=change_file_data.get('revision'),
-            file_path=change_file_data.get('file_path')
-        )
-        print('-' * 50)
+        # 验证repo数据
+        repo: Repository = verify_svn_data(repo_data, Repository)
+        if not repo:
+            return Response({'msg': 'Repo验证失败', })
+
+        # 验证FileChange
         try:
-            print('创建或者更新fbx_file')
+            file_change = FileChange.objects.get(
+                commit__repository=repo,
+                commit__revision=change_file_data.get('revision'),
+                path=change_file_data.get('path')
+            )
+        except Exception as e:
+            return Response({'msg': str(e), })
 
-            #  获取client_version
-            client_version = fbx_data.get('client_version')
-            client_version = parse(client_version)
-
+        try:
             # 创建FBXFile
-            fbx_file, fbx_file_created = FBXFile.objects.get_or_create(file_change_id=file_change.id, )
-            print('FBXFile创建完成...')
+            # 1. 更新fbx_file数据
+            fbx_file, fbx_file_created = FBXFile.objects.get_or_create(file_change=file_change)
+            serializer = ReceiveFBXFileSerializer(instance=fbx_file, data=fbx_data)
+            if serializer.is_valid():
+                serializer.save()
 
-            if parse(fbx_file.client_version) < client_version or fbx_file_created:
-                print('新建数据或者服务器版本过低...')
-                # 1. 更新fbx_file数据
+            for i in takes:
+                i['fbx_file'] = fbx_file.id
 
-                serializer = ReceiveFBXFileSerializer(fbx_file, data=fbx_data)
-                if serializer.is_valid():
-                    serializer.save()
+            take_serializer = ReceiveTakeSerializer(data=takes, many=True)
+            if take_serializer.is_valid(raise_exception=True):
+                if fbx_file_created:
+                    take_serializer.save()
 
-                # 2. 创建 Take数据
-                for i in takes:
-                    i['fbx_file'] = fbx_file
-                for take_data in takes:
-                    Take.objects.get_or_create(**take_data)
-                print('Takes创建完成...')
 
-                # 3. 储存skeleton数据
-                print('开始储存skeleton数据')
-                # 创建根节点
-                ModelSkeleton.objects.get_or_create(name='RootNode', fbx_file=fbx_file, parent=None)
-                # 储存ModelSkeleton
-                save_model_skeletons(model_skeletons, fbx_file)
-                # 下面的方法与上面的方法耗时不同
-                # for skeleton_data in model_skeletons:
-                #     skeleton_data['fbx_file'] = fbx_file
-                #     parent = skeleton_data.pop('parent')
-                #     if parent:
-                #         parent = ModelSkeleton.objects.get(name=parent, fbx_file=fbx_file)
-                #         skeleton_data['parent'] = parent
-                #     ModelSkeleton.objects.get_or_create(**skeleton_data)
+            #     # 3. 储存skeleton数据
+            print('开始储存skeleton数据')
+            # 创建根节点
+            ModelSkeleton.objects.get_or_create(name='RootNode', fbx_file=fbx_file, parent=None)
+            # 储存ModelSkeleton
+            save_model_skeletons(model_skeletons, fbx_file)
 
-            serializer = ReceiveFBXFileSerializer(fbx_file)
             return Response({'success': 'FBXFile created successfully', 'data': serializer.data})
 
         except Exception as e:

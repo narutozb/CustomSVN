@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 
 from svn._dc import FileChangeSummaryDC
 from svn.models import FileChange, Repository
+from svn.query_functions.functions import query_file_changes_by_repo_name_and_file_changes
 from svn.serializers import QueryFileChangeSerializer
 from svn.views.custom_class import CustomPagination
 
@@ -119,23 +120,8 @@ class GetFileChangeByRevisionView(APIView):
         # 检查请求数据是否包含file_changes
 
         try:
-            file_changes: list[dict] = request.data['file_changes']
-            data = []
-            for i in file_changes:
-                repo_name = i.get('repo_name')
-                revision = i.get('revision')
-                path = i.get('path')
-
-                # file_change = FileChange.objects.get(
-                #     commit__repository__name=repo_name, commit__revision=revision, path=path
-                # )
-                repo = Repository.objects.get(name=repo_name)
-                print(path)
-                print(FileChange.objects.get(path__icontains=path, commit__repository__name=repo_name, commit__revision=revision))
-                # data.append(file_change)
-            # serializer = QueryFileChangeSerializer(data, many=True)
-            # return Response(serializer.data)
-            return Response({'a': 123}, status=status.HTTP_200_OK)
+            serializer = query_file_changes_by_repo_name_and_file_changes(request)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
 
         except FileChange.DoesNotExist:

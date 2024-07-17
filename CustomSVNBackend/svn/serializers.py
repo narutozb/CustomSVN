@@ -31,3 +31,9 @@ class RepositorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Repository
         fields = ['id', 'name', 'url', 'description', 'created_at', 'commits_count']
+
+
+class VerifyRepositorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Repository
+        fields = ['name', 'url']
