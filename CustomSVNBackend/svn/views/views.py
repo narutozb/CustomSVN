@@ -1,13 +1,14 @@
 import os
 from django.core.paginator import Paginator
 from django.shortcuts import render, get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, status
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.db.models import OuterRef, Subquery, F
 from svn.models import Repository, Commit, FileChange, Branch
-from svn.serializers import RepositorySerializer, CommitSerializer, FileChangeSerializer
+from svn.serializers import RepositorySerializer, CommitSerializer, FileChangeSerializer, BranchSerializer
 from django.db.models import IntegerField, Count
 from django.db.models.functions import Cast
 from django.utils import timezone
@@ -47,7 +48,12 @@ class CommitViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-
+class BranchViewSet(viewsets.ModelViewSet):
+    queryset = Branch.objects.all()
+    serializer_class = BranchSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['repository__id']
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

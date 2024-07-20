@@ -13,5 +13,16 @@ module.exports = {
   },
   rules: {
     'vue/multi-word-component-names': 0
+  },
+  settings: {
+    'import/resolver': {
+      alias: {
+        map: [
+          ['@', './src']
+        ],
+        extensions: ['.ts', '.js', '.jsx', '.json', '.vue']
+      }
+    }
   }
+
 }

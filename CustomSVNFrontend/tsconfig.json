@@ -8,5 +8,16 @@
       "path": "./tsconfig.app.json"
     }
   ],
- 
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    },
+    "types": [
+      "vue-router"
+    ]
+  },
+  "include": ["env.d.ts", "src/**/*", "src/**/*.vue"]
 }

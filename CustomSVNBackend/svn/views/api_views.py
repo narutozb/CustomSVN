@@ -6,8 +6,7 @@ from rest_framework.response import Response
 
 from rest_framework.views import APIView
 
-from svn._dc import FileChangeSummaryDC
-from svn.models import FileChange, Repository
+from svn.models import FileChange
 from svn.query_functions.functions import query_file_changes_by_repo_name_and_file_changes
 from svn.serializers import QueryFileChangeSerializer
 from svn.views.custom_class import CustomPagination

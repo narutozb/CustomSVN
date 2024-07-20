@@ -2,13 +2,14 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
 from svn.views.api_views import FileChangeListLatestExistView, GetFileChangeByRevisionView, GetFileChangesByFilePath
-from svn.views.views import RepositoryViewSet, CommitViewSet, get_latest_revision, list_commits, list_file_changes
+from svn.views.views import RepositoryViewSet, CommitViewSet, get_latest_revision, list_commits, list_file_changes,BranchViewSet
 
 from svn.views.update_svn import receive_commits
 
 router = DefaultRouter()
 router.register(r'repositories', RepositoryViewSet)
 router.register(r'commits', CommitViewSet)
+router.register(r'branches', BranchViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
