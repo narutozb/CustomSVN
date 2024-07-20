@@ -1,11 +1,20 @@
-from django.contrib.auth import authenticate, login, logout
+# users/views.py
+from django.contrib.auth import logout
 
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect, render
 from django.contrib import messages
+from django.views import View
+from django.contrib.auth import authenticate, login
+
+from rest_framework.permissions import AllowAny
+from rest_framework.views import APIView
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
-from rest_framework import viewsets
+from rest_framework import viewsets, status
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView
+
 from .models import CustomUser
 from .serializers import UserSerializer
 
@@ -28,23 +37,6 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
 
 
-def login_user(request):
-    if request.method == 'POST':
-        username = request.POST['InputUsername']
-        password = request.POST['InputPassword']
-        # Authenticate
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-            login(request, user)
-            messages.success(request, f'{username}登录成功')
-            return redirect('home')
-        else:
-            messages.success(request, '登陆失败')
-            return redirect('login')
-
-    return render(request, 'user/login.html', {})
-
-
 def logout_user(request):
     if request.user.is_authenticated:
         logout(request)
@@ -52,3 +44,33 @@ def logout_user(request):
         return redirect('home')
     else:
         return redirect('home')
+
+
+class LogoutView(APIView):
+    def post(self, request):
+        try:
+            refresh_token = request.data["refresh_token"]
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response(status=status.HTTP_205_RESET_CONTENT)
+        except Exception as e:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class LoginView(TokenObtainPairView):
+    permission_classes = [AllowAny]
+
+
+class UserInfoView(APIView):
+    def get(self, request):
+        user = request.user
+        return Response({
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+        })
+
+
+class TestAPI(APIView):
+    def get(self, request):
+        return Response({'msg': 12121212}, status=status.HTTP_200_OK)
