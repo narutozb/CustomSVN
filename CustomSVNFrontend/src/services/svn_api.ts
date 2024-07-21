@@ -16,7 +16,12 @@ export const fetchBranches = async (repositoryId: string) => {
 
 export const searchCommits = async (data) => {
     try {
-        const response = await api.post('api/svn/_commits/search/', data);
+        const response = await api.post('api/svn/_commits/search/', data, {
+            params: {
+                page: data.page,
+                page_size: data.page_size
+            }
+        });
         return response.data;
     } catch (error) {
         console.error('搜索提交失败:', error);

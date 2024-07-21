@@ -1,6 +1,7 @@
 import re
 from django.db.models import OuterRef, Subquery, F, Q
 from rest_framework import status
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
 from rest_framework.views import APIView
@@ -128,8 +129,13 @@ class GetFileChangeByRevisionView(APIView):
             },
                 status=status.HTTP_404_NOT_FOUND)
 
+class CustomPageNumberPagination(PageNumberPagination):
+    page_size_query_param = 'page_size'
+    max_page_size = 100
 
 class CommitSearchView(APIView):
+    pagination_class = CustomPageNumberPagination
+
     def post(self, request):
         # 获取请求数据
         data = request.data
@@ -166,6 +172,10 @@ class CommitSearchView(APIView):
                 content_filter |= Q(revision__icontains=contents) if not exact_search else Q(revision__exact=contents)
             queryset = queryset.filter(content_filter)
 
+        # 应用分页
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(queryset, request)
+
         # 序列化结果
-        serializer = CommitSerializer(queryset, many=True)
-        return Response(serializer.data)
+        serializer = CommitSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)

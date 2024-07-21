@@ -88,27 +88,50 @@
     <el-form-item label="Search Contents">
       <el-input v-model="form.contents"/>
     </el-form-item>
-
+    <el-form-item label="Page Size">
+      <el-select v-model="form.page_size" placeholder="Select page size">
+        <el-option
+            v-for="size in pageSizeOptions"
+            :key="size"
+            :label="size"
+            :value="size"
+        />
+      </el-select>
+    </el-form-item>
     <el-form-item>
       <el-button type="primary" @click="onSubmit">Search</el-button>
     </el-form-item>
+
   </el-form>
 
-  <!-- 添加一个表格来显示搜索结果 -->
-  <el-table v-if="searchResults.length > 0" :data="searchResults" style="width: 100%">
-    <el-table-column prop="revision" label="Revision" width="180"/>
-    <el-table-column prop="author" label="Author" width="180"/>
-    <el-table-column prop="date" label="Date" width="180">
-      <template #default="scope">
-        <!--修改日期显示格式-->
-        {{ $filters.formatDate(scope.row.date) }}
-      </template>
-    </el-table-column>
-    <el-table-column prop="message" label="Message"/>
-  </el-table>
+
+  <!-- 修改表格和分页控件 -->
+  <div v-if="searchResults.results && searchResults.results.length > 0">
+    <el-table :data="searchResults.results" style="width: 100%">
+      <el-table-column prop="revision" label="Revision" width="180"/>
+      <el-table-column prop="author" label="Author" width="180"/>
+      <el-table-column prop="date" label="Date" width="180">
+        <template #default="scope">
+          {{ $filters.formatDate(scope.row.date) }}
+        </template>
+      </el-table-column>
+      <el-table-column prop="message" label="Message"/>
+    </el-table>
+
+    <el-pagination
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+        :current-page="currentPage"
+        :page-sizes="pageSizeOptions"
+        :page-size="form.page_size"
+        layout="total, sizes, prev, pager, next, jumper"
+        :total="searchResults.count"
+    />
+  </div>
 </template>
 
 <script lang="ts" setup>
+
 import {computed, reactive, ref, watch} from 'vue'
 import {onMounted} from 'vue'
 import {useRepositoriesStore} from "@/store/repositories"
@@ -116,6 +139,9 @@ import {fetchBranches, searchCommits} from '@/services/svn_api'
 
 const store = useRepositoriesStore()
 const branches = ref([])
+const pageSizeOptions = [100, 500, 1000, 5000, 10000, 20000, 50000]
+const currentPage = ref(1)
+
 
 // 设置默认的开始和结束时间
 const setDefaultDates = () => {
@@ -173,6 +199,7 @@ const form = reactive({
   contents: '',
   exact_search: false,
   search_type: ['message', 'auth', 'revision'],
+  page_size: 100,
 
 })
 
@@ -184,7 +211,21 @@ watch(() => store.selectedRepository, async (newValue) => {
   }
 })
 
-const searchResults = ref([])
+const searchResults = ref({
+  count: 0,
+  next: null,
+  previous: null,
+  results: [],
+})
+const handleSizeChange = (val: number) => {
+  form.page_size = val
+  currentPage.value = 1
+  onSubmit()
+}
+const handleCurrentChange = (val: number) => {
+  currentPage.value = val
+  onSubmit()
+}
 
 const onSubmit = async () => {
   try {
@@ -192,6 +233,8 @@ const onSubmit = async () => {
       ...form,
       start_date: form.start_date && form.start_time ? new Date(form.start_date.setHours(form.start_time.getHours(), form.start_time.getMinutes())).toISOString() : null,
       end_date: form.end_date && form.end_time ? new Date(form.end_date.setHours(form.end_time.getHours(), form.end_time.getMinutes())).toISOString() : null,
+      page: currentPage.value,
+      page_size: form.page_size,
     }
     console.log('Submitting:', formattedData)
     const results = await searchCommits(formattedData)

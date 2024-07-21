@@ -15,6 +15,7 @@
     "@vueuse/core": "^10.11.0",
     "axios": "^1.7.2",
     "bootstrap": "^5.3.3",
+    "date-fns": "^3.6.0",
     "element-plus": "^2.7.7",
     "pinia": "^2.1.7",
     "vue": "^3.4.29",
