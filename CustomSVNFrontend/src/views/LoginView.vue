@@ -8,14 +8,18 @@
         <el-form-item prop="username">
           <el-input v-model="loginForm.username" placeholder="用户名">
             <template #prefix>
-              <el-icon><User /></el-icon>
+              <el-icon>
+                <User/>
+              </el-icon>
             </template>
           </el-input>
         </el-form-item>
         <el-form-item prop="password">
           <el-input v-model="loginForm.password" type="password" placeholder="密码" show-password>
             <template #prefix>
-              <el-icon><Lock /></el-icon>
+              <el-icon>
+                <Lock/>
+              </el-icon>
             </template>
           </el-input>
         </el-form-item>
@@ -28,11 +32,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
-import { ElMessage } from 'element-plus';
-import { User, Lock } from '@element-plus/icons-vue';
-import { useUserStore } from '@/store/user';
-import type { FormInstance } from 'element-plus';
+import {ref, reactive} from 'vue';
+import {ElMessage} from 'element-plus';
+import {User, Lock} from '@element-plus/icons-vue';
+import {useUserStore} from '@/store/user';
+import type {FormInstance} from 'element-plus';
 
 const userStore = useUserStore();
 const loginFormRef = ref<FormInstance>();
@@ -44,8 +48,8 @@ const loginForm = reactive({
 });
 
 const rules = {
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
-  password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
+  username: [{required: true, message: '请输入用户名', trigger: 'blur'}],
+  password: [{required: true, message: '请输入密码', trigger: 'blur'}],
 };
 
 const handleSubmit = async () => {
@@ -56,10 +60,10 @@ const handleSubmit = async () => {
       loading.value = true;
       try {
         await userStore.login(loginForm.username, loginForm.password);
-        ElMessage.success('登录成功');
+        ElMessage.success('Success to login');
       } catch (error) {
         console.error('Login error:', error);
-        ElMessage.error('登录失败，请检查用户名和密码');
+        ElMessage.error('Failed to login. Please check your username and password.');
       } finally {
         loading.value = false;
       }

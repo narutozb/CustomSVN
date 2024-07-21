@@ -1,21 +1,15 @@
 <script setup lang="ts">
-
-
-import Commits from "@/components/SVN/Commits.vue";
-import TestForm from "@/components/SVN/TestForm.vue";
-
+import TestOptionsComponent from "@/components/SVN/TestSVNNav.vue";
+import Dashboard from "@/components/SVN/DashboardTop.vue";
 
 </script>
 
 <template>
-  <h1>SVN</h1>
+  <h2>SVN</h2>
 
-  <h2>Commits</h2>
-  <Commits/>
-  <TestForm/>
+  <TestOptionsComponent/>
+  <RouterView/>
+
+  <Dashboard/>
 
 </template>
-
-<style scoped>
-
-</style>

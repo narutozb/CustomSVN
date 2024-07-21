@@ -6,6 +6,8 @@ import {useUserStore} from '@/store/user';
 import Layout from "@/views/LayoutView.vue";
 import SVNView from "@/views/svn/SVNView.vue"
 import CommitSearch from "@/components/SVN/CommitSearch.vue";
+import CommitDetail from "@/components/SVN/CommitDetail.vue";
+import CommitSearchView from "@/views/svn/CommitSearchView.vue";
 
 const routes: Array<RouteRecordRaw> = [
     {
@@ -19,13 +21,17 @@ const routes: Array<RouteRecordRaw> = [
             },
             {
                 path: '/svn',
-                contents: 'SVN',
+                // contents: 'SVN',
                 component: SVNView,
                 children: [
                     {
                         path: 'commits',
-                        contents: 'CommitSearch',
-                        component: CommitSearch,
+                        component: CommitSearchView,
+                    },
+                    {
+                        path: 'commits/:id',
+                        name: 'CommitDetail',
+                        component: CommitDetail
                     }
                 ]
             },

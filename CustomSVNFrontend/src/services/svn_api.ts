@@ -28,3 +28,13 @@ export const searchCommits = async (data) => {
         throw error;
     }
 }
+
+export const getCommitDetail = async (commitId: number) => {
+    try {
+        const response = await api.get(`api/svn/_commits/commit-details/${commitId}/`);
+        return response.data;
+    } catch (error) {
+        console.error('获取提交详情失败:', error);
+        throw error;
+    }
+}
