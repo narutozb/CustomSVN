@@ -1,14 +1,15 @@
 <script setup lang="ts">
-
+import TestOptionsComponent from "@/components/SVN/TestSVNNav.vue";
+import Dashboard from "@/components/SVN/DashboardTop.vue";
 
 </script>
 
 <template>
-  <li><a href="/svn/commits/">Search Commits</a></li>
+  <h2>SVN</h2>
 
+  <TestOptionsComponent/>
   <RouterView/>
+
+  <Dashboard/>
+
 </template>
-
-<style scoped>
-
-</style>

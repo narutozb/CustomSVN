@@ -1,7 +1,7 @@
 <template>
   <el-header class="app-header">
     <div class="header-left">
-      <img src="@/assets/logo.svg" alt="Logo" class="logo"/>
+<!--      <img src="@/assets/logo2.webp" alt="Logo" class="logo"/>-->
       <h1 class="site-title">Custom SVN</h1>
     </div>
     <el-menu
@@ -11,15 +11,20 @@
         @select="handleSelect"
         router
     >
-      <el-menu-item index="1" route="/">Home</el-menu-item>
-<!--      <el-menu-item index="2" route="/character">Character</el-menu-item>-->
-<!--      <el-menu-item index="3" route="/task">Task</el-menu-item>-->
+                  <el-menu-item index="1" route="/" >Home</el-menu-item>
+      <!--            <el-menu-item index="2" route="/character" >CharacterManager</el-menu-item>-->
+      <!--            <el-menu-item index="3" route="/task">Task</el-menu-item>-->
       <el-menu-item index="4" route="/svn">SVN</el-menu-item>
     </el-menu>
+
     <div class="header-right">
       <template v-if="isLoggedIn">
         <el-dropdown @command="handleCommand" trigger="click">
+
           <el-button class="user-dropdown-button">
+            <el-icon>
+              <User/>
+            </el-icon>
             {{ username }}
             <el-icon class="el-icon--right">
               <arrow-down/>
@@ -27,9 +32,12 @@
           </el-button>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item command="profile">个人信息</el-dropdown-item>
-              <el-dropdown-item command="settings">设置</el-dropdown-item>
-              <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
+              <el-dropdown-item divided command="logout">
+                <el-icon>
+                  <SwitchButton/>
+                </el-icon>
+                logout
+              </el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -99,7 +107,7 @@ const handleCommand = (command: string) => {
       break
     case 'logout':
       userStore.logout()
-      ElMessage.success('已退出登录')
+      ElMessage.success('Successes to logout')
       router.push('/login')
       break
   }
@@ -120,7 +128,7 @@ watch(() => route.path, () => {
 .app-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding: 0 20px;
   background-color: #fff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -143,12 +151,17 @@ watch(() => route.path, () => {
 
 .header-menu {
   flex-grow: 1;
-  justify-content: center;
+  justify-content: flex-start;
+}
+
+.el-menu {
+  margin-left: 40px;
 }
 
 .header-right {
   display: flex;
   align-items: center;
+  margin-left: auto;
 }
 
 .el-dropdown-link {
