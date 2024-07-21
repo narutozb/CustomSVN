@@ -2,7 +2,7 @@
   <el-header class="app-header">
     <div class="header-left">
       <img src="@/assets/logo.svg" alt="Logo" class="logo"/>
-      <h1 class="site-title">Your Site Name</h1>
+      <h1 class="site-title">Custom SVN</h1>
     </div>
     <el-menu
         mode="horizontal"
@@ -11,9 +11,9 @@
         @select="handleSelect"
         router
     >
-      <el-menu-item index="1" route="/">首页</el-menu-item>
-      <el-menu-item index="2" route="/character">Character</el-menu-item>
-      <el-menu-item index="3" route="/task">Task</el-menu-item>
+      <el-menu-item index="1" route="/">Home</el-menu-item>
+<!--      <el-menu-item index="2" route="/character">Character</el-menu-item>-->
+<!--      <el-menu-item index="3" route="/task">Task</el-menu-item>-->
       <el-menu-item index="4" route="/svn">SVN</el-menu-item>
     </el-menu>
     <div class="header-right">
