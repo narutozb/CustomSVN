@@ -14,7 +14,7 @@ def get_token(session, username, password):
     response = session.post(Endpoints.get_api_url(Endpoints.token_auth),
                             data={'username': username, 'password': password})
     if response.status_code == 200:
-        return response.json().get('token')
+        return response.json().get('access')  # JWT typically returns 'access' token
     return None
 
 

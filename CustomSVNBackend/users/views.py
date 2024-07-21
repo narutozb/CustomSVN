@@ -39,14 +39,6 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
 
 
-def logout_user(request):
-    if request.user.is_authenticated:
-        logout(request)
-        messages.success(request, f'退出登录')
-        return redirect('home')
-    else:
-        return redirect('home')
-
 
 class LogoutView(APIView):
     def post(self, request):
@@ -71,25 +63,3 @@ class UserInfoView(APIView):
             'username': user.username,
             'email': user.email,
         })
-
-
-class TestAPI(APIView):
-    def post(self, request):
-        print(request.data)
-        _data = request.data
-        data = {'repositories': [_data['repository']], 'branches': _data['branches']}
-        query_serializer = CommitQuerySerializer(data=data)
-
-        if not query_serializer.is_valid():
-            return Response(query_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        repositories = query_serializer.validated_data['repositories']
-        branches = query_serializer.validated_data['branches']
-
-        commits = Commit.objects.filter(
-            repository__id__in=repositories,
-            branch__id__in=branches
-        ).select_related('repository', 'branch')
-
-        serializer = CommitSerializer(commits, many=True)
-        return Response(serializer.data)

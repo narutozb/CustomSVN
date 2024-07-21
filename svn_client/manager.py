@@ -1,9 +1,4 @@
 import dataclasses
-import sys
-import threading
-import time
-
-import requests
 from config import SVNClientConfig, Config
 from dc import CommitLogToServerDC
 from endpoints import Endpoints
