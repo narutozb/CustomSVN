@@ -37,16 +37,6 @@
             style="width: 100%"
         />
       </el-col>
-      <el-col :span="2" class="text-center">
-        <span class="text-gray-500">-</span>
-      </el-col>
-      <el-col :span="11">
-        <el-time-picker
-            v-model="form.start_time"
-            placeholder="Pick a time"
-            style="width: 100%"
-        />
-      </el-col>
     </el-form-item>
     <el-form-item label="EndFrom">
       <el-col :span="11">
@@ -54,16 +44,6 @@
             v-model="form.end_date"
             type="date"
             placeholder="Pick a date"
-            style="width: 100%"
-        />
-      </el-col>
-      <el-col :span="2" class="text-center">
-        <span class="text-gray-500">-</span>
-      </el-col>
-      <el-col :span="11">
-        <el-time-picker
-            v-model="form.end_time"
-            placeholder="Pick a time"
             style="width: 100%"
         />
       </el-col>
@@ -98,15 +78,23 @@
         />
       </el-select>
     </el-form-item>
-    <el-form-item>
-      <el-button type="primary" @click="onSubmit">Search</el-button>
-    </el-form-item>
 
   </el-form>
 
 
   <!-- 修改表格和分页控件 -->
   <div v-if="searchResults.results && searchResults.results.length > 0">
+    <!-- 顶部分页控件 -->
+    <el-pagination
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+        :current-page="currentPage"
+        :page-sizes="pageSizeOptions"
+        :page-size="form.page_size"
+        layout="total, sizes, prev, pager, next, jumper"
+        :total="searchResults.count"
+    />
+
     <el-table :data="searchResults.results" style="width: 100%">
       <el-table-column prop="revision" label="Revision" width="180"/>
       <el-table-column prop="author" label="Author" width="180"/>
@@ -118,6 +106,7 @@
       <el-table-column prop="message" label="Message"/>
     </el-table>
 
+    <!-- 底部分页控件 -->
     <el-pagination
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
@@ -136,6 +125,7 @@ import {computed, reactive, ref, watch} from 'vue'
 import {onMounted} from 'vue'
 import {useRepositoriesStore} from "@/store/repositories"
 import {fetchBranches, searchCommits} from '@/services/svn_api'
+import {debounce} from 'lodash' // 需要安装 lodash 库
 
 const store = useRepositoriesStore()
 const branches = ref([])
@@ -146,15 +136,11 @@ const currentPage = ref(1)
 // 设置默认的开始和结束时间
 const setDefaultDates = () => {
   const now = new Date()
-  // const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+  const last_3month = new Date(now.getTime() - 24 * 60 * 60 * 1000 * 90)
   // form.start_date = yesterday
-  // form.start_time = yesterday
   // form.end_date = now
-  // form.end_time = null
-  form.start_date = null
-  form.start_time = null
+  form.start_date = last_3month
   form.end_date = null
-  form.end_time = null
 
 }
 
@@ -195,22 +181,22 @@ const form = reactive({
   }),
   branches: [],
   start_date: null as Date | null,
-  start_time: null as Date | null,
   end_date: null as Date | null,
-  end_time: null as Date | null,
   contents: '',
   exact_search: false,
   search_type: ['message', 'auth', 'revision'],
   page_size: 100,
-
 })
 
-// 监听 store 中 selectedRepository 的变化
-watch(() => store.selectedRepository, async (newValue) => {
-  if (newValue) {
-    form.repository = newValue
-    await loadBranches(newValue)
-  }
+// 监听表单数据的变化
+watch(form, () => {
+  currentPage.value = 1 // 重置页码
+  debouncedSearch()
+}, {deep: true})
+
+// 监听页码变化
+watch(currentPage, () => {
+  debouncedSearch()
 })
 
 const searchResults = ref({
@@ -219,32 +205,41 @@ const searchResults = ref({
   previous: null,
   results: [],
 })
+
+// 使用 debounce 来避免频繁触发搜索
+const debouncedSearch = debounce(async () => {
+  try {
+    let start_date = form.start_date ? form.start_date.toISOString().split('T')[0] : null;
+    let end_date = form.end_date ? form.end_date.toISOString().split('T')[0] : null;
+
+    const formattedData = {
+      ...form,
+      start_date,
+      end_date,
+      page: currentPage.value,
+      page_size: form.page_size,
+    };
+
+    console.log('Submitting:', formattedData);
+    const results = await searchCommits(formattedData);
+    searchResults.value = results;
+    console.log('Search results:', results);
+  } catch (error) {
+    console.error('搜索失败:', error);
+    // 这里可以添加错误处理，比如显示一个错误消息
+  }
+}, 500);
+
 const handleSizeChange = (val: number) => {
   form.page_size = val
   currentPage.value = 1
-  onSubmit()
-}
-const handleCurrentChange = (val: number) => {
-  currentPage.value = val
-  onSubmit()
+  debouncedSearch()
 }
 
-const onSubmit = async () => {
-  try {
-    const formattedData = {
-      ...form,
-      start_date: form.start_date && form.start_time ? new Date(form.start_date.setHours(form.start_time.getHours(), form.start_time.getMinutes())).toISOString() : null,
-      end_date: form.end_date && form.end_time ? new Date(form.end_date.setHours(form.end_time.getHours(), form.end_time.getMinutes())).toISOString() : null,
-      page: currentPage.value,
-      page_size: form.page_size,
-    }
-    console.log('Submitting:', formattedData)
-    const results = await searchCommits(formattedData)
-    searchResults.value = results
-    console.log('Search results:', results)
-  } catch (error) {
-    console.error('搜索失败:', error)
-    // 这里可以添加错误处理，比如显示一个错误消息
-  }
+const handleCurrentChange = (val: number) => {
+  currentPage.value = val
+  // 不需要在这里调用 debouncedSearch，因为 currentPage 的 watch 会处理
 }
+
+
 </script>

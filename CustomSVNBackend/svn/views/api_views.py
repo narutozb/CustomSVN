@@ -129,9 +129,11 @@ class GetFileChangeByRevisionView(APIView):
             },
                 status=status.HTTP_404_NOT_FOUND)
 
+
 class CustomPageNumberPagination(PageNumberPagination):
     page_size_query_param = 'page_size'
     max_page_size = 100
+
 
 class CommitSearchView(APIView):
     pagination_class = CustomPageNumberPagination
@@ -164,12 +166,27 @@ class CommitSearchView(APIView):
         # 处理内容搜索
         if contents:
             content_filter = Q()
-            if 'message' in search_type:
-                content_filter |= Q(message__icontains=contents) if not exact_search else Q(message__exact=contents)
-            if 'auth' in search_type:
-                content_filter |= Q(author__icontains=contents) if not exact_search else Q(author__exact=contents)
-            if 'revision' in search_type:
-                content_filter |= Q(revision__icontains=contents) if not exact_search else Q(revision__exact=contents)
+            for search_field in search_type:
+                if search_field == 'revision':
+                    if contents.isdigit():
+                        if exact_search:
+                            content_filter |= Q(revision=int(contents))
+                        else:
+                            content_filter |= Q(revision__icontains=contents)
+                    elif exact_search:
+                        # 如果是精确搜索且内容不是数字，则返回空结果
+                        return Response({'results': [], 'count': 0})
+                elif search_field == 'message':
+                    if exact_search:
+                        content_filter |= Q(message__exact=contents)
+                    else:
+                        content_filter |= Q(message__icontains=contents)
+                elif search_field == 'auth':  # 这里改为 'author'
+                    if exact_search:
+                        content_filter |= Q(author__exact=contents)
+                    else:
+                        content_filter |= Q(author__icontains=contents)
+
             queryset = queryset.filter(content_filter)
 
         # 应用分页
