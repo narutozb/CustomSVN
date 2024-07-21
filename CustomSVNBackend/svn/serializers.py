@@ -48,3 +48,11 @@ class CommitQuerySerializer(serializers.Serializer):
         child=serializers.IntegerField(),
         required=True
     )
+
+
+class CommitDetailSerializer(serializers.ModelSerializer):
+    file_changes = FileChangeSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Commit
+        fields = ['id', 'revision', 'author', 'date', 'message', 'file_changes']

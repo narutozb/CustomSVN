@@ -82,41 +82,48 @@
   </el-form>
 
 
-  <!-- 修改表格和分页控件 -->
-  <div v-if="searchResults.results && searchResults.results.length > 0">
-    <!-- 顶部分页控件 -->
-    <el-pagination
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-        :current-page="currentPage"
-        :page-sizes="pageSizeOptions"
-        :page-size="form.page_size"
-        layout="total, sizes, prev, pager, next, jumper"
-        :total="searchResults.count"
-    />
+  <!-- 顶部分页控件 -->
+  <el-pagination
+      v-if="searchResults.results && searchResults.results.length > 0"
+      @size-change="handleSizeChange"
+      @current-change="handleCurrentChange"
+      :current-page="currentPage"
+      :page-sizes="pageSizeOptions"
+      :page-size="form.page_size"
+      layout="total, sizes, prev, pager, next, jumper"
+      :total="searchResults.count"
+  />
 
-    <el-table :data="searchResults.results" style="width: 100%">
-      <el-table-column prop="revision" label="Revision" width="180"/>
-      <el-table-column prop="author" label="Author" width="180"/>
-      <el-table-column prop="date" label="Date" width="180">
-        <template #default="scope">
-          {{ $filters.formatDate(scope.row.date) }}
-        </template>
-      </el-table-column>
-      <el-table-column prop="message" label="Message"/>
-    </el-table>
+  <el-table :data="searchResults.results" style="width: 100%">
+    <el-table-column prop="revision" label="Revision" width="180"/>
+    <el-table-column prop="author" label="Author" width="180"/>
+    <el-table-column prop="date" label="Date" width="180">
+      <template #default="scope">
+        {{ $filters.formatDate(scope.row.date) }}
+      </template>
+    </el-table-column>
+    <el-table-column prop="message" label="Message"/>
+    <!-- 修改 Actions 列 -->
+    <el-table-column label="Actions" width="120">
+      <template #default="scope">
+        <router-link :to="{ name: 'CommitDetail', params: { id: scope.row.id } }">
+          <el-button type="text" size="small">View Details</el-button>
+        </router-link>
+      </template>
+    </el-table-column>
+  </el-table>
 
-    <!-- 底部分页控件 -->
-    <el-pagination
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-        :current-page="currentPage"
-        :page-sizes="pageSizeOptions"
-        :page-size="form.page_size"
-        layout="total, sizes, prev, pager, next, jumper"
-        :total="searchResults.count"
-    />
-  </div>
+  <!-- 底部分页控件 -->
+  <el-pagination
+      v-if="searchResults.results && searchResults.results.length > 0"
+      @size-change="handleSizeChange"
+      @current-change="handleCurrentChange"
+      :current-page="currentPage"
+      :page-sizes="pageSizeOptions"
+      :page-size="form.page_size"
+      layout="total, sizes, prev, pager, next, jumper"
+      :total="searchResults.count"
+  />
 </template>
 
 <script lang="ts" setup>
@@ -127,6 +134,7 @@ import {useRepositoriesStore} from "@/store/repositories"
 import {fetchBranches, searchCommits} from '@/services/svn_api'
 import {debounce} from 'lodash' // 需要安装 lodash 库
 
+
 const store = useRepositoriesStore()
 const branches = ref([])
 const pageSizeOptions = [100, 500, 1000, 5000, 10000, 20000, 50000]
@@ -136,10 +144,8 @@ const currentPage = ref(1)
 // 设置默认的开始和结束时间
 const setDefaultDates = () => {
   const now = new Date()
-  const last_3month = new Date(now.getTime() - 24 * 60 * 60 * 1000 * 90)
-  // form.start_date = yesterday
-  // form.end_date = now
-  form.start_date = last_3month
+  const default_start_date = new Date(now.getTime() - 24 * 60 * 60 * 1000 * 90)
+  form.start_date = default_start_date
   form.end_date = null
 
 }

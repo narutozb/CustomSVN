@@ -1,6 +1,6 @@
 import re
-from django.db.models import OuterRef, Subquery, F, Q
-from rest_framework import status
+from django.db.models import OuterRef, Subquery, F, Q, Count
+from rest_framework import status, viewsets
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
@@ -8,17 +8,8 @@ from rest_framework.views import APIView
 
 from svn.models import FileChange, Commit
 from svn.query_functions.functions import query_file_changes_by_repo_name_and_file_changes
-from svn.serializers import QueryFileChangeSerializer, CommitSerializer
+from svn.serializers import QueryFileChangeSerializer, CommitSerializer, FileChangeSerializer, CommitDetailSerializer
 from svn.views.custom_class import CustomPagination
-
-
-def replace_case_insensitive(text, old, new):
-    # 定义一个函数，用于替换所有匹配的子串，不考虑大小写
-    pattern = re.compile(re.escape(old), re.IGNORECASE)
-    result = pattern.sub(new, text)
-    if not result.startswith('/'):
-        result = '/' + result
-    return result
 
 
 class FileChangeListLatestExistView(APIView):
@@ -139,6 +130,9 @@ class CommitSearchView(APIView):
     pagination_class = CustomPageNumberPagination
 
     def post(self, request):
+        '''
+        前端搜索数据使用
+        '''
         # 获取请求数据
         data = request.data
         repository_id = data.get('repository')
@@ -196,3 +190,14 @@ class CommitSearchView(APIView):
         # 序列化结果
         serializer = CommitSerializer(page, many=True)
         return paginator.get_paginated_response(serializer.data)
+
+
+class CommitDetailView(APIView):
+
+    def get(self, request, commit_id):
+        try:
+            commit = Commit.objects.get(id=commit_id)
+            serializer = CommitDetailSerializer(commit)
+            return Response(serializer.data)
+        except Commit.DoesNotExist:
+            return Response({"error": "Commit not found"}, status=status.HTTP_404_NOT_FOUND)

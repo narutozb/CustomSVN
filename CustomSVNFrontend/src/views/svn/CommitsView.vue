@@ -1,12 +1,9 @@
 <script setup lang="ts">
 
-
 </script>
 
 <template>
-  <li><a href="/svn/commits/">Search Commits</a></li>
 
-  <RouterView/>
 </template>
 
 <style scoped>
