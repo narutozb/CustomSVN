@@ -5,8 +5,6 @@ from rest_framework.views import APIView
 
 from svn.models import FileChange, Repository
 from svn.query_functions.functions import verify_repo, verify_svn_data
-from svn.serializers import QueryFileChangeSerializer, VerifyRepositorySerializer
-# Create your views here.
 from .models import FBXFile, Take, ModelSkeleton, TakeModelSkeleton
 from rest_framework import generics, permissions, viewsets
 from .serializers import FBXFileSerializer, TakeSerializer, ModelSkeletonSerializer, TakeModelSkeletonSerializer, \

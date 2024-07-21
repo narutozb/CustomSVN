@@ -1,8 +1,6 @@
 <template>
-  <el-form :model="form" label-width="auto" style="max-width: 600px">
-    <el-form-item label="Search Contents">
-      <el-input v-model="form.contents"/>
-    </el-form-item>
+
+  <el-form :model="form" label-width="auto" style="max-width: 800px" size="small">
     <el-form-item label="Repository">
       <el-select
           v-model="form.repository"
@@ -74,44 +72,88 @@
       <el-switch v-model="form.exact_search"/>
     </el-form-item>
     <el-form-item label="Search Options">
-      <el-checkbox-group v-model="form.type">
-        <el-checkbox value="Message" name="type">
+      <el-checkbox-group v-model="form.search_type">
+        <el-checkbox value="message" name="type">
           Message
         </el-checkbox>
-        <el-checkbox value="Username" name="type">
+        <el-checkbox value="auth" name="type">
           Username
         </el-checkbox>
-        <el-checkbox value="Revision" name="type">
+        <el-checkbox value="revision" name="type">
           Revision
         </el-checkbox>
       </el-checkbox-group>
+
+    </el-form-item>
+    <el-form-item label="Search Contents">
+      <el-input v-model="form.contents"/>
+    </el-form-item>
+    <el-form-item label="Page Size">
+      <el-select v-model="form.page_size" placeholder="Select page size">
+        <el-option
+            v-for="size in pageSizeOptions"
+            :key="size"
+            :label="size"
+            :value="size"
+        />
+      </el-select>
+    </el-form-item>
+    <el-form-item>
+      <el-button type="primary" @click="onSubmit">Search</el-button>
     </el-form-item>
 
-    <el-form-item>
-      <el-button type="primary" @click="onSubmit">Create</el-button>
-      <el-button>Cancel</el-button>
-    </el-form-item>
   </el-form>
+
+
+  <!-- 修改表格和分页控件 -->
+  <div v-if="searchResults.results && searchResults.results.length > 0">
+    <el-table :data="searchResults.results" style="width: 100%">
+      <el-table-column prop="revision" label="Revision" width="180"/>
+      <el-table-column prop="author" label="Author" width="180"/>
+      <el-table-column prop="date" label="Date" width="180">
+        <template #default="scope">
+          {{ $filters.formatDate(scope.row.date) }}
+        </template>
+      </el-table-column>
+      <el-table-column prop="message" label="Message"/>
+    </el-table>
+
+    <el-pagination
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+        :current-page="currentPage"
+        :page-sizes="pageSizeOptions"
+        :page-size="form.page_size"
+        layout="total, sizes, prev, pager, next, jumper"
+        :total="searchResults.count"
+    />
+  </div>
 </template>
 
 <script lang="ts" setup>
-import { computed, reactive, ref, watch } from 'vue'
-import { onMounted } from 'vue'
-import { useRepositoriesStore } from "@/store/repositories"
-import { fetchBranches } from '@/services/svn_api'
+
+import {computed, reactive, ref, watch} from 'vue'
+import {onMounted} from 'vue'
+import {useRepositoriesStore} from "@/store/repositories"
+import {fetchBranches, searchCommits} from '@/services/svn_api'
 
 const store = useRepositoriesStore()
 const branches = ref([])
+const pageSizeOptions = [100, 500, 1000, 5000, 10000, 20000, 50000]
+const currentPage = ref(1)
+
 
 // 设置默认的开始和结束时间
 const setDefaultDates = () => {
   const now = new Date()
-  const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000)
-
+  // const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+  // form.start_date = yesterday
+  // form.start_time = yesterday
+  form.start_date = null
+  form.start_time = null
   form.end_date = now
-  form.end_time = now
-  form.start_date = yesterday
-  form.start_time = yesterday
+  form.end_time = null
+
 }
 
 const loadBranches = async (repositoryId: string) => {
@@ -135,9 +177,7 @@ onMounted(async () => {
 })
 
 const handleChange = async (value: string) => {
-  console.log('选中的仓库ID:', value)
-  const selectedRepo = store.repositories.find(repo => repo.id === value)
-  console.log('选中的仓库详情:', selectedRepo)
+  // const selectedRepo = store.repositories.find(repo => repo.id === value)
   await loadBranches(value)
 }
 
@@ -147,7 +187,6 @@ const setDefaultBranches = () => {
 }
 
 const form = reactive({
-  contents: '',
   repository: computed({
     get: () => store.selectedRepository,
     set: (value) => store.setSelectedRepository(value)
@@ -157,8 +196,11 @@ const form = reactive({
   start_time: null as Date | null,
   end_date: null as Date | null,
   end_time: null as Date | null,
+  contents: '',
   exact_search: false,
-  type: [],
+  search_type: ['message', 'auth', 'revision'],
+  page_size: 100,
+
 })
 
 // 监听 store 中 selectedRepository 的变化
@@ -169,8 +211,38 @@ watch(() => store.selectedRepository, async (newValue) => {
   }
 })
 
-const onSubmit = () => {
-  console.log('submit!')
-  console.log(form)
+const searchResults = ref({
+  count: 0,
+  next: null,
+  previous: null,
+  results: [],
+})
+const handleSizeChange = (val: number) => {
+  form.page_size = val
+  currentPage.value = 1
+  onSubmit()
+}
+const handleCurrentChange = (val: number) => {
+  currentPage.value = val
+  onSubmit()
+}
+
+const onSubmit = async () => {
+  try {
+    const formattedData = {
+      ...form,
+      start_date: form.start_date && form.start_time ? new Date(form.start_date.setHours(form.start_time.getHours(), form.start_time.getMinutes())).toISOString() : null,
+      end_date: form.end_date && form.end_time ? new Date(form.end_date.setHours(form.end_time.getHours(), form.end_time.getMinutes())).toISOString() : null,
+      page: currentPage.value,
+      page_size: form.page_size,
+    }
+    console.log('Submitting:', formattedData)
+    const results = await searchCommits(formattedData)
+    searchResults.value = results
+    console.log('Search results:', results)
+  } catch (error) {
+    console.error('搜索失败:', error)
+    // 这里可以添加错误处理，比如显示一个错误消息
+  }
 }
 </script>

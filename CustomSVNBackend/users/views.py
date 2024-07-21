@@ -15,6 +15,8 @@ from rest_framework import viewsets, status
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from svn.models import Commit
+from svn.serializers import CommitQuerySerializer, CommitSerializer
 from .models import CustomUser
 from .serializers import UserSerializer
 
@@ -36,14 +38,6 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = CustomUser.objects.all()
     serializer_class = UserSerializer
 
-
-def logout_user(request):
-    if request.user.is_authenticated:
-        logout(request)
-        messages.success(request, f'退出登录')
-        return redirect('home')
-    else:
-        return redirect('home')
 
 
 class LogoutView(APIView):
@@ -69,8 +63,3 @@ class UserInfoView(APIView):
             'username': user.username,
             'email': user.email,
         })
-
-
-class TestAPI(APIView):
-    def get(self, request):
-        return Response({'msg': 12121212}, status=status.HTTP_200_OK)

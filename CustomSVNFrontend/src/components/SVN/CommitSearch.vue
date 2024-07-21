@@ -1,10 +1,8 @@
 <template>
   <h1>commits</h1>
+
   <div class="commit-search">
     <el-card class="search-form">
-      <template #header>
-        <h3>Commit 查询</h3>
-      </template>
       <el-form :model="searchForm" @submit.prevent="submitSearch">
         <el-form-item label="Revision">
           <el-input v-model="searchForm.revision"></el-input>
@@ -55,8 +53,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
-import { ElMessage } from 'element-plus';
+import {ref, reactive} from 'vue';
+import {ElMessage} from 'element-plus';
 import api from '@/services/api';
 
 const searchForm = reactive({
@@ -81,7 +79,7 @@ const submitSearch = async () => {
       search: searchForm.message,
       page: currentPage.value,
     };
-    const response = await api.get('api/svn/commits/', { params });
+    const response = await api.get('api/svn/commits/', {params});
     commits.value = response.data.results;
     total.value = response.data.count;
     ElMessage.success('查询成功');

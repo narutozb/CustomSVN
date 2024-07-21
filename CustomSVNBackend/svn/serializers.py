@@ -37,3 +37,14 @@ class RepositorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Repository
         fields = ['id', 'name', 'url', 'description', 'created_at', 'commits_count']
+
+
+class CommitQuerySerializer(serializers.Serializer):
+    repositories = serializers.ListField(
+        child=serializers.IntegerField(),
+        required=True
+    )
+    branches = serializers.ListField(
+        child=serializers.IntegerField(),
+        required=True
+    )

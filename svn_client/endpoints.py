@@ -10,7 +10,7 @@ class Endpoints:
     svn_commits = 'svn/commits/'
     receive_commits = 'svn/receive_commits/'  # 接收commits数据并且创建或更新commits数据
 
-    token_auth = 'api-token-auth/'  # 验证用户
+    token_auth = 'user/login/'  # 验证用户
 
     maya_sceneinfos = 'maya/mayafilesview/'  # 上传maya数据
 
