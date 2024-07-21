@@ -1,14 +1,13 @@
 import re
-
-from django.db.models import OuterRef, Subquery, F
+from django.db.models import OuterRef, Subquery, F, Q
 from rest_framework import status
 from rest_framework.response import Response
 
 from rest_framework.views import APIView
 
-from svn.models import FileChange
+from svn.models import FileChange, Commit
 from svn.query_functions.functions import query_file_changes_by_repo_name_and_file_changes
-from svn.serializers import QueryFileChangeSerializer
+from svn.serializers import QueryFileChangeSerializer, CommitSerializer
 from svn.views.custom_class import CustomPagination
 
 
@@ -128,3 +127,45 @@ class GetFileChangeByRevisionView(APIView):
                 'status': 'error', 'message': 'FileChange does not exist.如果有任意一个FileChange不存在，将返回404错误',
             },
                 status=status.HTTP_404_NOT_FOUND)
+
+
+class CommitSearchView(APIView):
+    def post(self, request):
+        # 获取请求数据
+        data = request.data
+        repository_id = data.get('repository')
+        branches = data.get('branches', [])
+        start_date = data.get('start_date')
+        end_date = data.get('end_date')
+        contents = data.get('contents')
+        exact_search = data.get('exact_search', False)
+        search_type = data.get('search_type', [])
+
+        # 开始构建查询
+        queryset = Commit.objects.filter(repository_id=repository_id)
+
+        if branches:
+            queryset = queryset.filter(branch_id__in=branches)
+
+        # 处理日期过滤
+        if start_date and end_date:
+            queryset = queryset.filter(date__range=[start_date, end_date])
+        elif start_date:
+            queryset = queryset.filter(date__gte=start_date)
+        elif end_date:
+            queryset = queryset.filter(date__lte=end_date)
+
+        # 处理内容搜索
+        if contents:
+            content_filter = Q()
+            if 'message' in search_type:
+                content_filter |= Q(message__icontains=contents) if not exact_search else Q(message__exact=contents)
+            if 'auth' in search_type:
+                content_filter |= Q(author__icontains=contents) if not exact_search else Q(author__exact=contents)
+            if 'revision' in search_type:
+                content_filter |= Q(revision__icontains=contents) if not exact_search else Q(revision__exact=contents)
+            queryset = queryset.filter(content_filter)
+
+        # 序列化结果
+        serializer = CommitSerializer(queryset, many=True)
+        return Response(serializer.data)

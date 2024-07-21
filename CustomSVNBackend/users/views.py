@@ -15,6 +15,8 @@ from rest_framework import viewsets, status
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from svn.models import Commit
+from svn.serializers import CommitQuerySerializer, CommitSerializer
 from .models import CustomUser
 from .serializers import UserSerializer
 
@@ -72,5 +74,22 @@ class UserInfoView(APIView):
 
 
 class TestAPI(APIView):
-    def get(self, request):
-        return Response({'msg': 12121212}, status=status.HTTP_200_OK)
+    def post(self, request):
+        print(request.data)
+        _data = request.data
+        data = {'repositories': [_data['repository']], 'branches': _data['branches']}
+        query_serializer = CommitQuerySerializer(data=data)
+
+        if not query_serializer.is_valid():
+            return Response(query_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        repositories = query_serializer.validated_data['repositories']
+        branches = query_serializer.validated_data['branches']
+
+        commits = Commit.objects.filter(
+            repository__id__in=repositories,
+            branch__id__in=branches
+        ).select_related('repository', 'branch')
+
+        serializer = CommitSerializer(commits, many=True)
+        return Response(serializer.data)

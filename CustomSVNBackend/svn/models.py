@@ -23,6 +23,9 @@ class Branch(models.Model):
     def __str__(self):
         return f'{self.repository.name}-{self.name}'
 
+    class Meta:
+        ordering = ['id']
+
 
 class Commit(models.Model):
     repository = models.ForeignKey(Repository, related_name='commits', on_delete=models.CASCADE)
@@ -49,6 +52,3 @@ class FileChange(models.Model):
 
     def __str__(self):
         return f"{self.id}-{self.path} ({self.action})"
-
-
-

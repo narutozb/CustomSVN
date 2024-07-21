@@ -11,3 +11,15 @@ export const fetchBranches = async (repositoryId: string) => {
         throw error; // 抛出错误，以便调用者可以处理
     }
 }
+
+
+
+export const searchCommits = async (data) => {
+    try {
+        const response = await api.post('api/svn/_commits/search/', data);
+        return response.data;
+    } catch (error) {
+        console.error('搜索提交失败:', error);
+        throw error;
+    }
+}
