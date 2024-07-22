@@ -1,6 +1,6 @@
 <template>
 
-  <el-form :model="form" label-width="auto" style="max-width: 800px" size="small">
+  <el-form :model="form" label-width="auto" style="max-width: 100%" size="small">
     <el-form-item label="Repository">
       <el-select
           v-model="form.repository"
@@ -28,7 +28,7 @@
         </el-checkbox>
       </el-checkbox-group>
     </el-form-item>
-    <el-form-item label="StartFrom">
+    <el-form-item label="Time Range">
       <el-col :span="11">
         <el-date-picker
             v-model="form.start_date"
@@ -37,8 +37,8 @@
             style="width: 100%"
         />
       </el-col>
-    </el-form-item>
-    <el-form-item label="EndFrom">
+      <el-col :span="2" style="text-align: center">-</el-col>
+
       <el-col :span="11">
         <el-date-picker
             v-model="form.end_date"
@@ -68,17 +68,6 @@
     <el-form-item label="Search Contents">
       <el-input v-model="form.contents"/>
     </el-form-item>
-    <el-form-item label="Page Size">
-      <el-select v-model="form.page_size" placeholder="Select page size">
-        <el-option
-            v-for="size in pageSizeOptions"
-            :key="size"
-            :label="size"
-            :value="size"
-        />
-      </el-select>
-    </el-form-item>
-
   </el-form>
 
 
