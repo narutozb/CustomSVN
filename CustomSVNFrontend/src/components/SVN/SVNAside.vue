@@ -1,6 +1,10 @@
 <template>
   <el-button type="primary" style="margin-left: 16px" @click="drawer = true">
-    SVN Navigation
+    Navigation
+    <el-icon>
+      <MapLocation/>
+    </el-icon>
+
   </el-button>
   <el-drawer v-model="drawer" title="Navigation" :with-header="true" size="80%">
     <div class="drawer-content">
@@ -37,7 +41,7 @@
       </div>
       <div class="content-section">
         <h2>SVN Navigation</h2>
-        提供SVN查询功能
+        Search Commits
 
       </div>
     </div>

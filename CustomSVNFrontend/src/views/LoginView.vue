@@ -2,11 +2,11 @@
   <div class="login-container">
     <el-card class="login-card">
       <template #header>
-        <h2 class="login-title">登录</h2>
+        <h2 class="login-title">Login</h2>
       </template>
       <el-form :model="loginForm" :rules="rules" ref="loginFormRef" @submit.prevent="handleSubmit">
         <el-form-item prop="username">
-          <el-input v-model="loginForm.username" placeholder="用户名">
+          <el-input v-model="loginForm.username" placeholder="Username">
             <template #prefix>
               <el-icon>
                 <User/>
@@ -15,7 +15,7 @@
           </el-input>
         </el-form-item>
         <el-form-item prop="password">
-          <el-input v-model="loginForm.password" type="password" placeholder="密码" show-password>
+          <el-input v-model="loginForm.password" type="password" placeholder="Password" show-password>
             <template #prefix>
               <el-icon>
                 <Lock/>
@@ -24,7 +24,7 @@
           </el-input>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" native-type="submit" :loading="loading" class="login-button">登录</el-button>
+          <el-button type="primary" native-type="submit" :loading="loading" class="login-button">Login</el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -32,13 +32,15 @@
 </template>
 
 <script setup lang="ts">
-import {ref, reactive} from 'vue';
-import {ElMessage} from 'element-plus';
-import {User, Lock} from '@element-plus/icons-vue';
-import {useUserStore} from '@/store/user';
-import type {FormInstance} from 'element-plus';
+import { ref, reactive } from 'vue';
+import { ElMessage } from 'element-plus';
+import { User, Lock } from '@element-plus/icons-vue';
+import { useUserStore } from '@/store/user';
+import { useRouter } from 'vue-router'; // 添加这行
+import type { FormInstance } from 'element-plus';
 
 const userStore = useUserStore();
+const router = useRouter(); // 添加这行
 const loginFormRef = ref<FormInstance>();
 const loading = ref(false);
 
@@ -48,30 +50,35 @@ const loginForm = reactive({
 });
 
 const rules = {
-  username: [{required: true, message: '请输入用户名', trigger: 'blur'}],
-  password: [{required: true, message: '请输入密码', trigger: 'blur'}],
+  username: [{ required: true, message: 'Input username', trigger: 'blur' }],
+  password: [{ required: true, message: 'Input password', trigger: 'blur' }],
 };
 
+// 修改 handleSubmit 函数
 const handleSubmit = async () => {
   if (!loginFormRef.value) return;
 
-  await loginFormRef.value.validate(async (valid) => {
-    if (valid) {
-      loading.value = true;
-      try {
-        await userStore.login(loginForm.username, loginForm.password);
-        ElMessage.success('Success to login');
-      } catch (error) {
-        console.error('Login error:', error);
-        ElMessage.error('Failed to login. Please check your username and password.');
-      } finally {
-        loading.value = false;
-      }
+  try {
+    loading.value = true;
+    await loginFormRef.value.validate();
+    await userStore.login(loginForm.username, loginForm.password);
+
+    // 登录成功后，检查是否有重定向 URL
+    const redirectUrl = localStorage.getItem('redirectUrl');
+    if (redirectUrl) {
+      localStorage.removeItem('redirectUrl');
+      router.push(redirectUrl);
     } else {
-      console.log('error submit!');
-      return false;
+      router.push('/');
     }
-  });
+
+    ElMessage.success('Login successful');
+  } catch (error) {
+    console.error('Login failed:', error);
+    ElMessage.error('Login failed. Please check your credentials.');
+  } finally {
+    loading.value = false;
+  }
 };
 </script>
 

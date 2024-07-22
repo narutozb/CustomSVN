@@ -1,17 +1,19 @@
 // src/store/repositories.ts
-import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import {defineStore} from 'pinia'
+import {ref} from 'vue'
 import api from "@/services/api"
-import { ElMessage } from "element-plus"
+import {ElMessage} from "element-plus"
+import type {Repository} from "@/services/interfaces";
+
 
 export const useRepositoriesStore = defineStore('repositories', () => {
-    const repositories = ref([])
-    const selectedRepository = ref('')
+    const repositories = ref<Repository[]>([])
+    const selectedRepository = ref<string>('')
 
     const fetchRepositories = async () => {
         try {
             const params = {}
-            const response = await api.get('api/svn/repositories/', { params })
+            const response = await api.get<{ results: Repository[] }>('api/svn/repositories/', {params})
             repositories.value = response.data.results
             // ElMessage.success('查询成功')
             if (repositories.value.length > 0) {
@@ -27,7 +29,5 @@ export const useRepositoriesStore = defineStore('repositories', () => {
         selectedRepository.value = id
     }
 
-    return { repositories, selectedRepository, fetchRepositories, setSelectedRepository }
+    return {repositories, selectedRepository, fetchRepositories, setSelectedRepository}
 })
-
-

@@ -132,11 +132,12 @@ import {computed, reactive, ref, watch} from 'vue'
 import {onMounted} from 'vue'
 import {useRepositoriesStore} from "@/store/repositories"
 import {fetchBranches, searchCommits} from '@/services/svn_api'
-import {debounce} from 'lodash' // 需要安装 lodash 库
+import {debounce} from 'lodash'
+import type {Branch} from "@/services/interfaces"; // 需要安装 lodash 库
 
 
 const store = useRepositoriesStore()
-const branches = ref([])
+const branches = ref<Branch[]>([])
 const pageSizeOptions = [100, 500, 1000, 5000, 10000, 20000, 50000]
 const currentPage = ref(1)
 
@@ -152,11 +153,10 @@ const setDefaultDates = () => {
 
 const loadBranches = async (repositoryId: string) => {
   try {
-    branches.value = await fetchBranches(repositoryId)
+    branches.value = await fetchBranches(repositoryId) as Branch[]
     setDefaultBranches()
   } catch (error) {
     console.error('获取分支列表失败:', error)
-    // 这里可以添加错误处理，比如显示一个错误消息
   }
 }
 
@@ -185,7 +185,7 @@ const form = reactive({
     get: () => store.selectedRepository,
     set: (value) => store.setSelectedRepository(value)
   }),
-  branches: [],
+  branches: [] as string[],
   start_date: null as Date | null,
   end_date: null as Date | null,
   contents: '',

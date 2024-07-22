@@ -1,11 +1,11 @@
 // router/index.ts
-import {createRouter, createWebHistory, RouteRecordRaw} from 'vue-router';
+import {createRouter, createWebHistory} from 'vue-router';
+import type {RouteRecordRaw} from "vue-router";
 import Home from '@/views/HomeView.vue';
 import Login from '@/views/LoginView.vue';
 import {useUserStore} from '@/store/user';
 import Layout from "@/views/LayoutView.vue";
 import SVNView from "@/views/svn/SVNView.vue"
-import CommitSearch from "@/components/SVN/CommitSearch.vue";
 import CommitDetail from "@/components/SVN/CommitDetail.vue";
 import CommitSearchView from "@/views/svn/CommitSearchView.vue";
 
@@ -58,6 +58,8 @@ router.beforeEach(async (to, from, next) => {
         }
     } else if (to.matched.some(record => record.meta.requiresAuth)) {
         if (!isAuthenticated) {
+            // 保存用户尝试访问的 URL
+            localStorage.setItem('redirectUrl', to.fullPath);
             next('/login');
         } else {
             next();

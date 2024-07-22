@@ -1,11 +1,12 @@
 import { defineStore } from 'pinia';
 import api from '@/services/api';
 import router from '@/router';
+import type {User} from "@/services/interfaces"
 
 export const useUserStore = defineStore('user', {
     state: () => ({
-        user: null,
-        token: null,
+        user: null as User | null,
+        token: null as string | null,
     }),
     actions: {
         async login(username: string, password: string) {
@@ -15,7 +16,7 @@ export const useUserStore = defineStore('user', {
                 localStorage.setItem('access_token', response.data.access);
                 localStorage.setItem('refresh_token', response.data.refresh);
                 await this.fetchUserInfo();
-                router.push('/');
+                // 移除这里的 router.push('/');，因为我们现在在 LoginView 中处理重定向
             } catch (error) {
                 console.error('Login failed:', error);
                 throw error;
@@ -38,7 +39,7 @@ export const useUserStore = defineStore('user', {
         async fetchUserInfo() {
             try {
                 const response = await api.get('api/user/me/');
-                this.user = response.data;
+                this.user = response.data as User;
             } catch (error) {
                 console.error('Failed to fetch user info:', error);
                 throw error;
