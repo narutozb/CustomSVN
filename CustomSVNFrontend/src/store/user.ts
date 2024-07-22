@@ -16,7 +16,7 @@ export const useUserStore = defineStore('user', {
                 localStorage.setItem('access_token', response.data.access);
                 localStorage.setItem('refresh_token', response.data.refresh);
                 await this.fetchUserInfo();
-                router.push('/');
+                // 移除这里的 router.push('/');，因为我们现在在 LoginView 中处理重定向
             } catch (error) {
                 console.error('Login failed:', error);
                 throw error;
