@@ -123,7 +123,7 @@ class GetFileChangeByRevisionView(APIView):
 
 class CustomPageNumberPagination(PageNumberPagination):
     page_size_query_param = 'page_size'
-    max_page_size = 100
+    max_page_size = 50000
 
 
 class CommitSearchView(APIView):
