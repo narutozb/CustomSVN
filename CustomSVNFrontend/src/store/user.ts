@@ -1,11 +1,12 @@
 import { defineStore } from 'pinia';
 import api from '@/services/api';
 import router from '@/router';
+import type {User} from "@/services/interfaces"
 
 export const useUserStore = defineStore('user', {
     state: () => ({
-        user: null,
-        token: null,
+        user: null as User | null,
+        token: null as string | null,
     }),
     actions: {
         async login(username: string, password: string) {
@@ -38,7 +39,7 @@ export const useUserStore = defineStore('user', {
         async fetchUserInfo() {
             try {
                 const response = await api.get('api/user/me/');
-                this.user = response.data;
+                this.user = response.data as User;
             } catch (error) {
                 console.error('Failed to fetch user info:', error);
                 throw error;

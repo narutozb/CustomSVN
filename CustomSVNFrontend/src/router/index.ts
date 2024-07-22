@@ -1,11 +1,11 @@
 // router/index.ts
-import {createRouter, createWebHistory, RouteRecordRaw} from 'vue-router';
+import {createRouter, createWebHistory} from 'vue-router';
+import type {RouteRecordRaw} from "vue-router";
 import Home from '@/views/HomeView.vue';
 import Login from '@/views/LoginView.vue';
 import {useUserStore} from '@/store/user';
 import Layout from "@/views/LayoutView.vue";
 import SVNView from "@/views/svn/SVNView.vue"
-import CommitSearch from "@/components/SVN/CommitSearch.vue";
 import CommitDetail from "@/components/SVN/CommitDetail.vue";
 import CommitSearchView from "@/views/svn/CommitSearchView.vue";
 

@@ -1,4 +1,5 @@
-import { App } from 'vue'
+// utils/filters.ts
+import type { App } from 'vue'
 import { format, parseISO } from 'date-fns'
 
 export function registerGlobalProperties(app: App) {

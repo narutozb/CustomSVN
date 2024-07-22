@@ -1,7 +1,8 @@
 // src/services/svn_api.ts
 import api from "@/services/api";
+import type {Branch, SearchCommitsData} from "@/services/interfaces";
 
-export const fetchBranches = async (repositoryId: string) => {
+export const fetchBranches = async (repositoryId: string): Promise<Branch[]> => {
     try {
         const response = await api.get(`api/svn/branches/?repository__id=${repositoryId}`);
         console.log(`api/branches/?repository__id=${repositoryId}`)
@@ -13,8 +14,7 @@ export const fetchBranches = async (repositoryId: string) => {
 }
 
 
-
-export const searchCommits = async (data) => {
+export const searchCommits = async (data:SearchCommitsData) => {
     try {
         const response = await api.post('api/svn/_commits/search/', data, {
             params: {

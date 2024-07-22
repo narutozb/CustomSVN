@@ -33,7 +33,7 @@
 
 <script setup lang="ts">
 import {ref, reactive} from 'vue';
-import {ElMessage} from 'element-plus';
+import {ElMessage, type FormValidateCallback} from 'element-plus';
 import {User, Lock} from '@element-plus/icons-vue';
 import {useUserStore} from '@/store/user';
 import type {FormInstance} from 'element-plus';
@@ -51,28 +51,26 @@ const rules = {
   username: [{required: true, message: '请输入用户名', trigger: 'blur'}],
   password: [{required: true, message: '请输入密码', trigger: 'blur'}],
 };
-
+// handleSubmit
 const handleSubmit = async () => {
-  if (!loginFormRef.value) return;
+  if (!loginFormRef.value) return
 
-  await loginFormRef.value.validate(async (valid) => {
+  const validateCallback: FormValidateCallback = async (valid) => {
     if (valid) {
-      loading.value = true;
       try {
-        await userStore.login(loginForm.username, loginForm.password);
-        ElMessage.success('Success to login');
+        await userStore.login(loginForm.username, loginForm.password)
+        // 登录成功后的逻辑
       } catch (error) {
-        console.error('Login error:', error);
-        ElMessage.error('Failed to login. Please check your username and password.');
-      } finally {
-        loading.value = false;
+        // 处理登录失败
+        console.error('Login failed:', error)
       }
     } else {
-      console.log('error submit!');
-      return false;
+      console.log('Form validation failed')
     }
-  });
-};
+  }
+
+  await loginFormRef.value.validate(validateCallback)
+}
 </script>
 
 <style scoped>
