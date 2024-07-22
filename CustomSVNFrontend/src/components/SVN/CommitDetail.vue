@@ -21,9 +21,11 @@
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { getCommitDetail } from '@/services/svn_api';
+import type {Commit} from "@/services/interfaces";
 
 const route = useRoute();
-const commit = ref(null);
+const commit = ref<Commit | null>(null);
+
 
 onMounted(async () => {
   const commitId = Number(route.params.id);
