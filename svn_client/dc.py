@@ -13,6 +13,7 @@ class SVNInfoLocalDC:
     last_change_rev: str = None
     last_changed_date: str = None
     node_kind: str = None
+    relative_url: str = None
 
 
 @dataclasses.dataclass
@@ -20,9 +21,8 @@ class SVNInfoLocalExtDC:
     '''
     除了必要的本地参数以外添加必要的自定义服务器所需要的属性
     '''
-    file_path: str = None
+    path: str = None
     revision: int = None
-    repo_name: str = None
 
 
 @dataclasses.dataclass
@@ -49,3 +49,17 @@ class FileChangeDC:
     path: str
     kind: str
     action: str
+
+
+@dataclasses.dataclass
+class FBXClientConfigDC:
+    repo: 'RepositoryCustomVerifyDC'
+    version: str = '0.0.3'  # 客户端版本号
+    local_svn_path = r'D:\svn_project_test\MyDataSVN'  # 本地仓库路径
+    FILE_SUFFIXES = ['.fbx', ]
+
+
+@dataclasses.dataclass
+class RepositoryCustomVerifyDC:
+    name: str
+    url: str

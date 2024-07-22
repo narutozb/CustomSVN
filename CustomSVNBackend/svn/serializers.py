@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Repository, Commit, FileChange
+from .models import Repository, Commit, FileChange, Branch
 
 
 class QueryFileChangeSerializer(serializers.ModelSerializer):
@@ -9,6 +9,12 @@ class QueryFileChangeSerializer(serializers.ModelSerializer):
 
     def get_view_file_path(self, obj):
         return f"File: {obj.path}"
+
+
+class BranchSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Branch
+        fields = ['id', 'name', 'repository']
 
 
 class FileChangeSerializer(serializers.ModelSerializer):
@@ -31,3 +37,22 @@ class RepositorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Repository
         fields = ['id', 'name', 'url', 'description', 'created_at', 'commits_count']
+
+
+class CommitQuerySerializer(serializers.Serializer):
+    repositories = serializers.ListField(
+        child=serializers.IntegerField(),
+        required=True
+    )
+    branches = serializers.ListField(
+        child=serializers.IntegerField(),
+        required=True
+    )
+
+
+class CommitDetailSerializer(serializers.ModelSerializer):
+    file_changes = FileChangeSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Commit
+        fields = ['id', 'revision', 'author', 'date', 'message', 'file_changes']

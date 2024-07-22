@@ -1,18 +1,14 @@
 <div class="col-md-6 offset-md-3">
-    <h1>Login</h1>
-
-    <form method="POST" action="{% url 'login' %}">
-        {% csrf_token %}
-        <br>
-        <form>
-            <div class="mb-3">
-                <input type="text" class="form-control" name="InputUsername" placeholder="Username">
-            </div>
-            <div class="mb-3">
-                <input type="password" class="form-control" name="InputPassword" placeholder="Password">
-            </div>
-            <button type="submit" class="btn btn-primary">Login</button>
+    <h2>Login</h2>
+    {% if access_token %}
+        <p>Access Token: {{ access_token }}</p>
+        <p>Refresh Token: {{ refresh_token }}</p>
+    {% else %}
+        <form method="post">
+            {% csrf_token %}
+            <input type="text" name="username" placeholder="Username"><br>
+            <input type="password" name="password" placeholder="Password"><br>
+            <input type="submit" value="Login">
         </form>
-
-    </form>
+    {% endif %}
 </div>

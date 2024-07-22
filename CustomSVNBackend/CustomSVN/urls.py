@@ -1,3 +1,4 @@
+# CustomSVN/urls.py
 """
 URL configuration for CustomSVN project.
 
@@ -16,19 +17,21 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from CustomSVN.views import home
 from users.views import CustomAuthToken
 
 urlpatterns = [
-    path('', home, name='home'),
     path('admin/', admin.site.urls),
-    path('api/api-token-auth/', CustomAuthToken.as_view(), name='api_token_auth'),  # 添加api-token-auth路径
     path('svn/', include('svn.urls')),
     path('api/svn/', include('svn.urls_api')),
     path('api/maya/', include('maya.urls_api')),
     path('maya/', include('maya.urls')),
-    path('user/', include('users.urls')),
     path('api/fbx/', include('fbx.urls_api')),
+    path('api/user/', include('users.urls')),
+
+
+    path('api-auth/', include('rest_framework.urls')),
+    # path('api-token-auth/', auth_views.obtain_auth_token),
 
 ]

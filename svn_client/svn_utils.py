@@ -14,7 +14,7 @@ def get_token(session, username, password):
     response = session.post(Endpoints.get_api_url(Endpoints.token_auth),
                             data={'username': username, 'password': password})
     if response.status_code == 200:
-        return response.json().get('token')
+        return response.json().get('access')  # JWT typically returns 'access' token
     return None
 
 
@@ -191,13 +191,18 @@ def get_local_last_changed_revision(svn_path):
     return None
 
 
-def get_local_file_svn_info(local_path: str):
+def get_local_file_svn_info(local_path: str, print_command=False):
     commands = ['svn', 'info', local_path]
-    result = subprocess.run(commands, stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE, text=True, check=True, env=SUBPROCESS_ENV)
+    if print_command:
+        print(' '.join(commands))
+
+    try:
+        result = subprocess.run(commands, stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE, text=True, check=True, env=SUBPROCESS_ENV)
+    except Exception as e:
+        return None
 
     svn_info = SVNInfoLocalDC()
-
     for line in result.stdout.splitlines():
         if line.startswith('URL:'):
             svn_info.url = line.split()[1]
@@ -213,6 +218,8 @@ def get_local_file_svn_info(local_path: str):
             svn_info.last_change_rev = line.split()[-1]
         if line.startswith('Last Changed Date:'):
             svn_info.last_changed_date = line.split(':', 1)[1].strip()
+        if line.startswith('Relative URL'):
+            svn_info.relative_url = line.split(':', 1)[1].strip().replace('^', '', 1)
 
     return svn_info
 

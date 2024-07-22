@@ -10,7 +10,7 @@ class Endpoints:
     svn_commits = 'svn/commits/'
     receive_commits = 'svn/receive_commits/'  # 接收commits数据并且创建或更新commits数据
 
-    token_auth = 'api-token-auth/'  # 验证用户
+    token_auth = 'user/login/'  # 验证用户
 
     maya_sceneinfos = 'maya/mayafilesview/'  # 上传maya数据
 
@@ -18,13 +18,17 @@ class Endpoints:
     receive_fbx_file = 'fbx/receive_fbx_file_data/'  # 接收并储存fbx_file数据
 
     @classmethod
-    def get_api_url(cls, endpoint):
+    def get_api_url(cls, endpoint, print_url=False):
         '''
         获取完整的URL
+        :param print_url:
         :param endpoint:
         :return:
         '''
-        return cls.api_url + endpoint
+        result = cls.api_url + endpoint
+        if print_url:
+            print(result)
+        return result
 
     @classmethod
     def get_latest_revision_api_url(cls, repo_name):
