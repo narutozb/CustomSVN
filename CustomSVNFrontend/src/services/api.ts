@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'http://localhost:8000/',  // 根据您的Django服务器地址调整
+    baseURL: '/',  // 根据您的Django服务器地址调整
 });
 
 api.interceptors.request.use((config) => {
