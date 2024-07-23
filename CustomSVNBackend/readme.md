@@ -44,30 +44,97 @@ python run_django.py
 ```
 
 ```
-server{
-    listen  80;
-    server_name  HOSTNAME;
-    
-    # 前端dist路径
-    location / {
-    root   D:/github/CustomSVN/CustomSVNFrontend/dist/;
-    index  index.html index.htm;
-    try_files $uri $uri/ /index.html;
-    }
-    
-    # 后端地址:端口
-    # 与后端运行的端口保持一致
-    location /api/ {
-    proxy_pass http://127.0.0.1:8000;
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    }
-    
-    # 后端静态文件目录
-    location /static/ {
-    alias DjangoProjectPath/static/;
-    }
+
+#user  nobody;
+worker_processes  5;
+
+#error_log  logs/error.log;
+#error_log  logs/error.log  notice;
+#error_log  logs/error.log  info;
+
+#pid        logs/nginx.pid;
+
+
+events {
+    worker_connections  1024;
 }
+
+
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+
+    #log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+    #                  '$status $body_bytes_sent "$http_referer" '
+    #                  '"$http_user_agent" "$http_x_forwarded_for"';
+
+    #access_log  logs/access.log  main;
+
+    sendfile        on;
+    #tcp_nopush     on;
+
+    #keepalive_timeout  0;
+    keepalive_timeout  65;
+    client_max_body_size 20M;  # 允许最大 20MB 的上传
+
+    #gzip  on;
+
+    server {
+        listen       80;
+        server_name  QIAOYUANZHEN;
+
+        #charset koi8-r;
+
+        #access_log  logs/host.access.log  main;
+
+        location / {
+            root   D:/github/CustomSVN/CustomSVNFrontend/dist/;
+            index  index.html index.htm;
+            try_files $uri $uri/ /index.html;
+        }
+
+        error_page   500 502 503 504  /50x.html;
+        location = /50x.html {
+            root   html;
+        }
+        location /api/ {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        # 添加以下CORS相关头部
+        add_header 'Access-Control-Allow-Origin' '*';
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, PUT, DELETE';
+        add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization';
+        add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range';
+
+        if ($request_method = 'OPTIONS') {
+            add_header 'Access-Control-Max-Age' 1728000;
+            add_header 'Content-Type' 'text/plain charset=UTF-8';
+            add_header 'Content-Length' 0;
+            return 204;
+        }
+        }
+        location /static/ {
+        alias D:/github/CustomSVN/CustomSVNBackend/static/;
+        }
+        location /media/ {
+        alias D:/github/CustomSVN/CustomSVNBackend/media/;
+        }
+
+        location /admin/ {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        # 添加以下CORS相关头部
+        add_header 'Access-Control-Allow-Origin' '*';
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, PUT, DELETE';
+        add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization';
+        add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range';
+        }
+    }
+ 
+}
+
 
 ```
 
