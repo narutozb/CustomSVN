@@ -1,7 +1,6 @@
 <template>
   <el-header class="app-header">
     <div class="header-left">
-<!--      <img src="@/assets/logo2.webp" alt="Logo" class="logo"/>-->
       <h1 class="site-title">Custom SVN</h1>
     </div>
     <el-menu
@@ -11,10 +10,9 @@
         @select="handleSelect"
         router
     >
-                  <el-menu-item index="1" route="/" >Home</el-menu-item>
-      <!--            <el-menu-item index="2" route="/character" >CharacterManager</el-menu-item>-->
-      <!--            <el-menu-item index="3" route="/task">Task</el-menu-item>-->
-      <el-menu-item index="4" route="/svn">SVN</el-menu-item>
+      <el-menu-item v-for="item in menuItems" :key="item.index" :index="item.index" :route="item.route">
+        {{ item.text }}
+      </el-menu-item>
     </el-menu>
 
     <div class="header-right">
@@ -47,54 +45,37 @@
 </template>
 
 <script setup lang="ts">
-import {ElMessage} from 'element-plus'
-import {ArrowDown} from '@element-plus/icons-vue'
-import {useUserStore} from '@/store/user'
-import {ref, computed, onMounted, watch} from 'vue'
-import {useRouter, useRoute} from 'vue-router'
+import { ElMessage } from 'element-plus'
+import { ArrowDown } from '@element-plus/icons-vue'
+import { useUserStore } from '@/store/user'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 
 const router = useRouter()
 const userStore = useUserStore()
+const route = useRoute()
 
 const activeIndex = ref('1')
 
-
 const isLoggedIn = computed(() => !!userStore.user)
 const username = computed(() => userStore.user?.username || '')
-const route = useRoute()
+
+// 定义菜单项
+const menuItems = [
+  { index: '1', route: '/', text: 'Home' },
+  { index: '2', route: '/character', text: 'CharacterManager' },
+  // { index: '3', route: '/task', text: 'Task' },  // 注释掉的菜单项
+  { index: '4', route: '/svn', text: 'SVN' },
+]
 
 const setActiveIndex = () => {
   const path = route.path
-  switch (path) {
-    case '/':
-      activeIndex.value = '1'
-      break
-    case '/character':
-      activeIndex.value = '2'
-      break
-    case '/task':
-      activeIndex.value = '3'
-      break
-    case '/svn':
-      activeIndex.value = '4'
-      break
-    default:
-      if (path.startsWith('/svn')) {
-        activeIndex.value = '4'
-      } else if (path.startsWith('/character')) {
-        activeIndex.value = '2'
-      } else if (path.startsWith('/task')) {
-        activeIndex.value = '3'
-      } else {
-        activeIndex.value = ''
-      }
-  }
+  const matchedItem = menuItems.find(item => path.startsWith(item.route))
+  activeIndex.value = matchedItem ? matchedItem.index : ''
 }
 
-
 const handleSelect = (key: string, keyPath: string[]) => {
-  // 由于添加了 router 属性，这个函数可以简化或移除
-  console.log(key, keyPath);
+  console.log(key, keyPath)
 }
 
 const handleCommand = (command: string) => {
@@ -107,12 +88,11 @@ const handleCommand = (command: string) => {
       break
     case 'logout':
       userStore.logout()
-      ElMessage.success('Successes to logout')
+      ElMessage.success('Successfully logged out')
       router.push('/login')
       break
   }
 }
-
 
 onMounted(() => {
   setActiveIndex()
@@ -121,7 +101,6 @@ onMounted(() => {
 watch(() => route.path, () => {
   setActiveIndex()
 })
-
 </script>
 
 <style scoped>
