@@ -1,3 +1,4 @@
+// src/services/interfaces.ts
 export interface SearchCommitsData {
     page: number;
     page_size: number;
@@ -30,4 +31,17 @@ export interface Commit {
 export interface User {
     username: string;
     // 添加其他用户属性
+}
+
+
+export interface Character {
+    id?: number;
+    name: string;
+    character_id: string;
+    description?: string;
+    height?: number;
+    gender?: number;
+    race?: number;
+    tags?: number[];
+    thumbnails?: Array<{ name: string; image: string }>;
 }
