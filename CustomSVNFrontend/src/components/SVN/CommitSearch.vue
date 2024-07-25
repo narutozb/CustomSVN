@@ -118,20 +118,34 @@
 </template>
 
 <script lang="ts" setup>
-
-import {computed, reactive, ref, watch} from 'vue'
-import {onMounted} from 'vue'
-import {useRepositoriesStore} from "@/store/repositories"
-import {fetchBranches, searchCommits} from '@/services/svn_api'
-import {debounce} from 'lodash'
-import type {Branch} from "@/services/interfaces"; // 需要安装 lodash 库
-
+import { computed, reactive, ref, watch } from 'vue'
+import { onMounted } from 'vue'
+import { useRepositoriesStore } from "@/store/repositories"
+import { fetchBranches, searchCommits } from '@/services/svn_api'
+import { debounce } from 'lodash'
+import type { Branch } from "@/services/interfaces"
 
 const store = useRepositoriesStore()
 const branches = ref<Branch[]>([])
 const pageSizeOptions = [100, 500, 1000, 5000, 10000, 20000, 50000]
 const currentPage = ref(1)
 
+const form = reactive({
+  repository: computed({
+    get: () => store.selectedRepository,
+    set: (value) => {
+      store.setSelectedRepository(value)
+      handleChange(value)
+    }
+  }),
+  branches: [] as string[],
+  start_date: null as Date | null,
+  end_date: null as Date | null,
+  contents: '',
+  exact_search: false,
+  search_type: ['message', 'auth', 'revision', 'file_changes'],
+  page_size: 100,
+})
 
 // 设置默认的开始和结束时间
 const setDefaultDates = () => {
@@ -139,7 +153,6 @@ const setDefaultDates = () => {
   const default_start_date = new Date(now.getTime() - 24 * 60 * 60 * 1000 * 90)
   form.start_date = default_start_date
   form.end_date = null
-
 }
 
 const loadBranches = async (repositoryId: string) => {
@@ -151,18 +164,7 @@ const loadBranches = async (repositoryId: string) => {
   }
 }
 
-onMounted(async () => {
-  await store.fetchRepositories()
-  setDefaultDates()
-  if (store.repositories.length > 0) {
-    const defaultRepositoryId = store.repositories[0].id
-    store.setSelectedRepository(defaultRepositoryId)
-    await loadBranches(defaultRepositoryId)
-  }
-})
-
 const handleChange = async (value: string) => {
-  // const selectedRepo = store.repositories.find(repo => repo.id === value)
   await loadBranches(value)
 }
 
@@ -171,38 +173,27 @@ const setDefaultBranches = () => {
   form.branches = trunkBranch ? [trunkBranch.id] : []
 }
 
-const form = reactive({
-  repository: computed({
-    get: () => store.selectedRepository,
-    set: (value) => store.setSelectedRepository(value),
-    search_type: ['message', 'auth', 'revision', 'file_changes'],
-
-  }),
-  branches: [] as string[],
-  start_date: null as Date | null,
-  end_date: null as Date | null,
-  contents: '',
-  exact_search: false,
-  search_type: ['message', 'auth', 'revision'],
-  page_size: 100,
-})
-
 // 监听表单数据的变化
 watch(form, () => {
   currentPage.value = 1 // 重置页码
   debouncedSearch()
-}, {deep: true})
-
-// 监听页码变化
-watch(currentPage, () => {
-  debouncedSearch()
-})
+}, { deep: true })
 
 const searchResults = ref({
   count: 0,
   next: null,
   previous: null,
   results: [],
+})
+
+onMounted(async () => {
+  await store.fetchRepositories()
+  setDefaultDates()
+  if (store.repositories.length > 0) {
+    const defaultRepositoryId = store.repositories[0].id
+    store.setSelectedRepository(defaultRepositoryId)
+    await loadBranches(defaultRepositoryId)
+  }
 })
 
 // 使用 debounce 来避免频繁触发搜索
