@@ -2,16 +2,29 @@
   <div class="character-manager">
     <h1>Character Manager</h1>
     <el-button type="primary" @click="showCreateDialog">Create New Character</el-button>
+
+    <!-- 添加缩略图尺寸控制器 -->
+    <div class="thumbnail-size-controller">
+      <span>Thumbnail Size: {{ thumbnailSize }}px</span>
+      <el-slider
+          v-model="thumbnailSize"
+          :min="50"
+          :max="500"
+          :step="10"
+          @change="updateThumbnailSize"
+      ></el-slider>
+    </div>
+
     <el-table :data="characters" style="width: 100%">
-      <el-table-column label="Thumbnail" width="100">
+      <el-table-column label="Thumbnail" :width="thumbnailSize + 20">
         <template #default="scope">
           <el-image
               v-if="scope.row.thumbnails && scope.row.thumbnails.length > 0"
               :src="scope.row.thumbnails[0].image"
               :preview-src-list="[scope.row.thumbnails[0].image]"
               :initial-index="0"
-              fit="contain"
-              :style="{ maxWidth: thumbnailSize + 'px', maxHeight: thumbnailSize + 'px', width: 'auto', height: 'auto' }"
+              fit="cover"
+              :style="{ width: thumbnailSize + 'px', height: thumbnailSize + 'px' }"
               :preview-teleported="true"
               :title="`${scope.row.name} (ID: ${scope.row.character_id})`"
           />
@@ -67,11 +80,30 @@
               :auto-upload="false"
               :on-change="handleFileChange"
               :on-remove="handleFileRemove"
+              :on-preview="handlePreview"
+              :limit="maxThumbnails"
+              :disabled="fileList.length >= maxThumbnails"
               drag
           >
-            <el-icon>
-              <plus/>
+            <el-icon v-if="fileList.length < maxThumbnails">
+              <plus />
             </el-icon>
+            <template #file="{ file }">
+              <img class="el-upload-list__item-thumbnail" :src="file.url" alt="" />
+              <span class="el-upload-list__item-actions">
+        <span class="el-upload-list__item-preview" @click="handlePreview(file)">
+          <el-icon><zoom-in /></el-icon>
+        </span>
+        <span class="el-upload-list__item-delete" @click="handleFileRemove(file)">
+          <el-icon><delete /></el-icon>
+        </span>
+      </span>
+            </template>
+            <template #tip>
+              <div class="el-upload__tip">
+                Drag files here or click to upload. Maximum {{ maxThumbnails }} images allowed.
+              </div>
+            </template>
           </el-upload>
         </el-form-item>
       </el-form>
@@ -84,23 +116,29 @@
       </template>
     </el-dialog>
   </div>
+  <el-dialog v-model="previewVisible" title="Image Preview">
+    <img :src="previewImage" style="width: 100%"/>
+  </el-dialog>
 </template>
 
 <script lang="ts">
-import {defineComponent, ref, onMounted} from 'vue'
+import { defineComponent, ref, onMounted, watch } from 'vue'
 import {ElMessage, ElMessageBox} from 'element-plus'
 import {characterApi} from "@/services/character_api"
-import {Plus} from '@element-plus/icons-vue'
+import {Plus, ZoomIn, Delete} from '@element-plus/icons-vue'
 import type {Character} from "@/services/interfaces";
 
 export default defineComponent({
   name: 'CharacterManager',
-  components: {Plus},
+  components: {Plus, ZoomIn, Delete},
   setup() {
     const characters = ref<Character[]>([])
     const genders = ref<Array<{ id: number; name: string }>>([])
     const races = ref<Array<{ id: number; name: string }>>([])
     const tags = ref<Array<{ id: number; name: string }>>([])
+    const maxThumbnails = ref(3) // 默认值，后面会从API获取
+    const previewVisible = ref(false)
+    const previewImage = ref('')
 
     const initialCharacter: Character = {
       name: '',
@@ -117,7 +155,18 @@ export default defineComponent({
     const dialogVisible = ref(false)
     const currentCharacter = ref<Character>({...initialCharacter});
     const isEditing = ref(false)
-    const thumbnailSize = ref(256)
+    const thumbnailSize = ref(100) // 默认缩略图尺寸
+
+    const updateThumbnailSize = (newSize: number) => {
+      thumbnailSize.value = newSize
+    }
+
+    // 使用 watch 来监听 thumbnailSize 的变化
+    watch(thumbnailSize, (newSize) => {
+      // 如果需要，这里可以添加额外的逻辑
+      console.log('Thumbnail size changed to:', newSize)
+    })
+
     const fileList = ref<Array<{ name: string; url: string; status?: string; uid?: string }>>([])
 
 
@@ -193,11 +242,34 @@ export default defineComponent({
       }
     }
 
+    const fetchMaxThumbnails = async () => {
+      try {
+        const response = await characterApi.fetchMaxThumbnails()
+        maxThumbnails.value = response.max_thumbnails
+      } catch (error) {
+        console.error('Error fetching max thumbnails:', error)
+        ElMessage.error('Failed to fetch max thumbnails count')
+      }
+    }
+
+    const handlePreview = (file: any) => {
+      previewImage.value = file.url
+      previewVisible.value = true
+    }
+
     const handleFileChange = (file: any) => {
       const isImage = file.raw.type.startsWith('image/')
       if (!isImage) {
         ElMessage.error('You can only upload image files!')
         return false
+      }
+      if (fileList.value.length >= maxThumbnails.value) {
+        ElMessage.warning(`You can only upload a maximum of ${maxThumbnails.value} images.`)
+        return false
+      }
+      // 如果是拖拽上传，file.status 可能是 undefined，所以我们手动设置它
+      if (!file.status) {
+        file.status = 'ready'
       }
       return true
     }
@@ -258,7 +330,10 @@ export default defineComponent({
       dialogVisible.value = true
     }
 
-    onMounted(fetchData)
+    onMounted(() => {
+      fetchData()
+      fetchMaxThumbnails()
+    })
 
     return {
       characters,
@@ -275,9 +350,30 @@ export default defineComponent({
       thumbnailSize,
       fileList,
       handleFileChange,
-      handleFileRemove
+      handleFileRemove,
+      maxThumbnails,
+      previewVisible,
+      previewImage,
+      handlePreview,
+      updateThumbnailSize,
     }
   }
 })
 </script>
 
+<style scoped>
+.thumbnail-size-controller {
+  margin: 20px 0;
+  display: flex;
+  align-items: center;
+}
+
+.thumbnail-size-controller span {
+  margin-right: 10px;
+  min-width: 150px;
+}
+
+.thumbnail-size-controller .el-slider {
+  width: 200px;
+}
+</style>

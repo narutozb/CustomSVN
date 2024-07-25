@@ -52,8 +52,8 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
 const router = useRouter()
-const userStore = useUserStore()
 const route = useRoute()
+const userStore = useUserStore()
 
 const activeIndex = ref('1')
 
@@ -69,9 +69,22 @@ const menuItems = [
 ]
 
 const setActiveIndex = () => {
-  const path = route.path
-  const matchedItem = menuItems.find(item => path.startsWith(item.route))
-  activeIndex.value = matchedItem ? matchedItem.index : ''
+  const currentPath = route.path
+  const matchedRoutes = route.matched.map(record => record.path)
+
+  let bestMatch = ''
+  let bestMatchIndex = ''
+
+  menuItems.forEach(item => {
+    if (matchedRoutes.includes(item.route) || currentPath.startsWith(item.route)) {
+      if (item.route.length > bestMatch.length) {
+        bestMatch = item.route
+        bestMatchIndex = item.index
+      }
+    }
+  })
+
+  activeIndex.value = bestMatchIndex || ''
 }
 
 const handleSelect = (key: string, keyPath: string[]) => {

@@ -62,8 +62,10 @@
         <el-checkbox value="revision" name="type">
           Revision
         </el-checkbox>
+        <el-checkbox value="file_changes" name="type">
+          FileChange
+        </el-checkbox>
       </el-checkbox-group>
-
     </el-form-item>
     <el-form-item label="Search Contents">
       <el-input v-model="form.contents"/>
@@ -172,7 +174,9 @@ const setDefaultBranches = () => {
 const form = reactive({
   repository: computed({
     get: () => store.selectedRepository,
-    set: (value) => store.setSelectedRepository(value)
+    set: (value) => store.setSelectedRepository(value),
+    search_type: ['message', 'auth', 'revision', 'file_changes'],
+
   }),
   branches: [] as string[],
   start_date: null as Date | null,
@@ -204,8 +208,8 @@ const searchResults = ref({
 // 使用 debounce 来避免频繁触发搜索
 const debouncedSearch = debounce(async () => {
   try {
-    let start_date = form.start_date ? form.start_date.toISOString().split('T')[0] : null;
-    let end_date = form.end_date ? form.end_date.toISOString().split('T')[0] : null;
+    let start_date = form.start_date ? new Date(form.start_date.getTime() - form.start_date.getTimezoneOffset() * 60000).toISOString().split('T')[0] : null;
+    let end_date = form.end_date ? new Date(form.end_date.getTime() - form.end_date.getTimezoneOffset() * 60000).toISOString().split('T')[0] : null;
 
     const formattedData = {
       ...form,
@@ -215,13 +219,12 @@ const debouncedSearch = debounce(async () => {
       page_size: form.page_size,
     };
 
-    console.log('Submitting:', formattedData);
+    console.log('Submitting:', JSON.stringify(formattedData, null, 2));
     const results = await searchCommits(formattedData);
     searchResults.value = results;
-    console.log('Search results:', results);
+    console.log('Search results:', JSON.stringify(results, null, 2));
   } catch (error) {
     console.error('搜索失败:', error);
-    // 这里可以添加错误处理，比如显示一个错误消息
   }
 }, 500);
 

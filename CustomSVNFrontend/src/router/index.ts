@@ -39,7 +39,8 @@ const routes: Array<RouteRecordRaw> = [
             {
                 path: '/character',
                 component: CharacterManager
-            }
+            },
+
         ],
     },
     {path: '/login', component: Login},

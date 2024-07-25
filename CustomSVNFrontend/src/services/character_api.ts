@@ -1,6 +1,7 @@
 // src/services/character_api.ts
 import api from "@/services/api";
 import type {Character} from "@/services/interfaces";
+
 export const characterApi = {
     fetchCharacters: async (): Promise<Character[]> => {
         const response = await api.get('/api/character/characters/');
@@ -24,19 +25,23 @@ export const characterApi = {
 
     createCharacter: async (character: FormData): Promise<Character> => {
         const response = await api.post('/api/character/characters/', character, {
-            headers: { 'Content-Type': 'multipart/form-data' }
+            headers: {'Content-Type': 'multipart/form-data'}
         });
         return response.data;
     },
 
     updateCharacter: async (id: number, character: FormData): Promise<Character> => {
         const response = await api.put(`/api/character/characters/${id}/`, character, {
-            headers: { 'Content-Type': 'multipart/form-data' }
+            headers: {'Content-Type': 'multipart/form-data'}
         });
         return response.data;
     },
 
     deleteCharacter: async (id: number): Promise<void> => {
         await api.delete(`/api/character/characters/${id}/`);
-    }
+    },
+    fetchMaxThumbnails: async (): Promise<{ max_thumbnails: number }> => {
+        const response = await api.get('/api/character/max-thumbnails/');
+        return response.data;
+    },
 };

@@ -15,7 +15,6 @@ export interface Repository {
     // 添加其他必要的属性
 }
 
-// 在 <script> 标签内添加
 export interface Commit {
     revision: string;
     author: string;

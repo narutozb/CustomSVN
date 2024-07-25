@@ -141,7 +141,6 @@ LANGUAGES = [
     ('en', 'English'),
 ]
 TIME_ZONE = 'Asia/Tokyo'
-
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
