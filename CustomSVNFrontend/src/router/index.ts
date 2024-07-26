@@ -8,6 +8,7 @@ import Layout from "@/views/LayoutView.vue";
 import SVNView from "@/views/svn/SVNView.vue"
 import CommitDetail from "@/components/SVN/CommitDetail.vue";
 import CommitSearchView from "@/views/svn/CommitSearchView.vue";
+import CharacterManager from "@/components/Character/CharacterManager.vue";
 
 const routes: Array<RouteRecordRaw> = [
     {
@@ -35,6 +36,11 @@ const routes: Array<RouteRecordRaw> = [
                     }
                 ]
             },
+            {
+                path: '/character',
+                component: CharacterManager
+            },
+
         ],
     },
     {path: '/login', component: Login},

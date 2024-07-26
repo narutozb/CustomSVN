@@ -1,0 +1,9 @@
+/* admin/css/character_admin.css */
+.field-get_items {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.field-get_items strong {
+    color: #447e9b;
+}

@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-uqi%jggvj5v9#^toz#tg^f54$e+6#ws!iyb)(27!8@e(0w(pd(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '*', 'QIAOYUANZHEN', '192.168.3.4','' ]
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '*', 'QIAOYUANZHEN', '192.168.3.4', '']
 CSRF_TRUSTED_ORIGINS = ['http://QIAOYUANZHEN', ]
 
 # Application definition
@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'svn.apps.SvnConfig',
     'maya.apps.MayaConfig',
     'fbx.apps.FbxConfig',
+    'character.apps.CharacterConfig',
     'django_filters'  # https://github.com/carltongibson/django-filter
 ]
 
@@ -60,7 +61,7 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 100,
+    'PAGE_SIZE': 500,
 }
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
@@ -140,7 +141,6 @@ LANGUAGES = [
     ('en', 'English'),
 ]
 TIME_ZONE = 'Asia/Tokyo'
-
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
@@ -160,3 +160,10 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=30),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=60),
 }
+
+# 媒体文件配置
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# character的app的配置
+MAX_THUMBNAILS_PER_CHARACTER = 3

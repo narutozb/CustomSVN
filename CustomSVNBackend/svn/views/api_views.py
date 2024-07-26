@@ -1,5 +1,8 @@
 import re
+from datetime import timedelta, datetime, time
+
 from django.db.models import OuterRef, Subquery, F, Q, Count
+from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
@@ -143,53 +146,70 @@ class CommitSearchView(APIView):
         exact_search = data.get('exact_search', False)
         search_type = data.get('search_type', [])
 
+        print(start_date)
+        print(end_date)
+
         # 开始构建查询
         queryset = Commit.objects.filter(repository_id=repository_id)
 
         if branches:
             queryset = queryset.filter(branch_id__in=branches)
 
-        # 处理日期过滤
-        if start_date and end_date:
-            queryset = queryset.filter(date__range=[start_date, end_date])
-        elif start_date:
-            queryset = queryset.filter(date__gte=start_date)
-        elif end_date:
-            queryset = queryset.filter(date__lte=end_date)
+            print(f"Received start_date: {start_date}")
+            print(f"Received end_date: {end_date}")
+            # 在处理日期时
+            if start_date:
+                start_datetime = timezone.localtime(
+                    timezone.make_aware(datetime.combine(datetime.strptime(start_date, '%Y-%m-%d'), time.min)))
+            else:
+                start_datetime = None
 
-        # 处理内容搜索
-        if contents:
-            content_filter = Q()
-            for search_field in search_type:
-                if search_field == 'revision':
-                    if contents.isdigit():
-                        if exact_search:
-                            content_filter |= Q(revision=int(contents))
-                        else:
-                            content_filter |= Q(revision__icontains=contents)
-                    elif exact_search:
-                        # 如果是精确搜索且内容不是数字，则返回空结果
-                        return Response({'results': [], 'count': 0})
-                elif search_field == 'message':
-                    if exact_search:
-                        content_filter |= Q(message__exact=contents)
-                    else:
-                        content_filter |= Q(message__icontains=contents)
-                elif search_field == 'auth':  # 这里改为 'author'
-                    if exact_search:
-                        content_filter |= Q(author__exact=contents)
-                    else:
-                        content_filter |= Q(author__icontains=contents)
+            if end_date:
+                end_datetime = timezone.localtime(
+                    timezone.make_aware(datetime.combine(datetime.strptime(end_date, '%Y-%m-%d'), time.max)))
+            else:
+                end_datetime = None
 
-            queryset = queryset.filter(content_filter)
+            print(f"Localized start_datetime: {start_datetime}")
+            print(f"Localized end_datetime: {end_datetime}")
+            # 处理日期过滤
+            if start_date or end_date:
+                if start_date:
+                    start_datetime = timezone.make_aware(
+                        datetime.combine(datetime.strptime(start_date, '%Y-%m-%d'), time.min))
+                else:
+                    start_datetime = None
 
-        # 应用分页
-        paginator = self.pagination_class()
-        page = paginator.paginate_queryset(queryset, request)
+                if end_date:
+                    end_datetime = timezone.make_aware(
+                        datetime.combine(datetime.strptime(end_date, '%Y-%m-%d'), time.max))
+                else:
+                    end_datetime = None
 
-        # 序列化结果
-        serializer = CommitSerializer(page, many=True)
-        return paginator.get_paginated_response(serializer.data)
+                print(f"Processed start_datetime: {start_datetime}")
+                print(f"Processed end_datetime: {end_datetime}")
+
+                if start_datetime and end_datetime:
+                    queryset = queryset.filter(date__range=(start_datetime, end_datetime))
+                elif start_datetime:
+                    queryset = queryset.filter(date__gte=start_datetime)
+                elif end_datetime:
+                    queryset = queryset.filter(date__lte=end_datetime)
+
+            # 添加 FileChange 搜索
+            if 'file_changes' in search_type and contents:
+                queryset = queryset.filter(file_changes__path__icontains=contents)
+
+            # 在执行查询之前，打印 SQL 查询
+            print(queryset.query)
+
+            # 应用分页
+            paginator = self.pagination_class()
+            page = paginator.paginate_queryset(queryset, request)
+
+            # 序列化结果
+            serializer = CommitSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
 
 
 class CommitDetailView(APIView):

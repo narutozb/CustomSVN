@@ -62,8 +62,10 @@
         <el-checkbox value="revision" name="type">
           Revision
         </el-checkbox>
+        <el-checkbox value="file_changes" name="type">
+          FileChange
+        </el-checkbox>
       </el-checkbox-group>
-
     </el-form-item>
     <el-form-item label="Search Contents">
       <el-input v-model="form.contents"/>
@@ -116,20 +118,34 @@
 </template>
 
 <script lang="ts" setup>
-
-import {computed, reactive, ref, watch} from 'vue'
-import {onMounted} from 'vue'
-import {useRepositoriesStore} from "@/store/repositories"
-import {fetchBranches, searchCommits} from '@/services/svn_api'
-import {debounce} from 'lodash'
-import type {Branch} from "@/services/interfaces"; // 需要安装 lodash 库
-
+import { computed, reactive, ref, watch } from 'vue'
+import { onMounted } from 'vue'
+import { useRepositoriesStore } from "@/store/repositories"
+import { fetchBranches, searchCommits } from '@/services/svn_api'
+import { debounce } from 'lodash'
+import type { Branch } from "@/services/interfaces"
 
 const store = useRepositoriesStore()
 const branches = ref<Branch[]>([])
 const pageSizeOptions = [100, 500, 1000, 5000, 10000, 20000, 50000]
 const currentPage = ref(1)
 
+const form = reactive({
+  repository: computed({
+    get: () => store.selectedRepository,
+    set: (value) => {
+      store.setSelectedRepository(value)
+      handleChange(value)
+    }
+  }),
+  branches: [] as string[],
+  start_date: null as Date | null,
+  end_date: null as Date | null,
+  contents: '',
+  exact_search: false,
+  search_type: ['message', 'auth', 'revision', 'file_changes'],
+  page_size: 100,
+})
 
 // 设置默认的开始和结束时间
 const setDefaultDates = () => {
@@ -137,7 +153,6 @@ const setDefaultDates = () => {
   const default_start_date = new Date(now.getTime() - 24 * 60 * 60 * 1000 * 90)
   form.start_date = default_start_date
   form.end_date = null
-
 }
 
 const loadBranches = async (repositoryId: string) => {
@@ -149,6 +164,28 @@ const loadBranches = async (repositoryId: string) => {
   }
 }
 
+const handleChange = async (value: string) => {
+  await loadBranches(value)
+}
+
+const setDefaultBranches = () => {
+  const trunkBranch = branches.value.find(branch => branch.name === '/trunk')
+  form.branches = trunkBranch ? [trunkBranch.id] : []
+}
+
+// 监听表单数据的变化
+watch(form, () => {
+  currentPage.value = 1 // 重置页码
+  debouncedSearch()
+}, { deep: true })
+
+const searchResults = ref({
+  count: 0,
+  next: null,
+  previous: null,
+  results: [],
+})
+
 onMounted(async () => {
   await store.fetchRepositories()
   setDefaultDates()
@@ -159,53 +196,11 @@ onMounted(async () => {
   }
 })
 
-const handleChange = async (value: string) => {
-  // const selectedRepo = store.repositories.find(repo => repo.id === value)
-  await loadBranches(value)
-}
-
-const setDefaultBranches = () => {
-  const trunkBranch = branches.value.find(branch => branch.name === '/trunk')
-  form.branches = trunkBranch ? [trunkBranch.id] : []
-}
-
-const form = reactive({
-  repository: computed({
-    get: () => store.selectedRepository,
-    set: (value) => store.setSelectedRepository(value)
-  }),
-  branches: [] as string[],
-  start_date: null as Date | null,
-  end_date: null as Date | null,
-  contents: '',
-  exact_search: false,
-  search_type: ['message', 'auth', 'revision'],
-  page_size: 100,
-})
-
-// 监听表单数据的变化
-watch(form, () => {
-  currentPage.value = 1 // 重置页码
-  debouncedSearch()
-}, {deep: true})
-
-// 监听页码变化
-watch(currentPage, () => {
-  debouncedSearch()
-})
-
-const searchResults = ref({
-  count: 0,
-  next: null,
-  previous: null,
-  results: [],
-})
-
 // 使用 debounce 来避免频繁触发搜索
 const debouncedSearch = debounce(async () => {
   try {
-    let start_date = form.start_date ? form.start_date.toISOString().split('T')[0] : null;
-    let end_date = form.end_date ? form.end_date.toISOString().split('T')[0] : null;
+    let start_date = form.start_date ? new Date(form.start_date.getTime() - form.start_date.getTimezoneOffset() * 60000).toISOString().split('T')[0] : null;
+    let end_date = form.end_date ? new Date(form.end_date.getTime() - form.end_date.getTimezoneOffset() * 60000).toISOString().split('T')[0] : null;
 
     const formattedData = {
       ...form,
@@ -215,13 +210,12 @@ const debouncedSearch = debounce(async () => {
       page_size: form.page_size,
     };
 
-    console.log('Submitting:', formattedData);
+    console.log('Submitting:', JSON.stringify(formattedData, null, 2));
     const results = await searchCommits(formattedData);
     searchResults.value = results;
-    console.log('Search results:', results);
+    console.log('Search results:', JSON.stringify(results, null, 2));
   } catch (error) {
     console.error('搜索失败:', error);
-    // 这里可以添加错误处理，比如显示一个错误消息
   }
 }, 500);
 

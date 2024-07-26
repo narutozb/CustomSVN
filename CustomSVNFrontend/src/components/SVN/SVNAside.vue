@@ -42,7 +42,6 @@
       <div class="content-section">
         <h2>SVN Navigation</h2>
         Search Commits
-
       </div>
     </div>
   </el-drawer>
