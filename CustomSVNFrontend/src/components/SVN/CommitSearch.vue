@@ -81,7 +81,7 @@
       :current-page="currentPage"
       :page-sizes="pageSizeOptions"
       :page-size="form.page_size"
-      layout="total, sizes, prev, pager, next, jumper"
+      layout="total, sizes, prev, pager, next, "
       :total="searchResults.count"
   />
 
@@ -112,7 +112,7 @@
       :current-page="currentPage"
       :page-sizes="pageSizeOptions"
       :page-size="form.page_size"
-      layout="total, sizes, prev, pager, next, jumper"
+      layout="total, sizes, prev, pager, next"
       :total="searchResults.count"
   />
 </template>
