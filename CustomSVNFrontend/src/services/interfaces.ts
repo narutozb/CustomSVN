@@ -44,3 +44,11 @@ export interface Character {
     tags?: number[];
     thumbnails?: Array<{ name: string; image: string }>;
 }
+
+export interface SearchCommitsResponse {
+    results?: any[];
+    count?: number;
+    next?: string | null;
+    previous?: string | null;
+    error?: string;
+}

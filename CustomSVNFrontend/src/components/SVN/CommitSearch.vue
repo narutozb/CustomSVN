@@ -48,15 +48,15 @@
         />
       </el-col>
     </el-form-item>
-    <el-form-item label="Exact search">
-      <el-switch v-model="form.exact_search"/>
+    <el-form-item label="Regex search">
+      <el-switch v-model="form.regex_search"/>
     </el-form-item>
     <el-form-item label="Search Options">
-      <el-checkbox-group v-model="form.search_type">
+      <el-checkbox-group v-model="form.search_fields">
         <el-checkbox value="message" name="type">
           Message
         </el-checkbox>
-        <el-checkbox value="auth" name="type">
+        <el-checkbox value="author" name="type">
           Username
         </el-checkbox>
         <el-checkbox value="revision" name="type">
@@ -118,16 +118,18 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, reactive, ref, watch } from 'vue'
-import { onMounted } from 'vue'
-import { useRepositoriesStore } from "@/store/repositories"
-import { fetchBranches, searchCommits } from '@/services/svn_api'
-import { debounce } from 'lodash'
-import type { Branch } from "@/services/interfaces"
+
+import {computed, onMounted, reactive, ref, watch} from 'vue';
+import {useRepositoriesStore} from "@/store/repositories";
+import {fetchBranches, searchCommits} from '@/services/svn_api';
+import {debounce} from 'lodash';
+import {ElMessage} from "element-plus";
+
+import type {Branch, SearchCommitsResponse} from "@/services/interfaces";
 
 const store = useRepositoriesStore()
 const branches = ref<Branch[]>([])
-const pageSizeOptions = [100, 500, 1000, 5000, 10000, 20000, 50000]
+const pageSizeOptions = [100, 500, 1000, 5000, 10000]
 const currentPage = ref(1)
 
 const form = reactive({
@@ -142,16 +144,15 @@ const form = reactive({
   start_date: null as Date | null,
   end_date: null as Date | null,
   contents: '',
-  exact_search: false,
-  search_type: ['message', 'auth', 'revision', 'file_changes'],
+  regex_search: false,
+  search_fields: ['message', 'author', 'revision', 'file_changes'],
   page_size: 100,
 })
 
 // 设置默认的开始和结束时间
 const setDefaultDates = () => {
   const now = new Date()
-  const default_start_date = new Date(now.getTime() - 24 * 60 * 60 * 1000 * 90)
-  form.start_date = default_start_date
+  form.start_date = new Date(now.getTime() - 24 * 60 * 60 * 1000 * 90)
   form.end_date = null
 }
 
@@ -177,14 +178,14 @@ const setDefaultBranches = () => {
 watch(form, () => {
   currentPage.value = 1 // 重置页码
   debouncedSearch()
-}, { deep: true })
+}, {deep: true})
 
-const searchResults = ref({
+const searchResults = ref<SearchCommitsResponse>({
   count: 0,
   next: null,
   previous: null,
   results: [],
-})
+});
 
 onMounted(async () => {
   await store.fetchRepositories()
@@ -212,10 +213,16 @@ const debouncedSearch = debounce(async () => {
 
     console.log('Submitting:', JSON.stringify(formattedData, null, 2));
     const results = await searchCommits(formattedData);
-    searchResults.value = results;
-    console.log('Search results:', JSON.stringify(results, null, 2));
-  } catch (error) {
+    if ('error' in results) {
+      ElMessage.error(results.error);
+      searchResults.value = {count: 0, next: null, previous: null, results: []};
+    } else {
+      searchResults.value = results;
+    }
+    console.log('Search results:', JSON.stringify(searchResults.value, null, 2));
+  } catch (error: any) {
     console.error('搜索失败:', error);
+    ElMessage.error(error.message || '搜索失败，请稍后重试');
   }
 }, 500);
 
@@ -229,6 +236,4 @@ const handleCurrentChange = (val: number) => {
   currentPage.value = val
   // 不需要在这里调用 debouncedSearch，因为 currentPage 的 watch 会处理
 }
-
-
 </script>
