@@ -1,6 +1,6 @@
 // src/services/svn_api.ts
 import api from "@/services/api";
-import type {Branch, SearchCommitsData} from "@/services/interfaces";
+import type {Branch, SearchCommitsData, SearchCommitsResponse} from "@/services/interfaces";
 
 export const fetchBranches = async (repositoryId: string): Promise<Branch[]> => {
     try {
@@ -14,7 +14,7 @@ export const fetchBranches = async (repositoryId: string): Promise<Branch[]> => 
 }
 
 
-export const searchCommits = async (data:SearchCommitsData) => {
+export const searchCommits = async (data: SearchCommitsData): Promise<SearchCommitsResponse> => {
     try {
         const response = await api.post('api/svn/_commits/search/', data, {
             params: {
@@ -23,9 +23,12 @@ export const searchCommits = async (data:SearchCommitsData) => {
             }
         });
         return response.data;
-    } catch (error) {
+    } catch (error: any) {
         console.error('搜索提交失败:', error);
-        throw error;
+        if (error.response && error.response.data) {
+            return { error: error.response.data.error || '搜索提交失败' };
+        }
+        return { error: '搜索提交失败，请稍后重试' };
     }
 }
 

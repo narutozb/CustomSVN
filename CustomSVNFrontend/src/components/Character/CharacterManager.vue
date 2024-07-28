@@ -1,3 +1,5 @@
+<!--/src/components/CharacterManager.vue-->
+
 <template>
   <div class="character-manager">
     <h1>Character Manager</h1>
@@ -86,16 +88,16 @@
               drag
           >
             <el-icon v-if="fileList.length < maxThumbnails">
-              <plus />
+              <plus/>
             </el-icon>
             <template #file="{ file }">
-              <img class="el-upload-list__item-thumbnail" :src="file.url" alt="" />
+              <img class="el-upload-list__item-thumbnail" :src="file.url" alt=""/>
               <span class="el-upload-list__item-actions">
         <span class="el-upload-list__item-preview" @click="handlePreview(file)">
-          <el-icon><zoom-in /></el-icon>
+          <el-icon><zoom-in/></el-icon>
         </span>
         <span class="el-upload-list__item-delete" @click="handleFileRemove(file)">
-          <el-icon><delete /></el-icon>
+          <el-icon><delete/></el-icon>
         </span>
       </span>
             </template>
@@ -122,11 +124,11 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, watch } from 'vue'
-import {ElMessage, ElMessageBox} from 'element-plus'
+import {defineComponent, ref, onMounted, watch} from 'vue'
+import {ElMessage, ElMessageBox,} from 'element-plus'
 import {characterApi} from "@/services/character_api"
 import {Plus, ZoomIn, Delete} from '@element-plus/icons-vue'
-import type {Character} from "@/services/interfaces";
+import type {Character, UploadFile} from "@/services/interfaces";
 
 export default defineComponent({
   name: 'CharacterManager',
@@ -144,9 +146,9 @@ export default defineComponent({
       name: '',
       character_id: '',
       description: '',
-      height: null,
-      gender: null,
-      race: null,
+      height: undefined,
+      gender: undefined,
+      race: undefined,
       tags: [],
       thumbnails: []
     };
@@ -167,7 +169,7 @@ export default defineComponent({
       console.log('Thumbnail size changed to:', newSize)
     })
 
-    const fileList = ref<Array<{ name: string; url: string; status?: string; uid?: string }>>([])
+    const fileList = ref<UploadFile[]>([])
 
 
     const fetchData = async () => {
@@ -257,24 +259,30 @@ export default defineComponent({
       previewVisible.value = true
     }
 
-    const handleFileChange = (file: any) => {
-      const isImage = file.raw.type.startsWith('image/')
-      if (!isImage) {
-        ElMessage.error('You can only upload image files!')
+    const handleFileChange = (file: UploadFile, fileList: UploadFile[]) => {
+      if (file.raw) {
+        const isImage = file.raw.type.startsWith('image/')
+        if (!isImage) {
+          ElMessage.error('You can only upload image files!')
+          return false
+        }
+      } else {
+        ElMessage.error('Invalid file')
         return false
       }
-      if (fileList.value.length >= maxThumbnails.value) {
+
+      if (fileList.length >= maxThumbnails.value) {
         ElMessage.warning(`You can only upload a maximum of ${maxThumbnails.value} images.`)
         return false
       }
-      // 如果是拖拽上传，file.status 可能是 undefined，所以我们手动设置它
+
       if (!file.status) {
         file.status = 'ready'
       }
       return true
     }
 
-    const handleFileRemove = (file: any) => {
+    const handleFileRemove = (file: UploadFile) => {
       const index = fileList.value.findIndex(f => f.uid === file.uid)
       if (index !== -1) {
         fileList.value.splice(index, 1)
@@ -297,7 +305,7 @@ export default defineComponent({
         formData.append('thumbnails', JSON.stringify(thumbnailsToKeep))
 
         // Handle new files
-        fileList.value.forEach((file,) => {
+        fileList.value.forEach((file: any) => {
           if (file.status === 'ready' && file.raw instanceof File) {
             formData.append(`new_thumbnails`, file.raw)
           }
@@ -325,7 +333,7 @@ export default defineComponent({
         url: thumbnail.image,
         status: 'success',
         uid: thumbnail.id.toString()
-      })) : []
+      } as UploadFile)) : []
       isEditing.value = true
       dialogVisible.value = true
     }
