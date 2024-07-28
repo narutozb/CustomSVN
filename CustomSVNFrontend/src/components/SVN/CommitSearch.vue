@@ -211,7 +211,7 @@ const debouncedSearch = debounce(async () => {
       page_size: form.page_size,
     };
 
-    console.log('Submitting:', JSON.stringify(formattedData, null, 2));
+    // console.log('Submitting:', JSON.stringify(formattedData, null, 2));
     const results = await searchCommits(formattedData);
     if ('error' in results) {
       ElMessage.error(results.error);
@@ -219,7 +219,7 @@ const debouncedSearch = debounce(async () => {
     } else {
       searchResults.value = results;
     }
-    console.log('Search results:', JSON.stringify(searchResults.value, null, 2));
+    // console.log('Search results:', JSON.stringify(searchResults.value, null, 2));
   } catch (error: any) {
     console.error('搜索失败:', error);
     ElMessage.error(error.message || '搜索失败，请稍后重试');

@@ -158,34 +158,36 @@ class CommitSearchView(APIView):
 
             if branches:
                 queryset = queryset.filter(branch_id__in=branches)
-                # 过滤时间
+
+            # 过滤时间
+            if start_date or end_date:
                 queryset = self.__filter_date(queryset, start_date, end_date)
 
-                # 过滤关键字
-                if regex_search:
-                    queryset, error = self.__safe_regex_filter(queryset, fields=search_type, keywords=[contents])
-                    if error:
-                        return Response({
-                            "error": "Invalid regex pattern",
-                            "details": error,
-                            "data": []
-                        }, status=status.HTTP_400_BAD_REQUEST)
-                else:
-                    queryset = self.__filter_contains_keywords(queryset, fields=search_type, keywords=[contents], )
-
-                # 应用分页
-                paginator = self.pagination_class()
-                try:
-                    page = paginator.paginate_queryset(queryset, request)
-                except (EmptyPage, PageNotAnInteger) as e:
+            # 过滤关键字
+            if regex_search:
+                queryset, error = self.__safe_regex_filter(queryset, fields=search_type, keywords=[contents])
+                if error:
                     return Response({
-                        "error": f"Pagination error: {str(e)}",
+                        "error": "Invalid regex pattern",
+                        "details": error,
                         "data": []
                     }, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                queryset = self.__filter_contains_keywords(queryset, fields=search_type, keywords=[contents], )
 
-                # 序列化结果
-                serializer = CommitSerializer(page, many=True)
-                return paginator.get_paginated_response(serializer.data)
+            # 应用分页
+            paginator = self.pagination_class()
+            try:
+                page = paginator.paginate_queryset(queryset, request)
+            except (EmptyPage, PageNotAnInteger) as e:
+                return Response({
+                    "error": f"Pagination error: {str(e)}",
+                    "data": []
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # 序列化结果
+            serializer = CommitSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
 
         except Exception as e:
             return Response({
