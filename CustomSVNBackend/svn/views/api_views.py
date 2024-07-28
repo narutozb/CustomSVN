@@ -1,6 +1,12 @@
+import operator
 import re
 from datetime import timedelta, datetime, time
+from functools import reduce
+from django.db.utils import OperationalError
 
+from django.core.exceptions import ValidationError
+from django.core.paginator import PageNotAnInteger, EmptyPage
+from django.db import DatabaseError
 from django.db.models import OuterRef, Subquery, F, Q, Count
 from django.utils import timezone
 from rest_framework import status, viewsets
@@ -136,28 +142,104 @@ class CommitSearchView(APIView):
         '''
         前端搜索数据使用
         '''
-        # 获取请求数据
-        data = request.data
-        repository_id = data.get('repository')
-        branches = data.get('branches', [])
-        start_date = data.get('start_date')
-        end_date = data.get('end_date')
-        contents = data.get('contents')
-        exact_search = data.get('exact_search', False)
-        search_type = data.get('search_type', [])
+        try:
+            # 获取请求数据
+            data = request.data
+            repository_id = data.get('repository')
+            branches = data.get('branches', [])
+            start_date = data.get('start_date')
+            end_date = data.get('end_date')
+            contents = data.get('contents')
+            regex_search = data.get('regex_search', False)
+            search_type = data.get('search_fields', [])
 
-        print(start_date)
-        print(end_date)
+            # 开始构建查询
+            queryset = Commit.objects.filter(repository_id=repository_id)
 
-        # 开始构建查询
-        queryset = Commit.objects.filter(repository_id=repository_id)
+            if branches:
+                queryset = queryset.filter(branch_id__in=branches)
 
-        if branches:
-            queryset = queryset.filter(branch_id__in=branches)
+            # 过滤时间
+            if start_date or end_date:
+                queryset = self.__filter_date(queryset, start_date, end_date)
 
-            print(f"Received start_date: {start_date}")
-            print(f"Received end_date: {end_date}")
-            # 在处理日期时
+            # 过滤关键字
+            if regex_search:
+                queryset, error = self.__safe_regex_filter(queryset, fields=search_type, keywords=[contents])
+                if error:
+                    return Response({
+                        "error": "Invalid regex pattern",
+                        "details": error,
+                        "data": []
+                    }, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                queryset = self.__filter_contains_keywords(queryset, fields=search_type, keywords=[contents], )
+
+            # 应用分页
+            paginator = self.pagination_class()
+            try:
+                page = paginator.paginate_queryset(queryset, request)
+            except (EmptyPage, PageNotAnInteger) as e:
+                return Response({
+                    "error": f"Pagination error: {str(e)}",
+                    "data": []
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # 序列化结果
+            serializer = CommitSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+
+        except Exception as e:
+            return Response({
+                "error": f"An unexpected error occurred: {str(e)}",
+                "data": []
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def __safe_regex_filter(self, queryset, fields, keywords):
+        try:
+            queries = []
+            for field in fields:
+                for keyword in keywords:
+                    if field == 'file_changes':
+                        subquery = FileChange.objects.filter(path__regex=keyword).values('commit')
+                        queries.append(Q(id__in=subquery))
+                    else:
+                        queries.append(Q(**{f"{field}__regex": keyword}))
+
+            query = reduce(operator.or_, queries)
+            return queryset.filter(query).distinct(), None
+        except (re.error, ValidationError, DatabaseError) as e:
+            error_message = f"Invalid regex pattern: {str(e)}"
+            return queryset.none(), error_message
+
+    def __filter_contains_keywords(self, queryset, fields: list[str] = None, keywords: list[str] = None):
+        if fields is None:
+            fields = ['message', 'author', 'revision']  # 默认搜索字段
+
+        queries = []
+        for field in fields:
+            for keyword in keywords:
+                if field == 'file_changes':
+                    # 对file_changes字段使用子查询
+                    subquery = FileChange.objects.filter(path__icontains=keyword).values('commit')
+                    queries.append(Q(id__in=subquery))
+                else:
+                    queries.append(Q(**{f"{field}__icontains": keyword}))
+
+        query = reduce(operator.or_, queries)
+        return queryset.filter(query).distinct()
+
+    def __build_search_query(self, fields, keywords, search_option='__icontains'):
+        queries = [
+            Q(**{f"{field}{search_option}": keyword})
+            for field in fields
+            for keyword in keywords
+        ]
+        return reduce(operator.or_, queries)
+
+    def __filter_date(self, queryset, start_date, end_date):
+        # 处理日期过滤
+        if start_date or end_date:
             if start_date:
                 start_datetime = timezone.localtime(
                     timezone.make_aware(datetime.combine(datetime.strptime(start_date, '%Y-%m-%d'), time.min)))
@@ -170,46 +252,14 @@ class CommitSearchView(APIView):
             else:
                 end_datetime = None
 
-            print(f"Localized start_datetime: {start_datetime}")
-            print(f"Localized end_datetime: {end_datetime}")
-            # 处理日期过滤
-            if start_date or end_date:
-                if start_date:
-                    start_datetime = timezone.make_aware(
-                        datetime.combine(datetime.strptime(start_date, '%Y-%m-%d'), time.min))
-                else:
-                    start_datetime = None
+            if start_datetime and end_datetime:
+                queryset = queryset.filter(date__range=(start_datetime, end_datetime))
+            elif start_datetime:
+                queryset = queryset.filter(date__gte=start_datetime)
+            elif end_datetime:
+                queryset = queryset.filter(date__lte=end_datetime)
 
-                if end_date:
-                    end_datetime = timezone.make_aware(
-                        datetime.combine(datetime.strptime(end_date, '%Y-%m-%d'), time.max))
-                else:
-                    end_datetime = None
-
-                print(f"Processed start_datetime: {start_datetime}")
-                print(f"Processed end_datetime: {end_datetime}")
-
-                if start_datetime and end_datetime:
-                    queryset = queryset.filter(date__range=(start_datetime, end_datetime))
-                elif start_datetime:
-                    queryset = queryset.filter(date__gte=start_datetime)
-                elif end_datetime:
-                    queryset = queryset.filter(date__lte=end_datetime)
-
-            # 添加 FileChange 搜索
-            if 'file_changes' in search_type and contents:
-                queryset = queryset.filter(file_changes__path__icontains=contents)
-
-            # 在执行查询之前，打印 SQL 查询
-            print(queryset.query)
-
-            # 应用分页
-            paginator = self.pagination_class()
-            page = paginator.paginate_queryset(queryset, request)
-
-            # 序列化结果
-            serializer = CommitSerializer(page, many=True)
-            return paginator.get_paginated_response(serializer.data)
+            return queryset
 
 
 class CommitDetailView(APIView):

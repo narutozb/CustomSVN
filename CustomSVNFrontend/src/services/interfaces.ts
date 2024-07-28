@@ -9,6 +9,7 @@ export interface Branch {
     id: string;
     name: string;
 }
+
 export interface Repository {
     id: string;
     name: string;
@@ -42,5 +43,23 @@ export interface Character {
     gender?: number;
     race?: number;
     tags?: number[];
-    thumbnails?: Array<{ name: string; image: string }>;
+    thumbnails?: Array<{ id: number; name: string; image: string }>;
+
 }
+
+export interface SearchCommitsResponse {
+    results?: any[];
+    count?: number;
+    next?: string | null;
+    previous?: string | null;
+    error?: string;
+}
+
+export interface UploadFile {
+    name: string;
+    url: string;
+    status?: string;
+    uid?: string;
+    raw?: File;
+}
+
