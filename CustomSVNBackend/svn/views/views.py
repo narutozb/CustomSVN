@@ -57,6 +57,12 @@ class BranchViewSet(viewsets.ModelViewSet):
     filterset_fields = ['repository__id']
 
 
+class FileChangeViewSet(viewsets.ModelViewSet):
+    queryset = FileChange.objects.all()
+    serializer_class = FileChangeSerializer
+    permission_classes = [IsAuthenticated]
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_latest_revision(request, repo_name):
@@ -198,4 +204,3 @@ def svn_commit_details(request, commit_id):
             'file_changes': file_changes
         }
     )
-

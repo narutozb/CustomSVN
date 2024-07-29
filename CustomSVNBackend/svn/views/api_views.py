@@ -1,9 +1,7 @@
 import operator
 import re
-from datetime import timedelta, datetime, time
+from datetime import datetime, time
 from functools import reduce
-from django.db.utils import OperationalError
-
 from django.core.exceptions import ValidationError
 from django.core.paginator import PageNotAnInteger, EmptyPage
 from django.db import DatabaseError
@@ -164,7 +162,7 @@ class CommitSearchView(APIView):
                 queryset = self.__filter_date(queryset, start_date, end_date)
 
             # 过滤关键字
-            if regex_search:
+            if regex_search and contents:
                 queryset, error = self.__safe_regex_filter(queryset, fields=search_type, keywords=[contents])
                 if error:
                     return Response({
@@ -172,7 +170,7 @@ class CommitSearchView(APIView):
                         "details": error,
                         "data": []
                     }, status=status.HTTP_400_BAD_REQUEST)
-            else:
+            elif not regex_search and contents:
                 queryset = self.__filter_contains_keywords(queryset, fields=search_type, keywords=[contents], )
 
             # 应用分页
@@ -271,3 +269,20 @@ class CommitDetailView(APIView):
             return Response(serializer.data)
         except Commit.DoesNotExist:
             return Response({"error": "Commit not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class CommitsByFilePathView(APIView):
+    pagination_class = PageNumberPagination
+
+    def get(self, request):
+        file_path = request.query_params.get('path')
+
+        if not file_path:
+            return Response({"error": "File path is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        commits = Commit.objects.filter(file_changes__path=file_path).distinct().order_by('-date')
+
+        paginator = self.pagination_class()
+        result_page = paginator.paginate_queryset(commits, request)
+        serializer = CommitSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)

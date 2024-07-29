@@ -2,6 +2,7 @@
   <div v-if="commit">
     <h2>Commit Details</h2>
     <el-descriptions :column="1" border>
+      <el-descriptions-item label="RepositoryName">{{ commit.repository.name }}</el-descriptions-item>
       <el-descriptions-item label="Revision">{{ commit.revision }}</el-descriptions-item>
       <el-descriptions-item label="Author">{{ commit.author }}</el-descriptions-item>
       <el-descriptions-item label="Date">{{ $filters.formatDate(commit.date) }}</el-descriptions-item>
@@ -10,7 +11,13 @@
 
     <h3>File Changes</h3>
     <el-table :data="commit.file_changes" style="width: 100%">
-      <el-table-column prop="path" label="Path"></el-table-column>
+      <el-table-column prop="path" label="Path">
+        <template #default="scope">
+          <router-link :to="{ name: 'FileChangeDetail', params: { id: scope.row.id } }">
+            {{ scope.row.path }}
+          </router-link>
+        </template>
+      </el-table-column>
       <el-table-column prop="action" label="Action"></el-table-column>
       <el-table-column prop="kind" label="Kind"></el-table-column>
     </el-table>
