@@ -8,6 +8,8 @@ export interface SearchCommitsData {
 export interface Branch {
     id: string;
     name: string;
+    repository: string;
+
 }
 
 export interface Repository {
@@ -21,6 +23,8 @@ export interface Commit {
     author: string;
     date: string;
     message: string;
+    repository: Repository;
+    branch: Branch;
     file_changes: Array<{
         path: string;
         action: string;
@@ -63,3 +67,18 @@ export interface UploadFile {
     raw?: File;
 }
 
+
+export interface Repository {
+    name: string
+    url: string
+    description: string
+    created_at: string
+}
+
+export interface FileChange {
+    id: string;
+    commit: number;  // 确保这里是 number 类型
+    path: string;
+    action: string;
+    kind: string;
+}

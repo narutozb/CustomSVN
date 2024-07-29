@@ -1,6 +1,7 @@
 // src/services/svn_api.ts
 import api from "@/services/api";
-import type {Branch, SearchCommitsData, SearchCommitsResponse} from "@/services/interfaces";
+import type {Branch, Commit, FileChange, SearchCommitsData, SearchCommitsResponse} from "@/services/interfaces";
+import type {Ref, UnwrapRef} from "vue";
 
 export const fetchBranches = async (repositoryId: string): Promise<Branch[]> => {
     try {
@@ -26,9 +27,9 @@ export const searchCommits = async (data: SearchCommitsData): Promise<SearchComm
     } catch (error: any) {
         console.error('搜索提交失败:', error);
         if (error.response && error.response.data) {
-            return { error: error.response.data.error || '搜索提交失败' };
+            return {error: error.response.data.error || '搜索提交失败'};
         }
-        return { error: '搜索提交失败，请稍后重试' };
+        return {error: '搜索提交失败，请稍后重试'};
     }
 }
 
@@ -38,6 +39,32 @@ export const getCommitDetail = async (commitId: number) => {
         return response.data;
     } catch (error) {
         console.error('获取提交详情失败:', error);
+        throw error;
+    }
+}
+
+
+export const getFileChangeDetail = async (fileChangeId: number | null) => {
+    try {
+        const response = await api.get(`api/svn/file_changes/${fileChangeId}/`);
+        return response.data;
+    } catch (error) {
+        console.error('获取提交详情失败:', error);
+        throw error;
+    }
+}
+
+export const getRelatedCommits = async (filePath: string): Promise<Commit[]> => {
+    try {
+        const response = await api.get(`api/svn/_commits/by-file-path/`, {params: {path: filePath}});
+        // 检查响应是否包含 results 字段（分页响应的常见结构）
+        if (response.data && response.data.results) {
+            return response.data.results;
+        }
+        // 如果没有 results 字段，假设整个响应就是提交数组
+        return Array.isArray(response.data) ? response.data : [];
+    } catch (error) {
+        console.error('获取相关提交失败:', error);
         throw error;
     }
 }
