@@ -45,6 +45,7 @@ python run_django.py
 
 ```
 
+
 #user  nobody;
 worker_processes  5;
 
@@ -97,23 +98,13 @@ http {
         location = /50x.html {
             root   html;
         }
-        location /api/ {
-        proxy_pass http://127.0.0.1:8000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        # 添加以下CORS相关头部
-        add_header 'Access-Control-Allow-Origin' '*';
-        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, PUT, DELETE';
-        add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization';
-        add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range';
 
-        if ($request_method = 'OPTIONS') {
-            add_header 'Access-Control-Max-Age' 1728000;
-            add_header 'Content-Type' 'text/plain charset=UTF-8';
-            add_header 'Content-Length' 0;
-            return 204;
-        }
-        }
+        # # 如果没在前端的config.js中配置后端api的话需要在此配置后端api地址和端口
+        # location = /config.js {
+        #     add_header Content-Type application/javascript;
+        #     return 200 'window.appConfig = { apiBaseUrl: "http://127.0.0.1:8000" };';
+        # }
+
         location /static/ {
         alias D:/github/CustomSVN/CustomSVNBackend/static/;
         }
@@ -134,7 +125,6 @@ http {
     }
  
 }
-
 
 ```
 

@@ -1,8 +1,9 @@
-// src/services/api.ts
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL || '/',
+    baseURL: import.meta.env.DEV
+        ? import.meta.env.VITE_API_BASE_URL
+        : ((window as any).appConfig?.apiBaseUrl || '/'),
 });
 
 api.interceptors.request.use((config) => {
