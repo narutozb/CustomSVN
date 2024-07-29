@@ -9,6 +9,7 @@ import SVNView from "@/views/svn/SVNView.vue"
 import CommitDetail from "@/components/SVN/CommitDetail.vue";
 import CommitSearchView from "@/views/svn/CommitSearchView.vue";
 import CharacterManager from "@/components/Character/CharacterManager.vue";
+import FileChangeDetail from "@/components/SVN/FileChangeDetail.vue";
 
 const routes: Array<RouteRecordRaw> = [
     {
@@ -33,7 +34,12 @@ const routes: Array<RouteRecordRaw> = [
                         path: 'commits/:id',
                         name: 'CommitDetail',
                         component: CommitDetail
-                    }
+                    },
+                    {
+                        path: 'file_changes/:id',
+                        name: 'FileChangeDetail',
+                        component: FileChangeDetail
+                    },
                 ]
             },
             {
