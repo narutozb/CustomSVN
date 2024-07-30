@@ -91,6 +91,9 @@
       layout="total, sizes, prev, pager, next, "
       :total="searchResults.count"
   />
+  <div v-if="searchDuration > 0" class="search-duration">
+    Search time: {{ searchDuration }}ms
+  </div>
   <el-table :data="searchResults.results" style="width: 100%">
     <el-table-column prop="revision" label="Revision" width="180"/>
     <el-table-column prop="author" label="Author" width="180"/>
@@ -135,6 +138,8 @@ import {ElMessage} from "element-plus";
 import type {Branch, SearchCommitsResponse} from "@/services/interfaces";
 import axios, {CancelToken, CancelTokenSource} from 'axios';
 
+const searchDuration = ref<number>(0);
+
 
 const store = useRepositoriesStore()
 const branches = ref<Branch[]>([])
@@ -167,6 +172,7 @@ const submitSearch = async () => {
 
   isSearching.value = true;
   cancelTokenSource.value = axios.CancelToken.source();
+  const startTime = performance.now();
 
   try {
     let start_date = form.start_date ? new Date(form.start_date.getTime() - form.start_date.getTimezoneOffset() * 60000).toISOString().split('T')[0] : null;
@@ -197,12 +203,17 @@ const submitSearch = async () => {
   } finally {
     isSearching.value = false;
     cancelTokenSource.value = null;
+    const endTime = performance.now();
+    searchDuration.value = Number((endTime - startTime).toFixed(2));
   }
 };
 
 
 // 创建一个防抖的 submitSearch 函数
-const debouncedSubmitSearch = debounce(submitSearch, 500);
+const debouncedSubmitSearch = debounce(() => {
+  searchDuration.value = 0;  // 重置搜索时长
+  submitSearch();
+}, 500);
 
 
 const cancelSearch = () => {
@@ -280,3 +291,11 @@ const handleCurrentChange = (val: number) => {
   debouncedSubmitSearch(); // 添加这行来触发搜索
 }
 </script>
+
+<style scoped>
+.search-duration {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #606266;
+}
+</style>

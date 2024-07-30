@@ -286,6 +286,7 @@ class CommitsByFilePathView(APIView):
         serializer = CommitSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
 
+
 class GetFileChangeDetail(APIView):
     def get(self, request, file_change_id):
         try:

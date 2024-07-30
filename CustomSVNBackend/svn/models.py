@@ -44,10 +44,16 @@ class Commit(models.Model):
 
 
 class FileChange(models.Model):
-    commit = models.ForeignKey(Commit, related_name='file_changes', on_delete=models.CASCADE)
-    path = models.CharField(max_length=255, )
-    action = models.CharField(max_length=10)  # , choices=[('A', 'Added'), ('M', 'Modified'), ('D', 'Deleted')])
+    commit = models.ForeignKey(Commit, related_name='file_changes', on_delete=models.CASCADE, db_index=True)
+    path = models.CharField(max_length=255, db_index=True)
+    action = models.CharField(max_length=10, db_index=True)
     kind = models.CharField(max_length=8, null=True, blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['commit', 'path']),
+            models.Index(fields=['path', 'action']),
+        ]
 
     def __str__(self):
         return f"{self.id}-{self.path} ({self.action})"
