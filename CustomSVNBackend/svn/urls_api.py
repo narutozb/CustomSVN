@@ -2,7 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
 from svn.views.api_views import FileChangeListLatestExistView, GetFileChangeByRevisionView, GetFileChangesByFilePath, \
-    CommitSearchView, CommitDetailView, CommitsByFilePathView
+    CommitSearchView, CommitDetailView, CommitsByFilePathView, GetFileChangeDetail
 from svn.views.views import RepositoryViewSet, CommitViewSet, get_latest_revision, list_commits, list_file_changes, \
     BranchViewSet, FileChangeViewSet
 
@@ -30,5 +30,6 @@ urlpatterns = [
     path('_commits/search/', CommitSearchView.as_view(), name='commit-search'),
     path('_commits/commit-details/<int:commit_id>/', CommitDetailView.as_view(), name='commit-details'),
     path('_commits/by-file-path/', CommitsByFilePathView.as_view(), name='commits-by-file-path'),
+    path('_file_changes/<int:file_change_id>/', GetFileChangeDetail.as_view(), name='file-change-detail'),
 
 ]

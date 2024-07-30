@@ -1,7 +1,6 @@
 // src/services/svn_api.ts
 import api from "@/services/api";
-import type {Branch, Commit, FileChange, SearchCommitsData, SearchCommitsResponse} from "@/services/interfaces";
-import type {Ref, UnwrapRef} from "vue";
+import type {Branch, Commit,  SearchCommitsData, SearchCommitsResponse} from "@/services/interfaces";
 import type {CancelToken} from "axios";
 import axios from "axios";
 
@@ -51,12 +50,12 @@ export const getCommitDetail = async (commitId: number) => {
 }
 
 
-export const getFileChangeDetail = async (fileChangeId: number | null) => {
+export const getFileChangeDetail = async (fileChangeId: number) => {
     try {
-        const response = await api.get(`api/svn/file_changes/${fileChangeId}/`);
+        const response = await api.get(`api/svn/_file_changes/${fileChangeId}/`);
         return response.data;
     } catch (error) {
-        console.error('获取提交详情失败:', error);
+        console.error('获取文件变更详情失败:', error);
         throw error;
     }
 }

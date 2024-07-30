@@ -3,9 +3,8 @@ from .validators import validate_url
 
 
 class Repository(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-
-    url = models.CharField(max_length=200, unique=True, validators=[validate_url])
+    name = models.CharField(max_length=100, unique=True, db_index=True)
+    url = models.CharField(max_length=200, unique=True, validators=[validate_url], db_index=True)
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -17,7 +16,7 @@ class Repository(models.Model):
 
 
 class Branch(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, db_index=True)
     repository = models.ForeignKey(Repository, related_name='branches', on_delete=models.CASCADE)
 
     def __str__(self):
@@ -30,10 +29,10 @@ class Branch(models.Model):
 class Commit(models.Model):
     repository = models.ForeignKey(Repository, related_name='commits', on_delete=models.CASCADE)
     branch = models.ForeignKey(Branch, related_name='commits', on_delete=models.CASCADE, null=True, blank=True)
-    revision = models.IntegerField()
-    author = models.CharField(max_length=100, null=True, blank=True)
+    revision = models.IntegerField(db_index=True)
     message = models.TextField(null=True, blank=True)
-    date = models.DateTimeField(null=True, blank=True)
+    author = models.CharField(max_length=100, null=True, blank=True, db_index=True)
+    date = models.DateTimeField(null=True, blank=True, db_index=True)
     svn_client_version = models.CharField(max_length=16, default='0.0.0', null=True, blank=True)
 
     class Meta:

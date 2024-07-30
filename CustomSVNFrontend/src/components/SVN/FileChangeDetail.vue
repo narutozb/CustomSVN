@@ -2,6 +2,7 @@
   <div v-if="fileChange">
     <h2>File Change Details</h2>
     <el-descriptions :column="1" border>
+      <el-descriptions-item label="Repository">{{ fileChange.commit?.repository?.name }}</el-descriptions-item>
       <el-descriptions-item label="Path">{{ fileChange.path }}</el-descriptions-item>
       <el-descriptions-item label="Action">{{ fileChange.action }}</el-descriptions-item>
       <el-descriptions-item label="Kind">{{ fileChange.kind }}</el-descriptions-item>
@@ -19,7 +20,12 @@
       <el-table-column prop="message" label="Message"></el-table-column>
       <el-table-column label="Actions" width="120">
         <template #default="scope">
-          <el-button size="small" @click="viewCommitDetails(scope.row.id)">View Details</el-button>
+          <router-link
+              :to="{ name: 'CommitDetail', params: { id: scope.row.id } }"
+              target="_blank"
+          >
+            View Details
+          </router-link>
         </template>
       </el-table-column>
     </el-table>
@@ -27,35 +33,32 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { ref, onMounted, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import { getFileChangeDetail, getRelatedCommits } from '@/services/svn_api';
 import type { FileChange, Commit } from "@/services/interfaces";
 
 const route = useRoute();
-const router = useRouter();
+
 const fileChange = ref<FileChange | null>(null);
 const relatedCommits = ref<Commit[]>([]);
 
-onMounted(async () => {
+async function loadData() {
   const fileChangeId = Number(route.params.id);
+
   try {
     fileChange.value = await getFileChangeDetail(fileChangeId);
+
     if (fileChange.value && fileChange.value.path) {
       const commits = await getRelatedCommits(fileChange.value.path);
-      if (Array.isArray(commits)) {
-        relatedCommits.value = commits;
-      } else {
-        console.error('Unexpected data format for related commits');
-        relatedCommits.value = [];
-      }
+      relatedCommits.value = Array.isArray(commits) ? commits : [];
     }
   } catch (error) {
     console.error('Error fetching file change details:', error);
   }
-});
+}
 
-const viewCommitDetails = (commitId: number) => {
-  router.push({ name: 'CommitDetail', params: { id: commitId } });
-};
+onMounted(loadData);
+
+watch(() => route.params.id, loadData);
 </script>
