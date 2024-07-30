@@ -43,17 +43,6 @@ class FileChangeSerializer(serializers.ModelSerializer):
         fields = ['id', 'path', 'action', 'kind', 'commit']
 
 
-class CommitQuerySerializer(serializers.Serializer):
-    repositories = serializers.ListField(
-        child=serializers.IntegerField(),
-        required=True
-    )
-    branches = serializers.ListField(
-        child=serializers.IntegerField(),
-        required=True
-    )
-
-
 class CommitDetailSerializer(serializers.ModelSerializer):
     file_changes = FileChangeSerializer(many=True, read_only=True)
     repository = RepositorySerializer(read_only=True, required=False)

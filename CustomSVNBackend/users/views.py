@@ -15,8 +15,6 @@ from rest_framework import viewsets, status
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from svn.models import Commit
-from svn.serializers import CommitQuerySerializer, CommitSerializer
 from .models import CustomUser
 from .serializers import UserSerializer
 
