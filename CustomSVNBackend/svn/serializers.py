@@ -25,12 +25,6 @@ class BranchSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'repository']
 
 
-class FileChangeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = FileChange
-        fields = ['id', 'path', 'action', 'kind', 'commit']
-
-
 class CommitSerializer(serializers.ModelSerializer):
     file_changes_count = serializers.IntegerField(source='file_changes.count', read_only=True)
     repository = RepositorySerializer(read_only=True)
@@ -39,6 +33,14 @@ class CommitSerializer(serializers.ModelSerializer):
     class Meta:
         model = Commit
         fields = ['id', 'revision', 'author', 'message', 'date', 'file_changes_count', 'repository', 'branch']
+
+
+class FileChangeSerializer(serializers.ModelSerializer):
+    commit = CommitSerializer(read_only=True)
+
+    class Meta:
+        model = FileChange
+        fields = ['id', 'path', 'action', 'kind', 'commit']
 
 
 class CommitQuerySerializer(serializers.Serializer):
