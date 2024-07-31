@@ -29,6 +29,15 @@ python .\manage.py createsuperuser
 python .\manage.py runserver
 ```
 
+
+## 创建数据库
+
+### mysql
+
+```
+CREATE DATABASE IF NOT EXISTS CUSTOMSVN DEFAULT CHARSET utf8 COLLATE utf8_general_ci;
+```
+
 ## SVN数据上传客户端
 
 ### 各种需求

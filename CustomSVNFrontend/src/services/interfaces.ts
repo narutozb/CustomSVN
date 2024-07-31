@@ -77,7 +77,7 @@ export interface Repository {
 
 export interface FileChange {
     id: string;
-    commit: number;  // 确保这里是 number 类型
+    commit: Commit;  // 确保这里是 number 类型
     path: string;
     action: string;
     kind: string;
