@@ -1,7 +1,8 @@
 // src/services/svn_api.ts
 import api from "@/services/api";
-import type {Branch, Commit, FileChange, SearchCommitsData, SearchCommitsResponse} from "@/services/interfaces";
-import type {Ref, UnwrapRef} from "vue";
+import type {Branch, Commit,  SearchCommitsData, SearchCommitsResponse} from "@/services/interfaces";
+import type {CancelToken} from "axios";
+import axios from "axios";
 
 export const fetchBranches = async (repositoryId: string): Promise<Branch[]> => {
     try {
@@ -15,16 +16,21 @@ export const fetchBranches = async (repositoryId: string): Promise<Branch[]> => 
 }
 
 
-export const searchCommits = async (data: SearchCommitsData): Promise<SearchCommitsResponse> => {
+export const searchCommits = async (data: SearchCommitsData, cancelToken?: CancelToken): Promise<SearchCommitsResponse> => {
     try {
         const response = await api.post('api/svn/_commits/search/', data, {
             params: {
                 page: data.page,
                 page_size: data.page_size
-            }
+            },
+            cancelToken // 添加这一行
         });
         return response.data;
     } catch (error: any) {
+        if (axios.isCancel(error)) {
+            console.log('Request canceled', error.message);
+            return { results: [], count: 0, next: null, previous: null };
+        }
         console.error('搜索提交失败:', error);
         if (error.response && error.response.data) {
             return {error: error.response.data.error || '搜索提交失败'};
@@ -44,12 +50,12 @@ export const getCommitDetail = async (commitId: number) => {
 }
 
 
-export const getFileChangeDetail = async (fileChangeId: number | null) => {
+export const getFileChangeDetail = async (fileChangeId: number) => {
     try {
-        const response = await api.get(`api/svn/file_changes/${fileChangeId}/`);
+        const response = await api.get(`api/svn/_file_changes/${fileChangeId}/`);
         return response.data;
     } catch (error) {
-        console.error('获取提交详情失败:', error);
+        console.error('获取文件变更详情失败:', error);
         throw error;
     }
 }

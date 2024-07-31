@@ -261,10 +261,9 @@ class CommitSearchView(APIView):
 
 
 class CommitDetailView(APIView):
-
     def get(self, request, commit_id):
         try:
-            commit = Commit.objects.get(id=commit_id)
+            commit = Commit.objects.select_related('repository', 'branch').get(id=commit_id)
             serializer = CommitDetailSerializer(commit)
             return Response(serializer.data)
         except Commit.DoesNotExist:
@@ -286,3 +285,13 @@ class CommitsByFilePathView(APIView):
         result_page = paginator.paginate_queryset(commits, request)
         serializer = CommitSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
+
+
+class GetFileChangeDetail(APIView):
+    def get(self, request, file_change_id):
+        try:
+            file_change = FileChange.objects.select_related('commit__repository').get(id=file_change_id)
+            serializer = FileChangeSerializer(file_change)
+            return Response(serializer.data)
+        except FileChange.DoesNotExist:
+            return Response({"error": "File change not found"}, status=status.HTTP_404_NOT_FOUND)
