@@ -43,12 +43,11 @@ export interface Character {
     name: string;
     character_id: string;
     description?: string;
-    height?: number;
-    gender?: number;
-    race?: number;
-    tags?: number[];
-    thumbnails?: Array<{ id: number; name: string; image: string }>;
-
+    height?: number | null;
+    gender?: number | null;
+    race?: number | null;
+    tags?: number[] | null;
+    thumbnails?: Array<{ id: number; name?: string; image: string }>;
 }
 
 export interface SearchCommitsResponse {

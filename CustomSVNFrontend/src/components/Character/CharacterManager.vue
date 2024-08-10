@@ -5,20 +5,19 @@
     <h1>Character Manager</h1>
     <el-button type="primary" @click="showCreateDialog">Create New Character</el-button>
 
-    <!-- 添加缩略图尺寸控制器 -->
     <div class="thumbnail-size-controller">
-      <span>Thumbnail Size: {{ thumbnailSize }}px</span>
+      <span>Thumbnail Size: {{ state.thumbnailSize }}px</span>
       <el-slider
-          v-model="thumbnailSize"
-          :min="50"
-          :max="500"
-          :step="10"
+          v-model="state.thumbnailSize"
+          :min="THUMBNAIL_SIZE_MIN"
+          :max="THUMBNAIL_SIZE_MAX"
+          :step="THUMBNAIL_SIZE_STEP"
           @change="updateThumbnailSize"
       ></el-slider>
     </div>
 
-    <el-table :data="characters" style="width: 100%">
-      <el-table-column label="Thumbnail" :width="thumbnailSize + 20">
+    <el-table :data="state.characters" style="width: 100%">
+      <el-table-column label="Thumbnail" :width="state.thumbnailSize + 20">
         <template #default="scope">
           <el-image
               v-if="scope.row.thumbnails && scope.row.thumbnails.length > 0"
@@ -26,7 +25,7 @@
               :preview-src-list="[scope.row.thumbnails[0].image]"
               :initial-index="0"
               fit="cover"
-              :style="{ width: thumbnailSize + 'px', height: thumbnailSize + 'px' }"
+              :style="{ width: state.thumbnailSize + 'px', height: state.thumbnailSize + 'px' }"
               :preview-teleported="true"
               :title="`${scope.row.name} (ID: ${scope.row.character_id})`"
           />
@@ -40,70 +39,70 @@
       <el-table-column label="Actions" width="200">
         <template #default="scope">
           <el-button size="small" @click="editCharacter(scope.row)">Edit</el-button>
-          <el-button size="small" type="danger" @click="confirmDelete(scope.row.id)">Delete</el-button>
+          <el-button size="small" type="danger" @click="confirmDelete(scope.row.id!)">Delete</el-button>
         </template>
       </el-table-column>
     </el-table>
 
-    <el-dialog v-model="dialogVisible" :title="isEditing ? 'Edit Character' : 'Create Character'">
-      <el-form :model="currentCharacter" label-width="120px">
+    <el-dialog v-model="state.dialogVisible" :title="state.isEditing ? 'Edit Character' : 'Create Character'">
+      <el-form :model="state.currentCharacter" label-width="120px">
         <el-form-item label="Name">
-          <el-input v-model="currentCharacter.name"/>
+          <el-input v-model="state.currentCharacter.name"/>
         </el-form-item>
         <el-form-item label="Character ID">
-          <el-input v-model="currentCharacter.character_id"/>
+          <el-input v-model="state.currentCharacter.character_id"/>
         </el-form-item>
         <el-form-item label="Description">
-          <el-input v-model="currentCharacter.description" type="textarea"/>
+          <el-input v-model="state.currentCharacter.description" type="textarea"/>
         </el-form-item>
         <el-form-item label="Height">
-          <el-input-number v-model="currentCharacter.height" :step="0.01"/>
+          <el-input-number v-model="state.currentCharacter.height" :step="1"/>
         </el-form-item>
         <el-form-item label="Gender">
-          <el-select v-model="currentCharacter.gender" placeholder="Select Gender">
-            <el-option v-for="gender in genders" :key="gender.id" :label="gender.name" :value="gender.id"/>
+          <el-select v-model="state.currentCharacter.gender" placeholder="Select Gender">
+            <el-option v-for="gender in state.genders" :key="gender.id" :label="gender.name" :value="gender.id"/>
           </el-select>
         </el-form-item>
         <el-form-item label="Race">
-          <el-select v-model="currentCharacter.race" placeholder="Select Race">
-            <el-option v-for="race in races" :key="race.id" :label="race.name" :value="race.id"/>
+          <el-select v-model="state.currentCharacter.race" placeholder="Select Race">
+            <el-option v-for="race in state.races" :key="race.id" :label="race.name" :value="race.id"/>
           </el-select>
         </el-form-item>
         <el-form-item label="Tags">
-          <el-select v-model="currentCharacter.tags" multiple placeholder="Select Tags">
-            <el-option v-for="tag in tags" :key="tag.id" :label="tag.name" :value="tag.id"/>
+          <el-select v-model="state.currentCharacter.tags" multiple placeholder="Select Tags">
+            <el-option v-for="tag in state.tags" :key="tag.id" :label="tag.name" :value="tag.id"/>
           </el-select>
         </el-form-item>
         <el-form-item label="Thumbnails">
           <el-upload
-              v-model:file-list="fileList"
+              v-model:file-list="state.fileList"
               action="#"
               list-type="picture-card"
               :auto-upload="false"
               :on-change="handleFileChange"
               :on-remove="handleFileRemove"
               :on-preview="handlePreview"
-              :limit="maxThumbnails"
-              :disabled="fileList.length >= maxThumbnails"
+              :limit="state.maxThumbnails"
+              :disabled="state.fileList.length >= state.maxThumbnails"
               drag
           >
-            <el-icon v-if="fileList.length < maxThumbnails">
+            <el-icon v-if="state.fileList.length < state.maxThumbnails">
               <plus/>
             </el-icon>
             <template #file="{ file }">
               <img class="el-upload-list__item-thumbnail" :src="file.url" alt=""/>
               <span class="el-upload-list__item-actions">
-        <span class="el-upload-list__item-preview" @click="handlePreview(file)">
-          <el-icon><zoom-in/></el-icon>
-        </span>
-        <span class="el-upload-list__item-delete" @click="handleFileRemove(file)">
-          <el-icon><delete/></el-icon>
-        </span>
-      </span>
+                <span class="el-upload-list__item-preview" @click="handlePreview(file)">
+                  <el-icon><zoom-in/></el-icon>
+                </span>
+                <span class="el-upload-list__item-delete" @click="handleFileRemove(file)">
+                  <el-icon><delete/></el-icon>
+                </span>
+              </span>
             </template>
             <template #tip>
               <div class="el-upload__tip">
-                Drag files here or click to upload. Maximum {{ maxThumbnails }} images allowed.
+                Drag files here or click to upload. Maximum {{ state.maxThumbnails }} images allowed.
               </div>
             </template>
           </el-upload>
@@ -112,85 +111,99 @@
 
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="dialogVisible = false">Cancel</el-button>
+          <el-button @click="state.dialogVisible = false">Cancel</el-button>
           <el-button type="primary" @click="confirmSave">Save</el-button>
         </span>
       </template>
     </el-dialog>
   </div>
-  <el-dialog v-model="previewVisible" title="Image Preview">
-    <img :src="previewImage" style="width: 100%"/>
+  <el-dialog v-model="state.previewVisible" title="Image Preview">
+    <img :src="state.previewImage" style="width: 100%"/>
   </el-dialog>
 </template>
 
 <script lang="ts">
-import {defineComponent, ref, onMounted, watch} from 'vue'
-import {ElMessage, ElMessageBox,} from 'element-plus'
-import {characterApi} from "@/services/character_api"
-import {Plus, ZoomIn, Delete} from '@element-plus/icons-vue'
-import type {Character, UploadFile} from "@/services/interfaces";
+import { defineComponent, reactive, onMounted } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { characterApi } from "@/services/character_api"
+import { Plus, ZoomIn, Delete } from '@element-plus/icons-vue'
+import type { Character, UploadFile } from "@/services/interfaces"
+import { AxiosError } from 'axios'
+
+const MAX_THUMBNAILS = 3
+const THUMBNAIL_SIZE_MIN = 50
+const THUMBNAIL_SIZE_MAX = 500
+const THUMBNAIL_SIZE_STEP = 10
 
 export default defineComponent({
   name: 'CharacterManager',
-  components: {Plus, ZoomIn, Delete},
+  components: { Plus, ZoomIn, Delete },
   setup() {
-    const characters = ref<Character[]>([])
-    const genders = ref<Array<{ id: number; name: string }>>([])
-    const races = ref<Array<{ id: number; name: string }>>([])
-    const tags = ref<Array<{ id: number; name: string }>>([])
-    const maxThumbnails = ref(3) // 默认值，后面会从API获取
-    const previewVisible = ref(false)
-    const previewImage = ref('')
+    const state = reactive({
+      characters: [] as Character[],
+      genders: [] as Array<{ id: number; name: string }>,
+      races: [] as Array<{ id: number; name: string }>,
+      tags: [] as Array<{ id: number; name: string }>,
+      maxThumbnails: MAX_THUMBNAILS,
+      previewVisible: false,
+      previewImage: '',
+      dialogVisible: false,
+      currentCharacter: {} as Character,
+      isEditing: false,
+      thumbnailSize: 100,
+      fileList: [] as UploadFile[],
+    })
 
     const initialCharacter: Character = {
       name: '',
       character_id: '',
       description: '',
-      height: undefined,
-      gender: undefined,
-      race: undefined,
-      tags: [],
-      thumbnails: []
-    };
-
-
-    const dialogVisible = ref(false)
-    const currentCharacter = ref<Character>({...initialCharacter});
-    const isEditing = ref(false)
-    const thumbnailSize = ref(100) // 默认缩略图尺寸
-
-    const updateThumbnailSize = (newSize: number) => {
-      thumbnailSize.value = newSize
+      height: null,
+      gender: null,
+      race: null,
+      tags: null,
+      thumbnails: [],
     }
 
-    // 使用 watch 来监听 thumbnailSize 的变化
-    watch(thumbnailSize, (newSize) => {
-      // 如果需要，这里可以添加额外的逻辑
-      console.log('Thumbnail size changed to:', newSize)
-    })
+    const resetCurrentCharacter = () => {
+      state.currentCharacter = { ...initialCharacter }
+      state.fileList = []
+      state.isEditing = false
+    }
 
-    const fileList = ref<UploadFile[]>([])
-
+    const handleError = (error: unknown, defaultMessage: string) => {
+      console.error(defaultMessage, error)
+      if (error instanceof Error) {
+        const axiosError = error as AxiosError
+        if (axiosError.response) {
+          console.error('Response data:', axiosError.response.data)
+          console.error('Response status:', axiosError.response.status)
+          console.error('Response headers:', axiosError.response.headers)
+          const responseData = axiosError.response.data as { detail?: string }
+          ElMessage.error(defaultMessage + ': ' + (responseData.detail || axiosError.message))
+        } else {
+          ElMessage.error(defaultMessage + ': ' + axiosError.message)
+        }
+      } else {
+        ElMessage.error('An unknown error occurred')
+      }
+    }
 
     const fetchData = async () => {
       try {
-        characters.value = await characterApi.fetchCharacters()
-        genders.value = await characterApi.fetchGenders()
-        races.value = await characterApi.fetchRaces()
-        tags.value = await characterApi.fetchTags()
+        state.characters = await characterApi.fetchCharacters()
+        state.genders = await characterApi.fetchGenders()
+        state.races = await characterApi.fetchRaces()
+        state.tags = await characterApi.fetchTags()
       } catch (error) {
-        console.error('Error fetching data:', error)
-        ElMessage.error('Failed to fetch data')
+        handleError(error, 'Failed to fetch data')
       }
     }
 
     const showCreateDialog = () => {
-      currentCharacter.value = {...initialCharacter};
-      fileList.value = [];
-      isEditing.value = false;
-      dialogVisible.value = true;
+      resetCurrentCharacter()
+      state.dialogVisible = true
     }
-
 
     const confirmSave = async () => {
       try {
@@ -206,12 +219,10 @@ export default defineComponent({
         await saveCharacter()
       } catch (error) {
         if (error !== 'cancel') {
-          console.error('Error in save confirmation:', error)
-          ElMessage.error('An error occurred during save confirmation')
+          handleError(error, 'An error occurred during save confirmation')
         }
       }
     }
-
 
     const confirmDelete = async (id: number) => {
       try {
@@ -227,8 +238,7 @@ export default defineComponent({
         await deleteCharacter(id)
       } catch (error) {
         if (error !== 'cancel') {
-          console.error('Error in delete confirmation:', error)
-          ElMessage.error('An error occurred during delete confirmation')
+          handleError(error, 'An error occurred during delete confirmation')
         }
       }
     }
@@ -239,24 +249,22 @@ export default defineComponent({
         ElMessage.success('Character deleted successfully')
         fetchData()
       } catch (error) {
-        console.error('Error deleting character:', error)
-        ElMessage.error('Failed to delete character')
+        handleError(error, 'Failed to delete character')
       }
     }
 
     const fetchMaxThumbnails = async () => {
       try {
         const response = await characterApi.fetchMaxThumbnails()
-        maxThumbnails.value = response.max_thumbnails
+        state.maxThumbnails = response.max_thumbnails
       } catch (error) {
-        console.error('Error fetching max thumbnails:', error)
-        ElMessage.error('Failed to fetch max thumbnails count')
+        handleError(error, 'Failed to fetch max thumbnails count')
       }
     }
 
-    const handlePreview = (file: any) => {
-      previewImage.value = file.url
-      previewVisible.value = true
+    const handlePreview = (file: UploadFile) => {
+      state.previewImage = file.url
+      state.previewVisible = true
     }
 
     const handleFileChange = (file: UploadFile, fileList: UploadFile[]) => {
@@ -271,8 +279,8 @@ export default defineComponent({
         return false
       }
 
-      if (fileList.length >= maxThumbnails.value) {
-        ElMessage.warning(`You can only upload a maximum of ${maxThumbnails.value} images.`)
+      if (fileList.length > state.maxThumbnails) {
+        ElMessage.warning(`You can only upload a maximum of ${state.maxThumbnails} images.`)
         return false
       }
 
@@ -283,59 +291,61 @@ export default defineComponent({
     }
 
     const handleFileRemove = (file: UploadFile) => {
-      const index = fileList.value.findIndex(f => f.uid === file.uid)
+      const index = state.fileList.findIndex(f => f.uid === file.uid)
       if (index !== -1) {
-        fileList.value.splice(index, 1)
+        state.fileList.splice(index, 1)
       }
     }
 
     const saveCharacter = async () => {
       try {
         const formData = new FormData()
-        Object.keys(currentCharacter.value).forEach(key => {
-          if (key !== 'thumbnails' && currentCharacter.value[key as keyof Character] !== null) {
-            formData.append(key, currentCharacter.value[key as keyof Character] as string)
+        Object.entries(state.currentCharacter).forEach(([key, value]) => {
+          if (value !== null && value !== undefined) {
+            if (key === 'tags' && Array.isArray(value)) {
+              value.forEach((tagId, index) => {
+                formData.append(`tags[${index}]`, tagId.toString())
+              })
+            } else {
+              formData.append(key, String(value))
+            }
           }
         })
 
-        // Handle existing thumbnails
-        const thumbnailsToKeep = fileList.value
-            .filter(file => file.status === 'success' && file.uid)
-            .map(file => file.uid)
-        formData.append('thumbnails', JSON.stringify(thumbnailsToKeep))
-
-        // Handle new files
-        fileList.value.forEach((file: any) => {
+        state.fileList.forEach((file: UploadFile) => {
           if (file.status === 'ready' && file.raw instanceof File) {
-            formData.append(`new_thumbnails`, file.raw)
+            formData.append('new_thumbnails', file.raw)
           }
         })
 
-        if (isEditing.value && currentCharacter.value.id) {
-          await characterApi.updateCharacter(currentCharacter.value.id, formData)
+        if (state.isEditing && state.currentCharacter.id) {
+          await characterApi.updateCharacter(state.currentCharacter.id, formData)
           ElMessage.success('Character updated successfully')
         } else {
           await characterApi.createCharacter(formData)
           ElMessage.success('Character created successfully')
         }
-        dialogVisible.value = false
+        state.dialogVisible = false
         fetchData()
       } catch (error) {
-        console.error('Error saving character:', error)
-        ElMessage.error('Failed to save character')
+        handleError(error, 'Failed to save character')
       }
     }
 
     const editCharacter = (character: Character) => {
-      currentCharacter.value = {...character}
-      fileList.value = character.thumbnails ? character.thumbnails.map(thumbnail => ({
+      state.currentCharacter = { ...character }
+      state.fileList = character.thumbnails ? character.thumbnails.map(thumbnail => ({
         name: thumbnail.name || 'thumbnail',
         url: thumbnail.image,
         status: 'success',
         uid: thumbnail.id.toString()
       } as UploadFile)) : []
-      isEditing.value = true
-      dialogVisible.value = true
+      state.isEditing = true
+      state.dialogVisible = true
+    }
+
+    const updateThumbnailSize = (newSize: number) => {
+      state.thumbnailSize = newSize
     }
 
     onMounted(() => {
@@ -344,26 +354,18 @@ export default defineComponent({
     })
 
     return {
-      characters,
-      genders,
-      races,
-      tags,
-      dialogVisible,
-      currentCharacter,
-      isEditing,
+      state,
       showCreateDialog,
-      editCharacter,
       confirmSave,
       confirmDelete,
-      thumbnailSize,
-      fileList,
       handleFileChange,
       handleFileRemove,
-      maxThumbnails,
-      previewVisible,
-      previewImage,
       handlePreview,
+      editCharacter,
       updateThumbnailSize,
+      THUMBNAIL_SIZE_MIN,
+      THUMBNAIL_SIZE_MAX,
+      THUMBNAIL_SIZE_STEP,
     }
   }
 })

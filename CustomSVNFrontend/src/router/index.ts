@@ -10,6 +10,9 @@ import CommitDetail from "@/components/SVN/CommitDetail.vue";
 import CommitSearchView from "@/views/svn/CommitSearchView.vue";
 import CharacterManager from "@/components/Character/CharacterManager.vue";
 import FileChangeDetail from "@/components/SVN/FileChangeDetail.vue";
+import GenderManager from "@/components/Character/GenderManager.vue";
+import RaceManager from "@/components/Character/RaceManager.vue";
+import TagManager from "@/components/Character/TagManager.vue";
 
 const routes: Array<RouteRecordRaw> = [
     {
@@ -40,12 +43,30 @@ const routes: Array<RouteRecordRaw> = [
                         name: 'FileChangeDetail',
                         component: FileChangeDetail
                     },
+
                 ]
             },
             {
                 path: '/character',
-                component: CharacterManager
-            },
+                children: [
+                    {
+                        path: 'character',
+                        component: CharacterManager
+                    },
+                    {
+                        path: 'Gender',
+                        component: GenderManager
+                    },
+                    {
+                        path: 'Race',
+                        component: RaceManager
+                    },
+                    {
+                        path: 'Tag',
+                        component: TagManager
+                    },
+                ]
+            }
 
         ],
     },
