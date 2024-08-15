@@ -1,11 +1,14 @@
 import json
 
 from django.conf import settings
-from rest_framework import viewsets, status
-from rest_framework.decorators import api_view
+
+from rest_framework import viewsets, status, generics, mixins
+from rest_framework.decorators import api_view, action
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
+from ._serializers.character_serializers import CharacterQueryCommonSerializer
 from .models import Gender, Race, Tag, Item, ItemAttribute, Character, CharacterItem, CharacterItemAttribute, Thumbnail
 from .serializers import GenderSerializer, RaceSerializer, TagSerializer, ItemSerializer, ItemAttributeSerializer, \
     CharacterSerializer, CharacterItemSerializer, CharacterItemAttributeSerializer, ThumbnailSerializer
@@ -100,3 +103,4 @@ class ThumbnailViewSet(viewsets.ModelViewSet):
 @api_view(['GET'])
 def get_max_thumbnails(request):
     return Response({'max_thumbnails': settings.MAX_THUMBNAILS_PER_CHARACTER})
+

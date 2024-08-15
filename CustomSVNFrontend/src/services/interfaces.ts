@@ -81,3 +81,11 @@ export interface FileChange {
     action: string;
     kind: string;
 }
+
+
+export interface Tag {
+    id: number;
+    name: string;
+    description: string;
+    active: boolean;
+}

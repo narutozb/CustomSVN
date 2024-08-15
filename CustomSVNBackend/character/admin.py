@@ -65,7 +65,7 @@ class ThumbnailInline(admin.TabularInline):
 
 @admin.register(Character)
 class CharacterAdmin(admin.ModelAdmin):
-    list_display = ('name', 'character_id', 'gender', 'race', 'height', 'tag_list', 'thumbnail_preview')
+    list_display = ('id', 'name', 'character_id', 'gender', 'race', 'height', 'tag_list', 'thumbnail_preview')
     list_filter = ('gender', 'race', 'tags')
     search_fields = ('name', 'character_id', 'description')
     filter_horizontal = ('tags',)
