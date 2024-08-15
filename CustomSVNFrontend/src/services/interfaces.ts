@@ -88,4 +88,5 @@ export interface Tag {
     name: string;
     description: string;
     active: boolean;
+    [key: string]: any;  // 允许动态属性
 }

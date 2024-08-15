@@ -32,7 +32,6 @@ class CharacterTagQueryViewSet(
             'search_fields': self.search_fields,
             'ordering_fields': self.ordering_fields,
             'table_fields': [
-                # {'key': 'id', 'label': 'ID', 'sortable': True, 'editable': False},
                 {'key': 'name', 'label': 'Name', 'sortable': True, 'editable': True},
                 {'key': 'description', 'label': 'Description', 'sortable': False, 'editable': True},
                 {'key': 'active', 'label': 'Active', 'sortable': True, 'editable': True},
@@ -50,10 +49,15 @@ class CharacterTagQueryViewSet(
         # 处理搜索
         search = request.query_params.get('search')
         search_fields = request.query_params.get('search_fields')
+        use_regex = request.query_params.get('use_regex', 'false').lower() == 'true'
+
         if search and search_fields:
             or_condition = Q()
             for field in search_fields.split(','):
-                or_condition |= Q(**{f"{field}__icontains": search})
+                if use_regex:
+                    or_condition |= Q(**{f"{field}__regex": search})
+                else:
+                    or_condition |= Q(**{f"{field}__icontains": search})
             queryset = queryset.filter(or_condition)
 
         # 处理排序

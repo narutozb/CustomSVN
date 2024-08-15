@@ -12,6 +12,7 @@
           :max-collapse-tags="5"
           style="width: 240px"
           @change="handleSearchFieldChange"
+          :disabled="searchFields.length === -1"
       >
         <template #header>
           <el-checkbox
@@ -39,6 +40,13 @@
           <el-icon><Search /></el-icon>
         </template>
       </el-input>
+      <el-switch
+          v-model="useRegex"
+          active-text="Regex"
+          inactive-text="Normal"
+          style="margin-left: 10px;"
+          @change="handleSearch"
+      />
     </div>
 
     <div class="sort-container">
@@ -92,10 +100,13 @@ export default defineComponent({
     const selectedSearchFields = ref<string[]>([]);
     const checkAll = ref(false);
     const indeterminate = ref(false);
+    const useRegex = ref(false);
 
     const searchPlaceholder = computed(() => {
-      if (selectedSearchFields.value.length === 0) {
-        return 'Search in all fields';
+      if (props.searchFields.length === 0) {
+        return 'Search is not available';
+      } else if (selectedSearchFields.value.length === 0) {
+        return 'Select fields to search';
       } else if (selectedSearchFields.value.length === 1) {
         return `Search in ${selectedSearchFields.value[0]}`;
       } else {
@@ -106,7 +117,8 @@ export default defineComponent({
     const handleSearch = () => {
       emit('search', {
         query: localSearchQuery.value,
-        fields: selectedSearchFields.value
+        fields: selectedSearchFields.value,
+        useRegex: useRegex.value
       });
     };
 
@@ -166,6 +178,7 @@ export default defineComponent({
       selectedSearchFields,
       checkAll,
       indeterminate,
+      useRegex,
       searchPlaceholder,
       handleSearch,
       handleSort,
@@ -198,6 +211,7 @@ export default defineComponent({
 .el-select {
   width: 150px;
 }
+
 </style>
 
 <style lang="scss">

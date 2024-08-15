@@ -76,14 +76,9 @@ import { defineComponent, ref, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { characterApi, FetchTagsParams } from "@/services/character_api";
 import SearchSortFilterComponent from "@/components/Character/SearchSortFilterComponent.vue";
+import type {Tag} from "@/services/interfaces";
 
-interface Tag {
-  id: number;
-  name: string;
-  description: string;
-  active: boolean;
-  [key: string]: any;  // 允许动态属性
-}
+
 
 interface TableField {
   key: string;
