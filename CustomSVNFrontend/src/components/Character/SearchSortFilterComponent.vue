@@ -12,7 +12,6 @@
           :max-collapse-tags="5"
           style="width: 240px"
           @change="handleSearchFieldChange"
-          :disabled="searchFields.length === -1"
       >
         <template #header>
           <el-checkbox
@@ -33,20 +32,19 @@
       <el-input
           v-model="localSearchQuery"
           :placeholder="searchPlaceholder"
-          @input="handleSearch"
           style="width: 300px; margin-left: 10px;"
       >
         <template #prefix>
           <el-icon><Search /></el-icon>
         </template>
       </el-input>
-      <el-switch
-          v-model="useRegex"
-          active-text="Regex"
-          inactive-text="Normal"
+      <el-button
+          type="primary"
+          @click="submitSearch"
           style="margin-left: 10px;"
-          @change="handleSearch"
-      />
+      >
+        Search
+      </el-button>
     </div>
 
     <div class="sort-container">
@@ -100,13 +98,10 @@ export default defineComponent({
     const selectedSearchFields = ref<string[]>([]);
     const checkAll = ref(false);
     const indeterminate = ref(false);
-    const useRegex = ref(false);
 
     const searchPlaceholder = computed(() => {
-      if (props.searchFields.length === 0) {
-        return 'Search is not available';
-      } else if (selectedSearchFields.value.length === 0) {
-        return 'Select fields to search';
+      if (selectedSearchFields.value.length === 0) {
+        return 'Search in all fields';
       } else if (selectedSearchFields.value.length === 1) {
         return `Search in ${selectedSearchFields.value[0]}`;
       } else {
@@ -114,11 +109,10 @@ export default defineComponent({
       }
     });
 
-    const handleSearch = () => {
+    const submitSearch = () => {
       emit('search', {
         query: localSearchQuery.value,
-        fields: selectedSearchFields.value,
-        useRegex: useRegex.value
+        fields: selectedSearchFields.value.length > 0 ? selectedSearchFields.value : props.searchFields,
       });
     };
 
@@ -136,7 +130,6 @@ export default defineComponent({
       } else {
         selectedSearchFields.value = [];
       }
-      handleSearch();
     };
 
     const handleSearchFieldChange = () => {
@@ -149,7 +142,6 @@ export default defineComponent({
       } else {
         indeterminate.value = true;
       }
-      handleSearch();
     };
 
     watch(() => props.searchQuery, (newValue) => {
@@ -178,16 +170,17 @@ export default defineComponent({
       selectedSearchFields,
       checkAll,
       indeterminate,
-      useRegex,
       searchPlaceholder,
-      handleSearch,
       handleSort,
       handleCheckAll,
       handleSearchFieldChange,
+      submitSearch,
     };
   },
 });
 </script>
+
+
 
 <style scoped>
 .search-sort-filter-container {

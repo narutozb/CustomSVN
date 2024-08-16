@@ -76,9 +76,14 @@ import { defineComponent, ref, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { characterApi, FetchTagsParams } from "@/services/character_api";
 import SearchSortFilterComponent from "@/components/Character/SearchSortFilterComponent.vue";
-import type {Tag} from "@/services/interfaces";
 
-
+interface Tag {
+  id: number;
+  name: string;
+  description: string;
+  active: boolean;
+  [key: string]: any;  // 允许动态属性
+}
 
 interface TableField {
   key: string;
@@ -118,6 +123,7 @@ export default defineComponent({
     const tableFields = ref<TableField[]>([]);
     const editFields = ref<EditField[]>([]);
     const selectedSearchFields = ref<string[]>([]);
+    const useRegex = ref(false);
 
     // API calls
     const fetchFilterOptions = async () => {
@@ -142,12 +148,14 @@ export default defineComponent({
           search_fields: selectedSearchFields.value.join(','),
           ordering: `${sortOrder.value === 'desc' ? '-' : ''}${sortField.value}`,
         };
+        console.log('Fetching tags with params:', params);  // 调试信息
         const response = await characterApi.fetchTags(params);
         tags.value = response.results;
         totalTags.value = response.pagination.total_items;
         totalPages.value = response.pagination.total_pages;
         currentPage.value = response.pagination.current_page;
       } catch (error) {
+        console.error('Error fetching tags:', error);  // 调试信息
         ElMessage.error('Failed to fetch tags');
       } finally {
         loading.value = false;
@@ -156,6 +164,7 @@ export default defineComponent({
 
     // Event handlers
     const handleSearch = ({ query, fields }: { query: string, fields: string[] }) => {
+      console.log('Search params:', { query, fields });  // 调试信息
       searchQuery.value = query;
       selectedSearchFields.value = fields;
       currentPage.value = 1;
