@@ -81,5 +81,5 @@ class CharacterGenderCommandViewSet(
     viewsets.GenericViewSet
 ):
     queryset = Gender.objects.all()
-    serializer_class = CharacterTagSerializer
+    serializer_class = CharacterGenderSerializer
     pagination_class = CustomPagination

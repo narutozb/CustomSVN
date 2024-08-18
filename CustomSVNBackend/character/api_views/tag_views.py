@@ -3,10 +3,10 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import mixins, viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
-
 from character.CustomPaginations import CustomPagination
 from character._serializers.tag_serializers import CharacterTagSerializer
 from character.models import Tag
+
 
 class CharacterTagQueryViewSet(
     mixins.ListModelMixin,
@@ -35,6 +35,10 @@ class CharacterTagQueryViewSet(
                 {'key': 'name', 'label': 'Name', 'sortable': True, 'editable': True},
                 {'key': 'description', 'label': 'Description', 'sortable': False, 'editable': True},
                 {'key': 'active', 'label': 'Active', 'sortable': True, 'editable': True},
+                {'key': 'updated_at', 'label': 'UpdateAt', 'sortable': True, 'editable': False},
+                {'key': 'updated_by', 'label': 'UpdateBy', 'sortable': True, 'editable': False},
+                {'key': 'create_at', 'label': 'CreateAt', 'sortable': True, 'editable': False},
+                {'key': 'create_by', 'label': 'CreateBy', 'sortable': True, 'editable': False},
             ],
             'edit_fields': [
                 {'key': 'name', 'label': 'Name', 'type': 'text', 'required': True},
@@ -49,15 +53,11 @@ class CharacterTagQueryViewSet(
         # 处理搜索
         search = request.query_params.get('search')
         search_fields = request.query_params.get('search_fields')
-        use_regex = request.query_params.get('use_regex', 'false').lower() == 'true'
 
         if search and search_fields:
             or_condition = Q()
             for field in search_fields.split(','):
-                if use_regex:
-                    or_condition |= Q(**{f"{field}__regex": search})
-                else:
-                    or_condition |= Q(**{f"{field}__icontains": search})
+                or_condition |= Q(**{f"{field}__icontains": search})
             queryset = queryset.filter(or_condition)
 
         # 处理排序
@@ -73,6 +73,7 @@ class CharacterTagQueryViewSet(
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
+
 class CharacterTagCommandViewSet(
     mixins.CreateModelMixin,
     mixins.UpdateModelMixin,
@@ -82,3 +83,10 @@ class CharacterTagCommandViewSet(
     queryset = Tag.objects.all()
     serializer_class = CharacterTagSerializer
     pagination_class = CustomPagination
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user, updated_by=self.request.user)
+
+    def perform_update(self, serializer):
+        serializer.save(updated_by=self.request.user)
+

@@ -123,7 +123,6 @@ export default defineComponent({
     const tableFields = ref<TableField[]>([]);
     const editFields = ref<EditField[]>([]);
     const selectedSearchFields = ref<string[]>([]);
-    const useRegex = ref(false);
 
     // API calls
     const fetchFilterOptions = async () => {

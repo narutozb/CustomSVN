@@ -1,110 +1,77 @@
 <template>
-  <div class="gender-manager">
-    <h2>Gender Manager</h2>
-    <el-button type="primary" @click="showDialog()">Add New Gender</el-button>
-
-    <el-table :data="genders" style="width: 100%">
-      <el-table-column prop="name" label="Name"/>
-      <el-table-column label="Actions" width="200">
-        <template #default="scope">
-          <el-button size="small" @click="showDialog(scope.row)">Edit</el-button>
-          <el-button size="small" type="danger" @click="confirmDelete(scope.row.id)">Delete</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
-
-    <el-dialog v-model="dialogVisible" :title="isEditing ? 'Edit Gender' : 'Add New Gender'">
-      <el-form :model="currentGender">
-        <el-form-item label="Name">
-          <el-input v-model="currentGender.name"/>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="dialogVisible = false">Cancel</el-button>
-          <el-button type="primary" @click="saveGender">Save</el-button>
-        </span>
-      </template>
-    </el-dialog>
-  </div>
+  <el-container class="layout-container">
+    <el-aside width="200px">
+      <el-menu
+          :default-active="activeMenuItem"
+          class="el-menu-vertical-demo"
+          @select="handleSelect"
+      >
+        <el-menu-item index="home">
+          <el-icon><icon-menu /></el-icon>
+          <span>Home</span>
+        </el-menu-item>
+        <el-menu-item v-for="item in menuItems" :key="item.name" :index="item.name">
+          <el-icon><component :is="item.icon" /></el-icon>
+          <span>{{ item.label }}</span>
+        </el-menu-item>
+      </el-menu>
+    </el-aside>
+    <el-main>
+      <component :is="currentView" />
+    </el-main>
+  </el-container>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref, onMounted } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
-import { characterApi } from "@/services/character_api";
+<script setup lang="ts">
+import { ref, shallowRef, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { Menu as IconMenu, User, PriceTag } from '@element-plus/icons-vue'
+import CharacterManager from '@/components/Character/CharacterManager.vue'
+import TagManager from '@/components/Character/TagManager.vue'
+import CharacterHome from '@/components/Character/CharacterHome.vue'
 
-export default defineComponent({
-  name: 'GenderManager',
-  setup() {
-    const genders = ref<Array<{ id: number; name: string }>>([]);
-    const dialogVisible = ref(false);
-    const isEditing = ref(false);
-    const currentGender = ref({ id: 0, name: '' });
+const router = useRouter()
+const activeMenuItem = ref('home')
+const currentView = shallowRef(CharacterHome)
 
-    const fetchGenders = async () => {
-      try {
-        genders.value = await characterApi.fetchGenders();
-      } catch (error) {
-        ElMessage.error('Failed to fetch genders');
-      }
-    };
+const menuItems = [
+  { name: 'characters', label: 'Characters', icon: User, component: CharacterManager },
+  { name: 'tags', label: 'Tags', icon: PriceTag, component: TagManager },
+  // 可以在这里添加更多菜单项
+]
 
-    const showDialog = (gender?: { id: number; name: string }) => {
-      if (gender) {
-        currentGender.value = { ...gender };
-        isEditing.value = true;
-      } else {
-        currentGender.value = { id: 0, name: '' };
-        isEditing.value = false;
-      }
-      dialogVisible.value = true;
-    };
+const handleSelect = (key: string) => {
+  activeMenuItem.value = key
+  if (key === 'home') {
+    currentView.value = CharacterHome
+  } else {
+    const selectedItem = menuItems.find(item => item.name === key)
+    if (selectedItem) {
+      currentView.value = selectedItem.component
+    }
+  }
+  router.push({ name: key })
+}
 
-    const saveGender = async () => {
-      try {
-        if (isEditing.value) {
-          await characterApi.updateGender(currentGender.value.id, currentGender.value);
-          ElMessage.success('Gender updated successfully');
-        } else {
-          await characterApi.createGender(currentGender.value);
-          ElMessage.success('Gender created successfully');
-        }
-        dialogVisible.value = false;
-        fetchGenders();
-      } catch (error) {
-        ElMessage.error('Failed to save gender');
-      }
-    };
-
-    const confirmDelete = async (id: number) => {
-      try {
-        await ElMessageBox.confirm('Are you sure you want to delete this gender?', 'Warning', {
-          confirmButtonText: 'OK',
-          cancelButtonText: 'Cancel',
-          type: 'warning',
-        });
-        await characterApi.deleteGender(id);
-        ElMessage.success('Gender deleted successfully');
-        fetchGenders();
-      } catch (error) {
-        if (error !== 'cancel') {
-          ElMessage.error('Failed to delete gender');
-        }
-      }
-    };
-
-    onMounted(fetchGenders);
-
-    return {
-      genders,
-      dialogVisible,
-      isEditing,
-      currentGender,
-      showDialog,
-      saveGender,
-      confirmDelete,
-    };
-  },
-});
+onMounted(() => {
+  const currentRoute = router.currentRoute.value.name as string
+  if (currentRoute && currentRoute !== 'home') {
+    handleSelect(currentRoute)
+  }
+})
 </script>
+
+<style scoped>
+.layout-container {
+  height: 100vh;
+}
+
+.el-aside {
+  background-color: #545c64;
+}
+
+.el-menu {
+  height: 100%;
+  border-right: none;
+}
+</style>
