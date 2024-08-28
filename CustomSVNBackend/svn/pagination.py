@@ -15,4 +15,5 @@ class CustomPagination(PageNumberPagination):
             'current_page': self.page.number,  # 自定义返回值
             'last_page': self.page.paginator.num_pages,  # 自定义返回值
             'results': data,
+
         })

@@ -1,4 +1,6 @@
 from rest_framework import serializers
+from rest_framework.decorators import action
+
 from .models import Repository, Commit, FileChange, Branch
 
 
@@ -33,6 +35,8 @@ class CommitSerializer(serializers.ModelSerializer):
     class Meta:
         model = Commit
         fields = ['id', 'revision', 'author', 'message', 'date', 'file_changes_count', 'repository', 'branch']
+
+
 
 
 class FileChangeSerializer(serializers.ModelSerializer):

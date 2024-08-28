@@ -16,7 +16,7 @@ from rest_framework.response import Response
 
 from svn.models import Repository, Commit, FileChange, Branch
 from svn.serializers import RepositorySerializer, CommitSerializer, FileChangeSerializer, BranchSerializer
-from svn.views.custom_class import CustomPagination
+from svn.pagination import CustomPagination
 
 
 class RepositoryViewSet(viewsets.ModelViewSet):

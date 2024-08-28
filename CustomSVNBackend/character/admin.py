@@ -3,44 +3,6 @@ from django.utils.html import format_html
 from .models import Gender, Race, Tag, Item, ItemAttribute, Character, CharacterItem, CharacterItemAttribute, Thumbnail
 
 
-class TrackedModelAdmin(admin.ModelAdmin):
-    readonly_fields = ('created_at', 'created_by', 'updated_at', 'updated_by')
-
-    def save_model(self, request, obj, form, change):
-        if not change:  # 如果是创建新对象
-            obj.created_by = request.user
-        obj.updated_by = request.user
-        super().save_model(request, obj, form, change)
-
-    def get_readonly_fields(self, request, obj=None):
-        if obj:  # 编辑现有对象
-            return self.readonly_fields
-        return ('created_at', 'updated_at')  # 创建新对象时
-
-
-@admin.register(Gender)
-class GenderAdmin(TrackedModelAdmin):
-    list_display = ('name', 'description', 'created_at', 'created_by', 'updated_at', 'updated_by')
-    search_fields = ('name', 'description')
-
-
-@admin.register(Race)
-class RaceAdmin(TrackedModelAdmin):
-    list_display = ('name', 'description', 'created_at', 'created_by', 'updated_at', 'updated_by')
-    search_fields = ('name', 'description')
-
-
-@admin.register(Tag)
-class TagAdmin(TrackedModelAdmin):
-    list_display = ('name', 'description', 'active', 'created_at', 'created_by', 'updated_at', 'updated_by')
-    search_fields = ('name', 'description')
-
-
-@admin.register(Item)
-class ItemAdmin(admin.ModelAdmin):
-    list_display = ('name', 'description')
-    search_fields = ('name', 'description')
-
 
 @admin.register(ItemAttribute)
 class ItemAttributeAdmin(admin.ModelAdmin):

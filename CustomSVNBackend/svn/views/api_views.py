@@ -5,9 +5,9 @@ from functools import reduce
 from django.core.exceptions import ValidationError
 from django.core.paginator import PageNotAnInteger, EmptyPage
 from django.db import DatabaseError
-from django.db.models import OuterRef, Subquery, F, Q, Count
+from django.db.models import OuterRef, Subquery, F, Q
 from django.utils import timezone
-from rest_framework import status, viewsets
+from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
@@ -16,7 +16,7 @@ from rest_framework.views import APIView
 from svn.models import FileChange, Commit
 from svn.query_functions.functions import query_file_changes_by_repo_name_and_file_changes
 from svn.serializers import QueryFileChangeSerializer, CommitSerializer, FileChangeSerializer, CommitDetailSerializer
-from svn.views.custom_class import CustomPagination
+from svn.pagination import CustomPagination
 
 
 class FileChangeListLatestExistView(APIView):

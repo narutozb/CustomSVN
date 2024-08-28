@@ -7,12 +7,16 @@ from svn.views.views import RepositoryViewSet, CommitViewSet, get_latest_revisio
     BranchViewSet, FileChangeViewSet
 
 from svn.views.update_svn import receive_commits
+from svn.views.views_commit import CommitQueryViewSet
+from svn.views.views_repository import RepositoryQueryViewSet
 
 router = DefaultRouter()
 router.register(r'repositories', RepositoryViewSet)
 router.register(r'commits', CommitViewSet)
 router.register(r'branches', BranchViewSet)
 router.register(r'file_changes', FileChangeViewSet)
+router.register(r'commits_query', CommitQueryViewSet, basename='Commits-Query')
+router.register('repositories_query', RepositoryQueryViewSet, basename='Repositories-Query')
 
 urlpatterns = [
     path('', include(router.urls)),
