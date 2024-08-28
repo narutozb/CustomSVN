@@ -31,10 +31,12 @@ if __name__ == '__main__':
 
     # results = local_process_main()
     for repo_path in MayaClientSettings.get_local_svn_repo_path():
-        for revision in range(1,19):
-            # revision = 5
-            client = maya_client_manager.MayaClientManager(repo_path,update_to_revision=revision)
-            r = client.get_file_changes_from_custom_server(repository_name='MyDataSVN', revision=revision)
+        client = maya_client_manager.MayaClientManager(repo_path, update_to_revision=3)
+        latest_commit = client.get_latest_commit()
+        for revision in range(1, latest_commit.revision+1):
+            client = maya_client_manager.MayaClientManager(repo_path, update_to_revision=revision)
+            r = client.get_file_changes_from_custom_server(revision=revision)
+            print(r)
             client.send_data()
 
     # for i in results:

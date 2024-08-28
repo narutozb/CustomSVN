@@ -110,7 +110,7 @@ class CommitQueryViewSet(viewsets.ReadOnlyModelViewSet):
         })
 
     @action(detail=False, methods=['GET'])
-    def latest_revision(self, request):
+    def latest_commit(self, request):
         '''
         通过repository的id和branch的id查询最后一个Commit数据
         '''

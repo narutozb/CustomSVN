@@ -19,7 +19,7 @@ class MayaClientManager(ClientBase):
         super().__init__()
         self.update_to_revision = update_to_revision
         self.repo_path_settings = repo_path_settings
-
+        self.repository = self.get_repository(self.repo_path_settings.REPO_NAME)
         self.local_svn_utilities = LocalSVNUtilities()
 
     # def update_to_revision(self):
@@ -45,9 +45,9 @@ class MayaClientManager(ClientBase):
             for i in data_from_maya:
                 print(i)
 
-            r = self.session.post('http://127.0.0.1:8000/api/maya/mayafile/command/',
-                                  headers=self.headers, data=json.dumps(send_data))
-            print(r.text)
+            # r = self.session.post('http://127.0.0.1:8000/api/maya/mayafile/command/',
+            #                       headers=self.headers, data=json.dumps(send_data))
+            # print(r.text)
 
         # 2. 在自定义服务器中查询是否存在maya文件信息。筛选需要上传或者更新的文件列表
 
@@ -80,9 +80,9 @@ class MayaClientManager(ClientBase):
 
         return result
 
-    def get_file_changes_from_custom_server(self, repository_name: str = None, revision: int = None):
+    def get_file_changes_from_custom_server(self, revision: int = None):
 
-        repository_id = self.get_repo_id_by_name_from_custom_server(repository_name)
+        repository_id = self.repository.id
         params = {'repository_id': repository_id, 'revision': revision}
         commit_response = self.session.get(f'{Config.ROOT_URL}/api/svn/commits_query/', params=params
                                            )
@@ -90,7 +90,10 @@ class MayaClientManager(ClientBase):
         if commit_id:
             commit_id = commit_id[0].get('id')
 
-        file_changes_response = self.session.get(f'{Config.ROOT_URL}/api/svn/commits_query/{commit_id}/file_changes/', )
+        file_changes_response = self.session.get(
+            f'{Config.ROOT_URL}/api/svn/commits_query/{commit_id}/file_changes/',
+            params={'suffix': ['ma', 'mb'], 'action': ['A', 'M'], 'kind': 'file'}
+        )
         result: list[FileChangeFromServerDC] = []
         for i in file_changes_response.json().get('results'):
             fc = FileChangeFromServerDC(
@@ -99,23 +102,20 @@ class MayaClientManager(ClientBase):
             result.append(fc)
         return result
 
-    def get_repo_id_by_name_from_custom_server(self, repo_name: str) -> int:
-        '''
-        通过仓库名获取仓库id
-        :param repo_name:
-        :return:
-        '''
+    def get_latest_commit(self):
+        __fields = ['id', 'revision', 'branch', 'message', 'author', 'date']
+        __Commit = namedtuple('__Commit', __fields)
 
-        repos = self.session.get(f'{Config.ROOT_URL}/api/svn/repositories_query/', )
+        params = {'repository_id': self.repository.id}
+        response = self.session.get(f'{Config.ROOT_URL}/api/svn/commits_query/latest_commit/',
+                                    params=params).json()
 
-        for repo in repos.json().get('results'):
-            if repo_name == repo.get('name'):
-                return repo.get('id')
-
-    def get_latest_commit(self, repo_name: str):
-        pass
+        if response:
+            return __Commit(**response)
 
     def get_repository(self, repo_name: str):
         RepositoryAPI = namedtuple('RepositoryAPI', ['id', 'name', 'url', 'description'])
-        data = self.session.get(f'{Config.ROOT_URL}/api/svn/repositories_query/', ).json().get('results')
-        return RepositoryAPI(**data)
+        data = self.session.get(f'{Config.ROOT_URL}/api/svn/repositories_query/',
+                                params={'name': repo_name}).json().get('results')
+        if data:
+            return RepositoryAPI(**data[0])
