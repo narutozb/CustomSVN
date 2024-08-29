@@ -28,12 +28,17 @@ class CommitFilter(filters.FilterSet):
     message_contains = filters.CharFilter(field_name='message', lookup_expr='icontains')
     branch_name_contains = filters.CharFilter(field_name='branch__name', lookup_expr='icontains')
 
-    author = filters.CharFilter(lookup_expr='icontains')
+    author = filters.CharFilter(method='filter_authors')
     date_from = filters.DateTimeFilter(field_name='date', lookup_expr='gte')
     date_to = filters.DateTimeFilter(field_name='date', lookup_expr='lte')
 
     # 新增的 repository id 过滤器
-    repository_id = filters.NumberFilter(field_name='repository__id')
+    repo_id = filters.NumberFilter(field_name='repository__id')
+
+    def filter_authors(self, queryset, name, value):
+        # 分割多个作者名称
+        authors = [author.strip() for author in value.split(',')]
+        return queryset.filter(author__in=authors)
 
     class Meta:
         model = Commit
@@ -47,7 +52,7 @@ class CommitFilter(filters.FilterSet):
             'branch_name_contains',
             'author',
             'date_from', 'date_to',
-            'repository_id',
+            'repo_id',
             'branch_id',
         ]
 
@@ -70,24 +75,17 @@ class CommitQueryViewSet(viewsets.ReadOnlyModelViewSet):
         '''
         ?repo_name=repo_name&repo_name_contains=repo_name_contains&repository_id=repository_id
         &branch_name=branch_name&branch_name_contains=branch_name_contains&message=message
-        &message_contains=message_contains&author=author&date_from=date_from&date_to=date_to
+        &message_contains=message_contains&author=author1,author2,author3&date_from=date_from&date_to=date_to
 
         通过参数过滤Commit数据
-        如果没有提供关于仓库的信息，返回一个空的分页响应
-        需要至少查询其中之一才会返回数据：repo_name, repo_name_contains, repository_id
-        可选查询字段: branch_name, branch_name_contains, message, message_contains, author, date_from, date_to
+        可选查询字段: repo_name, repo_name_contains, repository_id, branch_name,
+        branch_name_contains, message, message_contains, author (支持多个，用逗号分隔), date_from, date_to
         '''
-        repo_name = request.query_params.get('repo_name')
-        repo_name_contains = request.query_params.get('repo_name_contains')
-        repository_id = request.query_params.get('repository_id')
-
-        if not repo_name and not repo_name_contains and not repository_id:
-            return self.get_empty_paginated_response("Please provide a repository name, id, or name contains.")
 
         queryset = self.filter_queryset(self.get_queryset())
 
         if not queryset.exists():
-            return self.get_empty_paginated_response("No commits found for the specified repository.")
+            return self.get_empty_paginated_response("No commits found for the specified criteria.")
 
         page = self.paginate_queryset(queryset)
         if page is not None:
@@ -114,13 +112,13 @@ class CommitQueryViewSet(viewsets.ReadOnlyModelViewSet):
         '''
         通过repository的id和branch的id查询最后一个Commit数据
         '''
-        repository_id = request.query_params.get('repository_id')
+        repo_id = request.query_params.get('repo_id')
         branch_id = request.query_params.get('branch_id')
 
-        if not repository_id:
+        if not repo_id:
             return Response({"detail": "Repository parameter is required."}, status=400)
 
-        repository = get_object_or_404(Repository, id=repository_id)
+        repository = get_object_or_404(Repository, id=repo_id)
 
         queryset = Commit.objects.filter(repository=repository)
 
@@ -165,3 +163,11 @@ class CommitQueryViewSet(viewsets.ReadOnlyModelViewSet):
 
         serializer = FileChangeQuerySerializer(file_changes, many=True)
         return Response(serializer.data)
+
+    @action(detail=False, methods=['GET'])
+    def authors(self, request):
+        '''
+        获取所有提交者
+        '''
+        authors = Commit.objects.values_list('author', flat=True).distinct()
+        return Response(list(set(authors)))
