@@ -12,9 +12,13 @@ from django.db.models import Q
 from functools import reduce
 from operator import or_
 
-from svn._serializers.serializer_branch import BranchQuerySerializer
-from svn.models import Branch
+from maya.models import TransformNode
+from svn._serializers.serializer_branch import BranchQueryDetailSerializer
+from svn._serializers.serializer_commit import CommitQuerySerializer
+from svn._serializers.serializer_file_change import FileChangeQuerySerializer
+from svn.models import Branch, Commit, FileChange
 from svn.pagination import CustomPagination
+from svn.serializers import CommitDetailSerializer
 
 
 class BranchFilter(filters.FilterSet):
@@ -30,7 +34,7 @@ class BranchFilter(filters.FilterSet):
 
 class BranchQueryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Branch.objects.all()
-    serializer_class = BranchQuerySerializer
+    serializer_class = BranchQueryDetailSerializer
     pagination_class = CustomPagination
     filterset_class = BranchFilter
 
@@ -57,3 +61,36 @@ class BranchQueryViewSet(viewsets.ReadOnlyModelViewSet):
             tags = tags.filter(repository__id__in=repo_id_list)
 
         return Response(self.get_serializer(tags, many=True).data)
+
+    @action(detail=True, methods=['GET'])
+    def commits(self, request, pk=None):
+        '''
+        获取指定分支的所有提交记录
+        '''
+        branch = get_object_or_404(Branch, pk=pk)
+        commits = Commit.objects.filter(branch=branch)
+        page = self.paginate_queryset(commits)
+
+        if page is not None:
+            commits = page
+
+        serializer = CommitQuerySerializer(commits, many=True)
+
+        if page is not None:
+            return self.get_paginated_response(serializer.data)
+
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['GET'])
+    def file_changes(self, request, pk=None):
+        branch = get_object_or_404(Branch, pk=pk)
+        file_changes = FileChange.objects.filter(commit__branch=branch)
+        page = self.paginate_queryset(file_changes)
+
+        if page is not None:
+            file_changes = page
+
+        serializer = FileChangeQuerySerializer(file_changes, many=True)
+        if page is not None:
+            return self.get_paginated_response(serializer.data)
+        return Response(serializer.data)

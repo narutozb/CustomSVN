@@ -6,7 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 
-from django.db.models import Q
+from django.db.models import Q, Max
 from functools import reduce
 from operator import or_
 
@@ -110,21 +110,14 @@ class CommitQueryViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=False, methods=['GET'])
     def latest_commit(self, request):
         '''
-        通过repository的id和branch的id查询最后一个Commit数据
+        通过branch的id查询最新的提交数据
         '''
-        repo_id = request.query_params.get('repo_id')
         branch_id = request.query_params.get('branch_id')
 
-        if not repo_id:
-            return Response({"detail": "Repository parameter is required."}, status=400)
+        if not branch_id:
+            return Response({"detail": "BranchID parameter is required."}, status=400)
 
-        repository = get_object_or_404(Repository, id=repo_id)
-
-        queryset = Commit.objects.filter(repository=repository)
-
-        if branch_id:
-            queryset = queryset.filter(id=branch_id)
-
+        queryset = Commit.objects.filter(id=branch_id)
         latest_commit = queryset.order_by('-revision').first()
 
         if not latest_commit:
@@ -169,5 +162,8 @@ class CommitQueryViewSet(viewsets.ReadOnlyModelViewSet):
         '''
         获取所有提交者
         '''
-        authors = Commit.objects.values_list('author', flat=True).distinct()
-        return Response(list(set(authors)))
+        queryset = self.filter_queryset(self.get_queryset())
+        authors = queryset.values('author').annotate(
+            max_id=Max('id')
+        ).values_list('author', flat=True)
+        return Response(authors)

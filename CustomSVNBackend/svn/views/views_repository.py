@@ -1,9 +1,14 @@
+from crypt import methods
+
+from django.core.serializers import serialize
+from rest_framework.decorators import action
 from django_filters import rest_framework as filters
 from rest_framework import viewsets
 from rest_framework.response import Response
 
+from svn._serializers.serializer_branch import BranchQueryDetailSerializer
 from svn._serializers.serializer_repository import RepositoryQuerySerializer
-from svn.models import Repository
+from svn.models import Repository, Branch
 from svn.pagination import CustomPagination
 
 
@@ -32,4 +37,18 @@ class RepositoryQueryViewSet(viewsets.ReadOnlyModelViewSet):
             return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['GET'])
+    def branches(self, request, pk=None):
+        branches = Branch.objects.filter(repository_id=pk)
+        page = self.paginate_queryset(branches)
+        if page is not None:
+            branches = page
+
+        serializer = BranchQueryDetailSerializer(branches, many=True)
+
+        if page is not None:
+            return self.get_paginated_response(serializer.data)
+
         return Response(serializer.data)
