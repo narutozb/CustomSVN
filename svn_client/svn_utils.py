@@ -1,7 +1,6 @@
 import subprocess
 import json
 import sys
-import xml.etree.ElementTree
 from urllib.parse import unquote
 import xml.etree.ElementTree as ET
 
@@ -9,14 +8,6 @@ from config import SUBPROCESS_ENV
 from dc import SVNInfoLocalDC, CommitLogDC, FileChangeDC
 from endpoints import Endpoints
 from exceptions import SVNUpdateError
-
-
-def get_token(session, username, password):
-    response = session.post(Endpoints.get_api_url(Endpoints.token_auth),
-                            data={'username': username, 'password': password})
-    if response.status_code == 200:
-        return response.json().get('access')  # JWT typically returns 'access' token
-    return None
 
 
 def get_latest_revision(session, repo_name, headers):
