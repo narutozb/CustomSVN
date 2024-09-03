@@ -4,7 +4,13 @@ from rest_framework import serializers
 from svn.models import Branch, Commit, FileChange
 
 
-class BranchQueryDetailSerializer(serializers.ModelSerializer):
+class BranchQuerySerializerS(serializers.ModelSerializer):
+    class Meta:
+        model = Branch
+        fields = ["id", "name", "repository", ]
+
+
+class BranchQuerySerializer(serializers.ModelSerializer):
     total_commits = serializers.SerializerMethodField()
     total_file_changes = serializers.SerializerMethodField()
     total_authors = serializers.SerializerMethodField()

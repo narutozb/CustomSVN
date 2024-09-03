@@ -13,7 +13,7 @@ from functools import reduce
 from operator import or_
 
 from maya.models import TransformNode
-from svn._serializers.serializer_branch import BranchQueryDetailSerializer
+from svn._serializers.serializer_branch import BranchQuerySerializer, BranchQuerySerializerS
 from svn._serializers.serializer_commit import CommitQuerySerializer
 from svn._serializers.serializer_file_change import FileChangeQuerySerializer
 from svn.models import Branch, Commit, FileChange
@@ -26,6 +26,7 @@ class BranchFilter(filters.FilterSet):
     name_contains = filters.CharFilter(field_name='name', lookup_expr='icontains')
     repo_name = filters.CharFilter(field_name='repository__name')
     repo_id = filters.NumberFilter(field_name='repository__id')
+    commit_id = filters.NumberFilter(field_name='commits__id')
 
     class Meta:
         model = Branch
@@ -34,7 +35,7 @@ class BranchFilter(filters.FilterSet):
 
 class BranchQueryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Branch.objects.all()
-    serializer_class = BranchQueryDetailSerializer
+    serializer_class = BranchQuerySerializerS
     pagination_class = CustomPagination
     filterset_class = BranchFilter
 

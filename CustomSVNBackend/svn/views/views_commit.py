@@ -10,7 +10,8 @@ from django.db.models import Q, Max
 from functools import reduce
 from operator import or_
 
-from svn._serializers.serializer_commit import CommitQuerySerializer
+from maya.models import TransformNode
+from svn._serializers.serializer_commit import CommitQuerySerializer, CommitQuerySerializerS
 from svn._serializers.serializer_file_change import FileChangeQuerySerializer
 from svn.models import Commit, FileChange, Repository
 from svn.pagination import CustomPagination
@@ -59,17 +60,10 @@ class CommitFilter(filters.FilterSet):
 
 class CommitQueryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Commit.objects.all()
-    serializer_class = CommitQuerySerializer
+    serializer_class = CommitQuerySerializerS
     pagination_class = CustomPagination
     filterset_class = CommitFilter
     ordering_fields = ['revision', 'date', 'author']
-
-    class CommitQueryViewSet(viewsets.ReadOnlyModelViewSet):
-        queryset = Commit.objects.all()
-        serializer_class = CommitQuerySerializer
-        pagination_class = CustomPagination
-        filterset_class = CommitFilter
-        ordering_fields = ['revision', 'date', 'author']
 
     def list(self, request, *args, **kwargs):
         '''
@@ -167,3 +161,5 @@ class CommitQueryViewSet(viewsets.ReadOnlyModelViewSet):
             max_id=Max('id')
         ).values_list('author', flat=True)
         return Response(authors)
+
+

@@ -6,7 +6,7 @@ from django_filters import rest_framework as filters
 from rest_framework import viewsets
 from rest_framework.response import Response
 
-from svn._serializers.serializer_branch import BranchQueryDetailSerializer
+from svn._serializers.serializer_branch import BranchQuerySerializer
 from svn._serializers.serializer_repository import RepositoryQuerySerializer
 from svn.models import Repository, Branch
 from svn.pagination import CustomPagination
@@ -14,10 +14,12 @@ from svn.pagination import CustomPagination
 
 class RepositoryFilter(filters.FilterSet):
     name = filters.CharFilter()
+    commit_id = filters.NumberFilter(field_name='commits__id')
+    file_change_id = filters.NumberFilter(field_name='commits__file_changes')
 
     class Meta:
         model = Repository
-        fields = ['name', ]
+        fields = ['name', 'id', 'commit_id', 'file_change_id']
 
 
 class RepositoryQueryViewSet(viewsets.ReadOnlyModelViewSet):
@@ -46,7 +48,7 @@ class RepositoryQueryViewSet(viewsets.ReadOnlyModelViewSet):
         if page is not None:
             branches = page
 
-        serializer = BranchQueryDetailSerializer(branches, many=True)
+        serializer = BranchQuerySerializer(branches, many=True)
 
         if page is not None:
             return self.get_paginated_response(serializer.data)

@@ -1,13 +1,17 @@
 from django_filters import rest_framework as filters
 from rest_framework import viewsets
 from rest_framework.decorators import action
+from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 
 from django.db.models import Max, F, Subquery, OuterRef
 
-from svn._serializers.serializer_file_change import FileChangeQuerySerializer
-from svn.models import FileChange
+from maya.models import TransformNode
+from svn._serializers.serializer_commit import CommitQuerySerializerS
+from svn._serializers.serializer_file_change import FileChangeQuerySerializer, FileChangeQuerySerializerS
+from svn.models import FileChange, Commit
 from svn.pagination import CustomPagination
+from svn.serializers import FileChangeSerializer
 
 
 class FileChangeFilter(filters.FilterSet):
@@ -70,7 +74,6 @@ class FileChangeQueryViewSet(viewsets.ReadOnlyModelViewSet):
     filterset_class = FileChangeFilter
     ordering_fields = ['revision', 'commit__date', ]
 
-
     def list(self, request, *args, **kwargs):
         '''
         需要指定1个或多个仓库id,否则返回空列表
@@ -128,4 +131,23 @@ class FileChangeQueryViewSet(viewsets.ReadOnlyModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
+    @action(detail=True, methods=['GET'])
+    def file_change_details(self, request, pk: None):
+        '''
+        获取FileChange的详细信息,用于展示在单个FileChange数据页面上
+        '''
+        queryset = FileChange.objects.get(id=pk)
+        serializer = FileChangeQuerySerializer(queryset)
+        return Response(serializer.data)
 
+    @action(detail=True, methods=['GET'])
+    def get_commits_by_self_path(self, request, pk: None):
+        obj = FileChange.objects.get(id=pk)
+        queryset = Commit.objects.filter(file_changes__path=obj.path).order_by('-date')
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = CommitQuerySerializerS(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = CommitQuerySerializerS(queryset, many=True)
+        return Response(serializer.data)

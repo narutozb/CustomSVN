@@ -14,6 +14,7 @@ from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from svn._serializers.serializer_commit import CommitQuerySerializer
 from svn.models import Repository, Commit, FileChange, Branch
 from svn.serializers import RepositorySerializer, CommitSerializer, FileChangeSerializer, BranchSerializer
 from svn.pagination import CustomPagination
@@ -30,15 +31,15 @@ class RepositoryViewSet(viewsets.ModelViewSet):
         commits = repository.commits.all().order_by('-revision')
         page = self.paginate_queryset(commits)
         if page is not None:
-            serializer = CommitSerializer(page, many=True)
+            serializer = CommitQuerySerializer(page, many=True)
             return self.get_paginated_response(serializer.data)
-        serializer = CommitSerializer(commits, many=True)
+        serializer = CommitQuerySerializer(commits, many=True)
         return Response(serializer.data)
 
 
 class CommitViewSet(viewsets.ModelViewSet):
     queryset = Commit.objects.annotate(file_changes_count=Count('file_changes')).order_by('-revision')
-    serializer_class = CommitSerializer
+    serializer_class = CommitQuerySerializer
     permission_classes = [IsAuthenticated]
 
     @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated])

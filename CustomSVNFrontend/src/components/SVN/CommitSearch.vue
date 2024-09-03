@@ -132,11 +132,11 @@ import {computed, onMounted, reactive, ref, watch} from 'vue';
 import {debounce} from 'lodash'; // 确保安装并导入 lodash
 
 import {useRepositoriesStore} from "@/store/repositories";
-import {fetchBranches, searchCommits} from '@/services/svn_api';
+import {getBranches, searchCommits} from '@/services/svn_api';
 import {ElMessage} from "element-plus";
 
 import type {Branch, SearchCommitsResponse} from "@/services/interfaces";
-import axios, {CancelToken, CancelTokenSource} from 'axios';
+import axios, {CancelTokenSource} from 'axios';
 
 const searchDuration = ref<number>(0);
 
@@ -232,7 +232,7 @@ const setDefaultDates = () => {
 
 const loadBranches = async (repositoryId: string) => {
   try {
-    branches.value = await fetchBranches(repositoryId) as Branch[]
+    branches.value = await getBranches({repo_id: repositoryId}) as Branch[]
     setDefaultBranches()
   } catch (error) {
     console.error('获取分支列表失败:', error)
@@ -246,7 +246,7 @@ const setDefaultBranches = () => {
 }
 
 // 监听表单数据的变化
-watch(() => ({ ...form, repository: form.repository }), (newForm, oldForm) => {
+watch(() => ({...form, repository: form.repository}), (newForm, oldForm) => {
   // 如果只有 contents 发生变化，不触发搜索
   if (newForm.contents !== oldForm.contents && Object.keys(newForm).every(key => key === 'contents' || newForm[key as keyof typeof newForm] === oldForm[key as keyof typeof oldForm])) {
     return;
@@ -254,7 +254,7 @@ watch(() => ({ ...form, repository: form.repository }), (newForm, oldForm) => {
 
   currentPage.value = 1; // 重置页码
   debouncedSubmitSearch();
-}, { deep: true });
+}, {deep: true});
 
 const searchResults = ref<SearchCommitsResponse>({
   count: 0,

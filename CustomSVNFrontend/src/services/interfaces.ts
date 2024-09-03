@@ -15,7 +15,11 @@ export interface Branch {
 export interface Repository {
     id: string;
     name: string;
-    // 添加其他必要的属性
+    description: string;
+    created_at: string;
+    url: string;
+    total_commits_total: number;
+    total_file_changes: number;
 }
 
 export interface Commit {
@@ -88,5 +92,6 @@ export interface Tag {
     name: string;
     description: string;
     active: boolean;
+
     [key: string]: any;  // 允许动态属性
 }

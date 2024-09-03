@@ -13,8 +13,9 @@ from rest_framework.response import Response
 
 from rest_framework.views import APIView
 
+from svn._serializers.serializer_commit import CommitQuerySerializerS
 from svn.models import FileChange, Commit
-from svn.serializers import QueryFileChangeSerializer, CommitSerializer, FileChangeSerializer, CommitDetailSerializer
+from svn.serializers import QueryFileChangeSerializer, FileChangeSerializer, CommitDetailSerializer
 from svn.pagination import CustomPagination
 
 
@@ -85,8 +86,6 @@ class GetFileChangesByFilePath(APIView):
                 status=status.HTTP_404_NOT_FOUND)
 
 
-
-
 class CustomPageNumberPagination(PageNumberPagination):
     page_size_query_param = 'page_size'
     max_page_size = 50000
@@ -143,7 +142,7 @@ class CommitSearchView(APIView):
                 }, status=status.HTTP_400_BAD_REQUEST)
 
             # 序列化结果
-            serializer = CommitSerializer(page, many=True)
+            serializer = CommitQuerySerializerS(page, many=True)
             return paginator.get_paginated_response(serializer.data)
 
         except Exception as e:
@@ -242,7 +241,7 @@ class CommitsByFilePathView(APIView):
 
         paginator = self.pagination_class()
         result_page = paginator.paginate_queryset(commits, request)
-        serializer = CommitSerializer(result_page, many=True)
+        serializer = CommitQuerySerializerS(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
 
 
