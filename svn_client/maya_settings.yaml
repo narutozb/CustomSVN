@@ -1,0 +1,14 @@
+REPO_PATH:
+  - REPO_NAME: MyDataSVN
+    LOCAL_SVN_REPO_PATH:
+#      - D:\svn_project_test\MyDataSVN_trunk
+#      - D:\svn_project_test\MyDataSVN\branches
+      - D:\svn_project_test\MyDataSVN\trunk
+
+INTERPRETER:
+  MAYA: C:\Program Files\Autodesk\Maya2024\bin\mayapy.exe
+
+
+MAYAAPP:
+  get_data_maya_data:
+    path: ./maya_app/get_data_main.py

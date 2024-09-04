@@ -9,6 +9,7 @@ from django.dispatch import receiver
 
 class Gender(models.Model):
     name = models.CharField(max_length=50, unique=True)
+    description = models.TextField(null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -19,6 +20,7 @@ class Gender(models.Model):
 
 class Race(models.Model):
     name = models.CharField(max_length=50, unique=True)
+    description = models.TextField(null=True, blank=True)
 
     class Meta:
         ordering = ['id']
@@ -29,6 +31,8 @@ class Race(models.Model):
 
 class Tag(models.Model):
     name = models.CharField(max_length=50, unique=True)
+    description = models.TextField(null=True, blank=True)
+    active = models.BooleanField(default=True)
 
     def __str__(self):
         return self.name
@@ -39,7 +43,7 @@ class Tag(models.Model):
 
 class Item(models.Model):
     name = models.CharField(max_length=100)
-    description = models.TextField(blank=True)
+    description = models.TextField(null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -47,12 +51,13 @@ class Item(models.Model):
     class Meta:
         ordering = ['id']
 
+
 class ItemAttribute(models.Model):
     name = models.CharField(max_length=50)
+    description = models.TextField(null=True, blank=True)
 
     def __str__(self):
         return self.name
-
 
 
 class Character(models.Model):

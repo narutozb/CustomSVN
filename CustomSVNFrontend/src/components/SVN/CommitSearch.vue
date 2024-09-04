@@ -16,18 +16,24 @@
         </el-option>
       </el-select>
     </el-form-item>
-    <el-form-item label="Search Branches">
-      <el-checkbox-group v-model="form.branches">
-        <el-checkbox
-            v-for="branch in branches"
-            :key="branch.id"
-            :label="branch.id"
-            :disabled="branch.name === 'root'"
-        >
-          {{ branch.name }}
-        </el-checkbox>
-      </el-checkbox-group>
+    <el-form-item label="Branches">
+      <custom-transfer
+          v-model="form.branches"
+          :data="branchesData"
+          left-title="Available"
+          right-title="Selected"
+          @change="handleBranchChange"
+      />
     </el-form-item>
+<!--    <el-form-item label="Authors">-->
+<!--      <custom-transfer-->
+<!--          v-model="form.authors"-->
+<!--          :data="authorsData"-->
+<!--          left-title="Available"-->
+<!--          right-title="Selected"-->
+<!--          @change="handleAuthorChange"-->
+<!--      />-->
+<!--    </el-form-item>-->
     <el-form-item label="Time Range">
       <el-col :span="11">
         <el-date-picker
@@ -130,13 +136,15 @@
 
 import {computed, onMounted, reactive, ref, watch} from 'vue';
 import {debounce} from 'lodash'; // 确保安装并导入 lodash
+import type {TransferProps} from 'element-plus';
 
 import {useRepositoriesStore} from "@/store/repositories";
-import {fetchBranches, searchCommits} from '@/services/svn_api';
+import {getBranches, searchCommits} from '@/services/svn_api';
 import {ElMessage} from "element-plus";
 
 import type {Branch, SearchCommitsResponse} from "@/services/interfaces";
-import axios, {CancelToken, CancelTokenSource} from 'axios';
+import axios, {CancelTokenSource} from 'axios';
+import CustomTransfer from "@/components/Common/CustomTransfer.vue";
 
 const searchDuration = ref<number>(0);
 
@@ -167,6 +175,25 @@ const form = reactive({
 const isSearching = ref(false);
 const cancelTokenSource = ref<CancelTokenSource | null>(null);
 
+
+const branchesData = computed(() => {
+  const data = branches.value.map(branch => ({
+    key: branch.id,
+    label: branch.name,
+    disabled: branch.name === 'root'
+  }));
+  console.log(data)
+  return data
+});
+
+
+const handleBranchChange = (value: string[], direction: 'left' | 'right', movedKeys: string[]) => {
+  console.log('Branch selection changed:', value, direction, movedKeys);
+  // 如果需要，可以在这里添加额外的逻辑
+  debouncedSubmitSearch();
+};
+
+
 const submitSearch = async () => {
   if (isSearching.value) return;
 
@@ -185,6 +212,8 @@ const submitSearch = async () => {
       page: currentPage.value,
       page_size: form.page_size,
     };
+
+    console.log(formattedData);
 
     const results = await searchCommits(formattedData, cancelTokenSource.value?.token);
     if ('error' in results) {
@@ -232,21 +261,18 @@ const setDefaultDates = () => {
 
 const loadBranches = async (repositoryId: string) => {
   try {
-    branches.value = await fetchBranches(repositoryId) as Branch[]
-    setDefaultBranches()
+    branches.value = await getBranches({repo_id: repositoryId})
   } catch (error) {
     console.error('获取分支列表失败:', error)
   }
 }
 
+const loadAuthors = async (repositoryId: string) => {
 
-const setDefaultBranches = () => {
-  const trunkBranch = branches.value.find(branch => branch.name === '/trunk')
-  form.branches = trunkBranch ? [trunkBranch.id] : []
 }
 
 // 监听表单数据的变化
-watch(() => ({ ...form, repository: form.repository }), (newForm, oldForm) => {
+watch(() => ({...form, repository: form.repository}), (newForm, oldForm) => {
   // 如果只有 contents 发生变化，不触发搜索
   if (newForm.contents !== oldForm.contents && Object.keys(newForm).every(key => key === 'contents' || newForm[key as keyof typeof newForm] === oldForm[key as keyof typeof oldForm])) {
     return;
@@ -254,7 +280,7 @@ watch(() => ({ ...form, repository: form.repository }), (newForm, oldForm) => {
 
   currentPage.value = 1; // 重置页码
   debouncedSubmitSearch();
-}, { deep: true });
+}, {deep: true});
 
 const searchResults = ref<SearchCommitsResponse>({
   count: 0,

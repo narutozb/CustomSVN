@@ -3,29 +3,6 @@ from django.utils.html import format_html
 from .models import Gender, Race, Tag, Item, ItemAttribute, Character, CharacterItem, CharacterItemAttribute, Thumbnail
 
 
-@admin.register(Gender)
-class GenderAdmin(admin.ModelAdmin):
-    list_display = ('name',)
-    search_fields = ('name',)
-
-
-@admin.register(Race)
-class RaceAdmin(admin.ModelAdmin):
-    list_display = ('name',)
-    search_fields = ('name',)
-
-
-@admin.register(Tag)
-class TagAdmin(admin.ModelAdmin):
-    list_display = ('name',)
-    search_fields = ('name',)
-
-
-@admin.register(Item)
-class ItemAdmin(admin.ModelAdmin):
-    list_display = ('name', 'description')
-    search_fields = ('name', 'description')
-
 
 @admin.register(ItemAttribute)
 class ItemAttributeAdmin(admin.ModelAdmin):
@@ -65,7 +42,7 @@ class ThumbnailInline(admin.TabularInline):
 
 @admin.register(Character)
 class CharacterAdmin(admin.ModelAdmin):
-    list_display = ('name', 'character_id', 'gender', 'race', 'height', 'tag_list', 'thumbnail_preview')
+    list_display = ('id', 'name', 'character_id', 'gender', 'race', 'height', 'tag_list', 'thumbnail_preview')
     list_filter = ('gender', 'race', 'tags')
     search_fields = ('name', 'character_id', 'description')
     filter_horizontal = ('tags',)

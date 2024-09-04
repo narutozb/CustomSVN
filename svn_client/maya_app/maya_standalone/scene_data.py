@@ -1,11 +1,10 @@
 from dataclasses import dataclass
-from pprint import pprint
 
-from custom_maya.custom_maya_class.scene_property import CMFileOptions
+from custom_maya.custom_maya_class.scene_base import CMNode
+from custom_maya.custom_maya_class.scene_property import CMFileOptions, CMStandaloneProperty
 from custom_maya.custom_maya_class.scenefile_application import CMApplication, CustomSceneFunction
 from custom_maya.tools.custom_maya_client.scene_utilities import SceneInformation
-
-from maya_client_config import MayaClientConfig
+from maya import cmds
 
 
 @dataclass
@@ -22,6 +21,26 @@ class FileCloseStatus:
     detail: str = ''
 
 
+class CustomCMApplication(CMNode, CMStandaloneProperty):
+    '''maya应用'''
+
+    def __init__(self, standalone_mode=True):
+        super().__init__()
+        self.standalone_mode = standalone_mode
+
+    def standalone_maya(self):
+        if self.is_standalone() and self.standalone_mode:
+            '''当maya以独立模式运行时，需要初始化maya'''
+            print("启动maya独立模式")
+            import maya.standalone
+            maya.standalone.initialize(name='python')
+
+    def open_file(self, options: CMFileOptions):
+        cmds.file(*options.get_open_file_options()[0], **options.get_open_file_options()[1])
+
+    def save_file(self, options: CMFileOptions):
+        cmds.file(*options.get_save_file_options()[0], **options.get_save_file_options()[1])
+
 class SceneFileInformation:
     def __init__(self, open_file_option: CMFileOptions):
         self.app = CMApplication()
@@ -32,9 +51,11 @@ class SceneFileInformation:
         open_file_options = self.open_file_option.get_open_file_options()
         file_path = open_file_options[0][0]
         try:
+            print(f'尝试打开Maya文件:{file_path}')
             self.app.open_file(self.open_file_option)
 
         except RuntimeError as e:
+            print('RuntimeError')
             if str(e).startswith('File not found:'):
                 return FileOpenStatus(False, file_path, detail=str(e))
 
@@ -110,8 +131,7 @@ class SceneFileInformation:
 
 
 class CheckMayaData:
-    def __init__(self, file_path: str, changed_file: str | int):
-        self.changed_file = changed_file  # url of the changed file
+    def __init__(self, file_path: str):
         self.file_path = file_path  # 需要检查的文件路径
         self.fo = CMFileOptions()
         self.fo.set_open_file_options(file_path, o=True, force=True)
@@ -120,10 +140,8 @@ class CheckMayaData:
     def get_data(self):
         data = {
             'description': self.scene_file_information.opened_file_status.detail,
-            'changed_file': self.changed_file,
             'opened_successfully': self.scene_file_information.opened_file_status.opened_successfully,
             'local_path': self.file_path,
-            'client_version': MayaClientConfig.version,
             'scene_info': {},
             "transform_nodes": self.scene_file_information.get_transforms(),
             "shape_nodes": [],
@@ -135,8 +153,8 @@ class CheckMayaData:
 
 
 if __name__ == '__main__':
-    file_path = r'D:\svn_project_test\MyDataSVN\RootFolder\_test_file.mb'
+    file_path = r'D:\svn_project_test\MyDataSVN_trunk\RootFolder\test_file1 - 副本 - 副本 (2).mb'
 
-    md = CheckMayaData(file_path, 'dummy')
-    print(md.scene_file_information.get_transforms())
-    # pprint(md.get_data())
+    md = CheckMayaData(file_path, )
+    # print(md.scene_file_information.get_transforms())
+    print(md.get_data())

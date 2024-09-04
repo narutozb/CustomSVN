@@ -1,18 +1,26 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
-from svn.views.api_views import FileChangeListLatestExistView, GetFileChangeByRevisionView, GetFileChangesByFilePath, \
+from svn.views.api_views import FileChangeListLatestExistView, GetFileChangesByFilePath, \
     CommitSearchView, CommitDetailView, CommitsByFilePathView, GetFileChangeDetail
 from svn.views.views import RepositoryViewSet, CommitViewSet, get_latest_revision, list_commits, list_file_changes, \
     BranchViewSet, FileChangeViewSet
 
 from svn.views.update_svn import receive_commits
+from svn.views.views_branch import BranchQueryViewSet
+from svn.views.views_commit import CommitQueryViewSet
+from svn.views.views_file_change import FileChangeQueryViewSet
+from svn.views.views_repository import RepositoryQueryViewSet
 
 router = DefaultRouter()
 router.register(r'repositories', RepositoryViewSet)
 router.register(r'commits', CommitViewSet)
 router.register(r'branches', BranchViewSet)
 router.register(r'file_changes', FileChangeViewSet)
+router.register(r'commits_query', CommitQueryViewSet, basename='Commits-Query')
+router.register('repositories_query', RepositoryQueryViewSet, basename='Repositories-Query')
+router.register('branches_query', BranchQueryViewSet, basename='Branches-Query')
+router.register('file_changes_query', FileChangeQueryViewSet, basename='FileChanges-Query')
 
 urlpatterns = [
     path('', include(router.urls)),
@@ -23,8 +31,7 @@ urlpatterns = [
          name='list_file_changes'),
     path('repo_name/<str:repo_name>/list_latest_exit_file_changes/', FileChangeListLatestExistView.as_view(),
          name='list_latest_exit_file_changes'),
-    path('get_file_change_by_revision/', GetFileChangeByRevisionView.as_view(),
-         name='get_file_change_by_revision'),
+
     path('repo_name/<str:repo_name>/file_changes_by_path/', GetFileChangesByFilePath.as_view(),
          name='file_changes_by_path'),
     path('_commits/search/', CommitSearchView.as_view(), name='commit-search'),

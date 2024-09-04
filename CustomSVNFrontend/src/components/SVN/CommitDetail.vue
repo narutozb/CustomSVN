@@ -35,7 +35,7 @@
 <script lang="ts" setup>
 import {ref, onMounted} from 'vue';
 import {useRoute} from 'vue-router';
-import {getCommitDetail} from '@/services/svn_api';
+import {getRepositories, getCommitDetail, getBranches} from '@/services/svn_api';
 import type {Branch, Commit, Repository} from "@/services/interfaces";
 
 const route = useRoute();
@@ -55,3 +55,9 @@ onMounted(async () => {
   }
 });
 </script>
+
+
+<!--const repositories = await getRepositories({commit_id: commitId});-->
+<!--repository.value = repositories[0] !== undefined ? repositories[0] : null;-->
+<!--const branches = await getBranches({commit_id: commitId});-->
+<!--branch.value = branches[0] !== undefined ? branches[0] : null;-->

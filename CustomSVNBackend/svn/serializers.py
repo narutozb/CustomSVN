@@ -1,4 +1,10 @@
 from rest_framework import serializers
+from rest_framework.decorators import action
+
+from ._serializers.serializer_branch import BranchQuerySerializer
+from ._serializers.serializer_commit import CommitQuerySerializerS, CommitQuerySerializer
+from ._serializers.serializer_file_change import FileChangeQuerySerializer
+from ._serializers.serializer_repository import RepositoryQuerySerializer, RepositoryQuerySerializerS
 from .models import Repository, Commit, FileChange, Branch
 
 
@@ -28,7 +34,7 @@ class BranchSerializer(serializers.ModelSerializer):
 class CommitSerializer(serializers.ModelSerializer):
     file_changes_count = serializers.IntegerField(source='file_changes.count', read_only=True)
     repository = RepositorySerializer(read_only=True)
-    branch = BranchSerializer(read_only=True)
+    branch = BranchQuerySerializer(read_only=True)
 
     class Meta:
         model = Commit
@@ -36,8 +42,8 @@ class CommitSerializer(serializers.ModelSerializer):
 
 
 class FileChangeSerializer(serializers.ModelSerializer):
-    commit = CommitSerializer(read_only=True)
-    repository = serializers.SerializerMethodField()
+    commit = CommitQuerySerializer(read_only=True)
+    repository = RepositoryQuerySerializerS(read_only=True)
 
     class Meta:
         model = FileChange
@@ -48,9 +54,9 @@ class FileChangeSerializer(serializers.ModelSerializer):
 
 
 class CommitDetailSerializer(serializers.ModelSerializer):
-    file_changes = FileChangeSerializer(many=True, read_only=True)
-    repository = RepositorySerializer(read_only=True)
-    branch = BranchSerializer(read_only=True)
+    file_changes = FileChangeQuerySerializer(many=True, read_only=True)
+    repository = RepositoryQuerySerializerS(read_only=True)
+    branch = BranchQuerySerializer(read_only=True)
 
     class Meta:
         model = Commit

@@ -10,7 +10,7 @@ class SVNInfoLocalDC:
     revision: int = None
     schedule: str = None
     last_changed_author: str = None
-    last_change_rev: str = None
+    last_change_rev: int = None
     last_changed_date: str = None
     node_kind: str = None
     relative_url: str = None
@@ -63,3 +63,20 @@ class FBXClientConfigDC:
 class RepositoryCustomVerifyDC:
     name: str
     url: str
+
+
+@dataclasses.dataclass
+class RepoPathSettings:
+    '''
+    maya_settings.yaml中的REPO_PATH的设定
+    '''
+    REPO_NAME: str
+    LOCAL_SVN_REPO_PATH_LIST: list[str]
+
+
+@dataclasses.dataclass
+class FileChangeFromServerDC:
+    id: int
+    commit: int
+    path: str
+    action: str

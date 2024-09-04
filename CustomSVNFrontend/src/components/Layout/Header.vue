@@ -63,7 +63,7 @@ const username = computed(() => userStore.user?.username || '')
 // 定义菜单项
 const menuItems = [
   { index: '1', route: '/', text: 'Home' },
-  { index: '2', route: '/character', text: 'CharacterManager' },
+  // { index: '2', route: '/character', text: 'CharacterManager' },
   // { index: '3', route: '/task', text: 'Task' },  // 注释掉的菜单项
   { index: '4', route: '/svn', text: 'SVN' },
 ]

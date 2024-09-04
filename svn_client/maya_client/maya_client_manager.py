@@ -1,101 +1,121 @@
-import locale
-
-locale.setlocale(locale.LC_ALL, 'en_US.utf8')
-
+import dataclasses
 import json
-import subprocess
+import os.path
+import tempfile
+import uuid
+from collections import namedtuple
 
-from classes import SVNChangedFileDC
 from config import Config
-from endpoints import Endpoints
+from dc import RepoPathSettings, FileChangeFromServerDC
 from login import ClientBase
-import maya_client_config
-from maya_client.maya_client_utils import MayaDataGetter
-from maya_client.maya_standalone.scene_data import CheckMayaData
-from svn_utils import get_local_last_changed_revision, get_local_current_revision
+from maya_client.local_process import LocalSVNUtilities
+from maya_client.maya_data import MayaData
+from svn_utils import get_local_file_svn_info
 
 
 class MayaClientManager(ClientBase):
 
-    def __init__(self):
+    def __init__(self, repo_path_settings: RepoPathSettings, update_to_revision: int = None):
         super().__init__()
+        self.update_to_revision = update_to_revision
+        self.repo_path_settings = repo_path_settings
+        self.repository = self.get_repository(self.repo_path_settings.REPO_NAME)
+        self.local_svn_utilities = LocalSVNUtilities()
 
-    def get_changed_maya_files(self, local_current_revision: int):
-        '''
-        获取必要的需要将数据上传的文件信息
-        :return:
-        '''
-        return self.session.get(Endpoints.get_maya_file_changes_by_repo_and_revision_api_url(
-            Config.REPO_NAME,
-            local_current_revision,
-            maya_client_config.MayaClientConfig.version
-        ), headers=self.headers)
+    # def update_to_revision(self):
 
-    def get_diff_local_maya_files(self, ):
-        local_last_changed_rev = int(
-            get_local_current_revision(maya_client_config.MayaClientConfig.local_svn_path))
-        response = self.get_changed_maya_files(local_last_changed_rev)
-        if response.json().get('results'):
-            results = [SVNChangedFileDC(
-                revision=local_last_changed_rev,
-                change_type=_.get('change_type'),
-                url=_.get('file_path'),
-                change_file_id=_.get('id'),
+    def send_data(self):
 
-            ) for _ in response.json().get('results')]
-        else:
-            results = []
+        data: list = []
+        # 1.1 更新特定本地仓库到特定revision
+        for path in self.repo_path_settings.LOCAL_SVN_REPO_PATH_LIST:
 
-        maya_data_getter = MayaDataGetter()
-        local_svn_files = maya_data_getter.get_local_changed_files()
+            self.local_svn_utilities.update_to_revision(self.update_to_revision, path)
 
-        diff_changed_maya_files: [SVNChangedFileDC] = []
-        for i in results:
-            print(i)
-            for j in local_svn_files:
-                if i.url == j.url:
-                    i.local_path = j.local_path
-                    diff_changed_maya_files.append(i)
-                    continue
+            # 1.2. 获取本地svn管理的maya文件列表和svn基本信息
+            maya_file_list = self.local_svn_utilities.get_maya_file_list(path)
+            pre_list = []
+            for maya_file_path in maya_file_list:
+                mf = get_local_file_svn_info(maya_file_path)
+                if mf.last_change_rev == self.update_to_revision:
+                    pre_list.append(maya_file_path)
 
-        return diff_changed_maya_files
+            data_from_maya = self.get_data_from_maya(pre_list)
+            send_data = {'maya_files': data_from_maya}
+            for i in data_from_maya:
+                print(i)
 
-    def send_changed_maya_files_data_to_custom_server(self):
-        changed_files = self.get_diff_local_maya_files()
-        for i in changed_files:
-            md = CheckMayaData(i.local_path, i.change_file_id)
-            data = md.get_data()
-            url = Endpoints.get_api_url(Endpoints.maya_sceneinfos)
-            ps = self.session.post(url, data=json.dumps(data), headers=self.headers)
-            print(ps.json())
+            # r = self.session.post('http://127.0.0.1:8000/api/maya/mayafile/command/',
+            #                       headers=self.headers, data=json.dumps(send_data))
+            # print(r.text)
 
-    def auto_send_changed_files_data(self):
-        # Step 1: Get the latest revision from the custom server
-        response = self.session.get(Endpoints.get_latest_revision_api_url(Config.REPO_NAME), headers=self.headers)
-        latest_server_revision = response.json().get('latest_revision')
+        # 2. 在自定义服务器中查询是否存在maya文件信息。筛选需要上传或者更新的文件列表
 
-        # Step 2: Check if the local repository's revision is older than the server's
-        local_last_changed_rev = int(
-            get_local_current_revision(maya_client_config.MayaClientConfig.local_svn_path))
+        # 3. 将数据传入maya获取必要数据。然后获取
 
-        print(local_last_changed_rev)
-        print(latest_server_revision)
-        if local_last_changed_rev < latest_server_revision:
-            # Step 3: Update the local repository and send the changed_file data to the server for each new revision
-            for revision in range(local_last_changed_rev + 1, latest_server_revision + 1):
-                # Update to the specific revision
-                subprocess.run(
-                    ['svn', 'update', '-r', str(revision), maya_client_config.MayaClientConfig.local_svn_path],
-                    check=True, universal_newlines=True)
+        # 4. 将必要数据传输到自定义服务器进行储存
 
-                # Send the changed_file data to the server
-                changed_files = self.get_diff_local_maya_files()
-                print(changed_files)
-                # print(changed_files)
-                for i in changed_files:
-                    md = CheckMayaData(i.local_path, i.change_file_id)
-                    data = md.get_data()
-                    print(data)
-                    url = Endpoints.get_api_url(Endpoints.maya_sceneinfos)
-                    response = self.session.post(url, data=json.dumps(data), headers=self.headers)
-                    print(response.json())
+    def get_data_from_maya(self, maya_file_path):
+        result = []
+        if not maya_file_path:
+            return result
+
+        save_maya_file_list_path = os.path.join(tempfile.gettempdir(), f'{uuid.uuid4()}.json')
+        with open(save_maya_file_list_path, 'w', encoding='utf-8') as f:
+            f.write(json.dumps(maya_file_path))
+        print(save_maya_file_list_path)
+
+        md = MayaData()
+        data_from_maya = md.get_data(save_maya_file_list_path)
+
+        for data in data_from_maya:
+            local_path = data['local_path']
+            file_info = get_local_file_svn_info(local_path)
+            data.update({
+                'repository_name': self.repo_path_settings.REPO_NAME,
+                'commit_revision': file_info.last_change_rev,
+                'path': file_info.relative_url
+            })
+            result.append(data)
+
+        return result
+
+    def get_file_changes_from_custom_server(self, revision: int = None):
+
+        repository_id = self.repository.id
+        params = {'repository_id': repository_id, 'revision': revision}
+        commit_response = self.session.get(f'{Config.ROOT_URL}/api/svn/commits_query/', params=params
+                                           )
+        commit_id = commit_response.json().get('results')
+        if commit_id:
+            commit_id = commit_id[0].get('id')
+
+        file_changes_response = self.session.get(
+            f'{Config.ROOT_URL}/api/svn/commits_query/{commit_id}/file_changes/',
+            params={'suffix': ['ma', 'mb'], 'action': ['A', 'M'], 'kind': 'file'}
+        )
+        result: list[FileChangeFromServerDC] = []
+        for i in file_changes_response.json().get('results'):
+            fc = FileChangeFromServerDC(
+                *[i.get(_) for _ in ['id', 'commit', 'path', 'action']]
+            )
+            result.append(fc)
+        return result
+
+    def get_latest_commit(self):
+        __fields = ['id', 'revision', 'branch', 'message', 'author', 'date']
+        __Commit = namedtuple('__Commit', __fields)
+
+        params = {'repository_id': self.repository.id}
+        response = self.session.get(f'{Config.ROOT_URL}/api/svn/commits_query/latest_commit/',
+                                    params=params).json()
+
+        if response:
+            return __Commit(**response)
+
+    def get_repository(self, repo_name: str):
+        RepositoryAPI = namedtuple('RepositoryAPI', ['id', 'name', 'url', 'description'])
+        data = self.session.get(f'{Config.ROOT_URL}/api/svn/repositories_query/',
+                                params={'name': repo_name}).json().get('results')
+        if data:
+            return RepositoryAPI(**data[0])
