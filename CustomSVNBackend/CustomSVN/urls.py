@@ -27,7 +27,7 @@ urlpatterns = [
     path('svn/', include('svn.urls')),
     path('api/svn/', include('svn.urls_api')),
     path('api/maya/', include('maya.urls_api')),
-    path('maya/', include('maya.urls')),
+    # path('maya/', include('maya.urls')),
     path('api/fbx/', include('fbx.urls_api')),
     path('api/user/', include('users.urls')),
     path('api/character/', include('character.urls')),

@@ -1,3 +1,4 @@
+# svn/models.py
 from django.db import models
 from .validators import validate_url
 
@@ -44,15 +45,17 @@ class Commit(models.Model):
 
 
 class FileChange(models.Model):
-    commit = models.ForeignKey(Commit, related_name='file_changes', on_delete=models.CASCADE, db_index=True)
+    commit = models.ForeignKey(Commit, related_name='file_changes', on_delete=models.CASCADE, )
     path = models.CharField(max_length=255, db_index=True)
     action = models.CharField(max_length=10, db_index=True)
     kind = models.CharField(max_length=8, null=True, blank=True)
 
     class Meta:
         indexes = [
+
             models.Index(fields=['commit', 'path']),
             models.Index(fields=['path', 'action']),
+
         ]
 
     def __str__(self):

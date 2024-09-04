@@ -1,11 +1,14 @@
 import json
 
 from django.conf import settings
-from rest_framework import viewsets
-from rest_framework.decorators import api_view
+
+from rest_framework import viewsets, status, generics, mixins
+from rest_framework.decorators import api_view, action
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
+from ._serializers.character_serializers import CharacterQueryCommonSerializer
 from .models import Gender, Race, Tag, Item, ItemAttribute, Character, CharacterItem, CharacterItemAttribute, Thumbnail
 from .serializers import GenderSerializer, RaceSerializer, TagSerializer, ItemSerializer, ItemAttributeSerializer, \
     CharacterSerializer, CharacterItemSerializer, CharacterItemAttributeSerializer, ThumbnailSerializer
@@ -41,7 +44,28 @@ class CharacterViewSet(viewsets.ModelViewSet):
     serializer_class = CharacterSerializer
     parser_classes = (MultiPartParser, FormParser)
 
+    def create(self, request, *args, **kwargs):
+        print("Received data:", request.data)
+        print("Received files:", request.FILES)
+
+        # 处理 undefined 值
+        data = request.data.copy()
+        for key in ['height', 'gender', 'race']:
+            if data.get(key) == 'undefined':
+                data[key] = None
+
+        # 处理 tags
+        if data.get('tags') == '':
+            data['tags'] = []
+
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
     def perform_create(self, serializer):
+        print("Performing create with data:", serializer.validated_data)
         instance = serializer.save()
         self._handle_thumbnails(instance)
 
@@ -79,3 +103,4 @@ class ThumbnailViewSet(viewsets.ModelViewSet):
 @api_view(['GET'])
 def get_max_thumbnails(request):
     return Response({'max_thumbnails': settings.MAX_THUMBNAILS_PER_CHARACTER})
+

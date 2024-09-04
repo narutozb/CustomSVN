@@ -1,15 +1,21 @@
 // router/index.ts
 import {createRouter, createWebHistory} from 'vue-router';
 import type {RouteRecordRaw} from "vue-router";
+import {useUserStore} from '@/store/user';
 import Home from '@/views/HomeView.vue';
 import Login from '@/views/LoginView.vue';
-import {useUserStore} from '@/store/user';
 import Layout from "@/views/LayoutView.vue";
 import SVNView from "@/views/svn/SVNView.vue"
 import CommitDetail from "@/components/SVN/CommitDetail.vue";
 import CommitSearchView from "@/views/svn/CommitSearchView.vue";
+import CharacterView from "@/views/Character/CharacterView.vue";
 import CharacterManager from "@/components/Character/CharacterManager.vue";
 import FileChangeDetail from "@/components/SVN/FileChangeDetail.vue";
+import GenderManager from "@/components/Character/GenderManager.vue";
+import RaceManager from "@/components/Character/RaceManager.vue";
+import TagManager from "@/components/Character/TagManager.vue";
+import CharacterHome from "@/components/Character/CharacterHome.vue";
+
 
 const routes: Array<RouteRecordRaw> = [
     {
@@ -40,12 +46,38 @@ const routes: Array<RouteRecordRaw> = [
                         name: 'FileChangeDetail',
                         component: FileChangeDetail
                     },
+
                 ]
             },
             {
                 path: '/character',
-                component: CharacterManager
-            },
+                component: CharacterView,
+                children: [
+                    {
+                        path: '',
+                        name: 'home',
+                        component: CharacterHome
+                    },
+                    {
+                        path: 'characters',
+                        name: 'Characters',
+                        component: CharacterManager
+                    },
+                    {
+                        path: 'Gender',
+                        component: GenderManager
+                    },
+                    {
+                        path: 'Race',
+                        component: RaceManager
+                    },
+                    {
+                        name: 'Tags',
+                        path: 'tags',
+                        component: TagManager
+                    },
+                ]
+            }
 
         ],
     },

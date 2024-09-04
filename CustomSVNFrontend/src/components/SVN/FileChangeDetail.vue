@@ -2,7 +2,7 @@
   <div v-if="fileChange">
     <h2>File Change Details</h2>
     <el-descriptions :column="1" border>
-      <el-descriptions-item label="Repository">{{ fileChange.commit?.repository?.name }}</el-descriptions-item>
+      <el-descriptions-item label="Repository">{{ fileChange.repository.name}}</el-descriptions-item>
       <el-descriptions-item label="Path">{{ fileChange.path }}</el-descriptions-item>
       <el-descriptions-item label="Action">{{ fileChange.action }}</el-descriptions-item>
       <el-descriptions-item label="Kind">{{ fileChange.kind }}</el-descriptions-item>
@@ -35,22 +35,22 @@
 <script lang="ts" setup>
 import { ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { getFileChangeDetail, getRelatedCommits } from '@/services/svn_api';
-import type { FileChange, Commit } from "@/services/interfaces";
+import {getCommitDetailsByChangeFile, getRelatedCommits} from '@/services/svn_api';
+import type { FileChangeDetails, Commit } from "@/services/interfaces";
 
 const route = useRoute();
 
-const fileChange = ref<FileChange | null>(null);
+const fileChange = ref<FileChangeDetails | null>(null);
 const relatedCommits = ref<Commit[]>([]);
 
 async function loadData() {
   const fileChangeId = Number(route.params.id);
 
   try {
-    fileChange.value = await getFileChangeDetail(fileChangeId);
+    fileChange.value = await getCommitDetailsByChangeFile(fileChangeId);
 
     if (fileChange.value && fileChange.value.path) {
-      const commits = await getRelatedCommits(fileChange.value.path);
+      const commits = await getRelatedCommits(fileChange.value.id);
       relatedCommits.value = Array.isArray(commits) ? commits : [];
     }
   } catch (error) {

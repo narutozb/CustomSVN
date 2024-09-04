@@ -1,21 +1,13 @@
 import subprocess
 import json
 import sys
-import xml.etree.ElementTree
 from urllib.parse import unquote
 import xml.etree.ElementTree as ET
 
 from config import SUBPROCESS_ENV
 from dc import SVNInfoLocalDC, CommitLogDC, FileChangeDC
 from endpoints import Endpoints
-
-
-def get_token(session, username, password):
-    response = session.post(Endpoints.get_api_url(Endpoints.token_auth),
-                            data={'username': username, 'password': password})
-    if response.status_code == 200:
-        return response.json().get('access')  # JWT typically returns 'access' token
-    return None
+from exceptions import SVNUpdateError
 
 
 def get_latest_revision(session, repo_name, headers):
@@ -192,6 +184,12 @@ def get_local_last_changed_revision(svn_path):
 
 
 def get_local_file_svn_info(local_path: str, print_command=False):
+    '''
+    获取本地特定地址的信息
+    :param local_path:
+    :param print_command:
+    :return:
+    '''
     commands = ['svn', 'info', local_path]
     if print_command:
         print(' '.join(commands))
@@ -207,7 +205,7 @@ def get_local_file_svn_info(local_path: str, print_command=False):
         if line.startswith('URL:'):
             svn_info.url = line.split()[1]
         if line.startswith('Revision:'):
-            svn_info.revision = line.split()[1]
+            svn_info.revision = int(line.split()[1])
         if line.startswith('Node Kind:'):
             svn_info.node_kind = line.split()[-1]
         if line.startswith('Schedule:'):
@@ -215,11 +213,11 @@ def get_local_file_svn_info(local_path: str, print_command=False):
         if line.startswith('Last Changed Author:'):
             svn_info.last_changed_author = line.split()[-1]
         if line.startswith('Last Changed Rev:'):
-            svn_info.last_change_rev = line.split()[-1]
+            svn_info.last_change_rev = int(line.split()[-1])
         if line.startswith('Last Changed Date:'):
             svn_info.last_changed_date = line.split(':', 1)[1].strip()
         if line.startswith('Relative URL'):
-            svn_info.relative_url = line.split(':', 1)[1].strip().replace('^', '', 1)
+            svn_info.relative_url = unquote(line.split(':', 1)[1].strip().replace('^', '', 1))
 
     return svn_info
 
@@ -232,3 +230,54 @@ def is_svn_repository(path):
     '''
     result = subprocess.run(['svn', 'info', path], stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=SUBPROCESS_ENV)
     return result.returncode == 0
+
+
+def update_to_revision(revision, repo_path):
+    try:
+        subprocess.run(
+            ['svn', 'update', '-r', str(revision), repo_path],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            env=SUBPROCESS_ENV,
+        )
+        # print(f'更新成功!仓库{repo_path}到revision:{revision}')
+    except subprocess.CalledProcessError as e:
+        raise SVNUpdateError(f'更新失败!!在将repo_path:{repo_path}更新到revision:{revision}时出现了异常')
+
+
+def cleanup(repo_path):
+    try:
+        subprocess.run(
+            ['svn', 'cleanup', repo_path],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            env=SUBPROCESS_ENV,
+        )
+    except subprocess.CalledProcessError as e:
+        raise SVNUpdateError(f'cleanup失败!!')
+
+
+def list_svn_files(repo_path):
+    """
+    获取指定路径下被SVN管理的文件列表。
+
+    :param repo_path: 本地SVN仓库路径
+    :return: 被SVN管理的文件列表
+    """
+    try:
+        result = subprocess.run(
+            ["svn", "list", "--recursive", repo_path],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        files = result.stdout.splitlines()
+        return files
+    except subprocess.CalledProcessError as e:
+        print(f"获取文件列表失败: {e.stderr}")
+        return []

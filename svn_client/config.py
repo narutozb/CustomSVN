@@ -24,11 +24,11 @@ class SVNClientConfig:
     REPO_NAME_CUSTOM_SERVER: str
     START_REVISION: int = None
     END_REVISION: int = None  # 当设置此时，RUN_ONCE 应自动设为 True
-    COMMITS_SPLIT_NUM: int = 5000  # 限制单次上传最大commit区间
+    COMMITS_SPLIT_NUM: int = 500  # 限制单次上传最大commit区间
     CLIENT_VERSION: str = '0.0.1'
     RUN_ONCE: bool = False  #
     FORCE_UPDATE: bool = False  # 强制更新指定区间是改为True
-    MAX_UPDATE_PER_COMMITS_DATA_SIZE = 1024 * 1024 * 512
+    MAX_UPDATE_PER_COMMITS_DATA_SIZE = 1024 * 1024 * 1024
     DEFAULT_SVN_UPDATE_INTERVAL: int = 1  # 默认等待5秒后开始下一次上传任务
     DEFAULT_SVN_UPDATE_MAX_INTERVAL: int = 60  # 最大等待时间
     DEFAULT_SVN_UPDATE_INTERVAL_INCREMENT: int = 5  # 等待递增时间

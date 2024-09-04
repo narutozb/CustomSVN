@@ -15,7 +15,11 @@ export interface Branch {
 export interface Repository {
     id: string;
     name: string;
-    // 添加其他必要的属性
+    description: string;
+    created_at: string;
+    url: string;
+    total_commits_total: number;
+    total_file_changes: number;
 }
 
 export interface Commit {
@@ -43,12 +47,11 @@ export interface Character {
     name: string;
     character_id: string;
     description?: string;
-    height?: number;
-    gender?: number;
-    race?: number;
-    tags?: number[];
-    thumbnails?: Array<{ id: number; name: string; image: string }>;
-
+    height?: number | null;
+    gender?: number | null;
+    race?: number | null;
+    tags?: number[] | null;
+    thumbnails?: Array<{ id: number; name?: string; image: string }>;
 }
 
 export interface SearchCommitsResponse {
@@ -75,10 +78,21 @@ export interface Repository {
     created_at: string
 }
 
-export interface FileChange {
+export interface FileChangeDetails {
     id: string;
     commit: Commit;  // 确保这里是 number 类型
     path: string;
     action: string;
     kind: string;
+    repository: Repository
+}
+
+
+export interface Tag {
+    id: number;
+    name: string;
+    description: string;
+    active: boolean;
+
+    [key: string]: any;  // 允许动态属性
 }

@@ -5,18 +5,18 @@ from functools import reduce
 from django.core.exceptions import ValidationError
 from django.core.paginator import PageNotAnInteger, EmptyPage
 from django.db import DatabaseError
-from django.db.models import OuterRef, Subquery, F, Q, Count
+from django.db.models import OuterRef, Subquery, F, Q
 from django.utils import timezone
-from rest_framework import status, viewsets
+from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
 from rest_framework.views import APIView
 
+from svn._serializers.serializer_commit import CommitQuerySerializerS
 from svn.models import FileChange, Commit
-from svn.query_functions.functions import query_file_changes_by_repo_name_and_file_changes
-from svn.serializers import QueryFileChangeSerializer, CommitSerializer, FileChangeSerializer, CommitDetailSerializer
-from svn.views.custom_class import CustomPagination
+from svn.serializers import QueryFileChangeSerializer, FileChangeSerializer, CommitDetailSerializer
+from svn.pagination import CustomPagination
 
 
 class FileChangeListLatestExistView(APIView):
@@ -86,48 +86,6 @@ class GetFileChangesByFilePath(APIView):
                 status=status.HTTP_404_NOT_FOUND)
 
 
-class GetFileChangeByRevisionView(APIView):
-    """
-    通过仓库名和其revision还有file_path获取特定FileChange信息
-    POST信息如下
-    {
-    "file_changes":
-    [
-        {
-            "path": "https://qiaoyuanzhen/svn/MyDataSVN/trunk/RootFolder/fbx_files/animation_test1.fbx",
-            "revision": 17,
-            "repo_name": "MyDataSVN"},
-        {
-            "path": "https://qiaoyuanzhen/svn/MyDataSVN/trunk/RootFolder/fbx_files/animation_test2.fbx",
-            "revision": 17,
-            "repo_name": "MyDataSVN"},
-        {
-            "path": "https://qiaoyuanzhen/svn/MyDataSVN/tags/release-1.0/RootFolder/_test_file.mb",
-            "revision": 13,
-            "repo_name": "MyDataSVN"}
-        ]
-    }
-    """
-
-    def get(self, request, *args, **kwargs):
-        data = {'msg': 12121212}
-        return Response(data, status=status.HTTP_200_OK)
-
-    def post(self, request):
-        # 检查请求数据是否包含file_changes
-
-        try:
-            serializer = query_file_changes_by_repo_name_and_file_changes(request)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-        except FileChange.DoesNotExist:
-            return Response({
-                'status': 'error', 'message': 'FileChange does not exist.如果有任意一个FileChange不存在，将返回404错误',
-            },
-                status=status.HTTP_404_NOT_FOUND)
-
-
 class CustomPageNumberPagination(PageNumberPagination):
     page_size_query_param = 'page_size'
     max_page_size = 50000
@@ -184,7 +142,7 @@ class CommitSearchView(APIView):
                 }, status=status.HTTP_400_BAD_REQUEST)
 
             # 序列化结果
-            serializer = CommitSerializer(page, many=True)
+            serializer = CommitQuerySerializerS(page, many=True)
             return paginator.get_paginated_response(serializer.data)
 
         except Exception as e:
@@ -283,7 +241,7 @@ class CommitsByFilePathView(APIView):
 
         paginator = self.pagination_class()
         result_page = paginator.paginate_queryset(commits, request)
-        serializer = CommitSerializer(result_page, many=True)
+        serializer = CommitQuerySerializerS(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
 
 
