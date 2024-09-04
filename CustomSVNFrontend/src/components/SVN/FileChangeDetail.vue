@@ -35,12 +35,12 @@
 <script lang="ts" setup>
 import { ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import {getCommitDetailsByChangeFile, getFileChangeDetail, getRelatedCommits} from '@/services/svn_api';
-import type { FileChange, Commit } from "@/services/interfaces";
+import {getCommitDetailsByChangeFile, getRelatedCommits} from '@/services/svn_api';
+import type { FileChangeDetails, Commit } from "@/services/interfaces";
 
 const route = useRoute();
 
-const fileChange = ref<FileChange | null>(null);
+const fileChange = ref<FileChangeDetails | null>(null);
 const relatedCommits = ref<Commit[]>([]);
 
 async function loadData() {

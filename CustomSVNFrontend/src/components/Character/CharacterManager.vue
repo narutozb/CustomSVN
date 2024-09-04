@@ -194,7 +194,7 @@ export default defineComponent({
         state.characters = await characterApi.fetchCharacters()
         state.genders = await characterApi.fetchGenders()
         state.races = await characterApi.fetchRaces()
-        state.tags = await characterApi.fetchTags()
+        // state.tags = await characterApi.fetchTags()
       } catch (error) {
         handleError(error, 'Failed to fetch data')
       }

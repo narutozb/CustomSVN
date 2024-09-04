@@ -78,12 +78,13 @@ export interface Repository {
     created_at: string
 }
 
-export interface FileChange {
+export interface FileChangeDetails {
     id: string;
     commit: Commit;  // 确保这里是 number 类型
     path: string;
     action: string;
     kind: string;
+    repository: Repository
 }
 
 

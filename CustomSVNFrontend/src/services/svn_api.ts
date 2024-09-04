@@ -67,7 +67,6 @@ export const getFileChangesDetail = async (id: string) => {
 
 
 export const getCommitDetail = async (commitId: number) => {
-    const url = `api/svn/_commits/commits_query/${commitId}/`
     const url2 = `api/svn/_commits/commit-details/${commitId}/`
     try {
         const response = await api.get(url2);
@@ -81,11 +80,9 @@ export const getCommitDetail = async (commitId: number) => {
 
 export const getFileChangeDetail = async (fileChangeId: number) => {
     try {
-        const url = `api/svn/file_changes_query/${fileChangeId}/commits`
         const url2 = `api/svn/_file_changes/${fileChangeId}`
         const response = await api.get(url2);
-        console.log(url);
-        console.log(response.data)
+
         return response.data;
     } catch (error) {
         console.error('获取文件变更详情失败:', error);
@@ -98,7 +95,7 @@ export const getCommitDetailsByChangeFile = async (fileChangeId: number) => {
     try {
         const url = `api/svn/file_changes_query/${fileChangeId}/file_change_details`
         const response = await api.get(url);
-        console.log(response.data)
+        console.log(url)
         return response.data;
     } catch (error) {
         console.error('获取文件变更详情失败:', error);
@@ -106,7 +103,7 @@ export const getCommitDetailsByChangeFile = async (fileChangeId: number) => {
     }
 }
 
-export const getRelatedCommits = async (fileChangeId: number): Promise<Commit[]> => {
+export const getRelatedCommits = async (fileChangeId: number | string): Promise<Commit[]> => {
     try {
         const response = await api.get(`api/svn/file_changes_query/${fileChangeId}/get_commits_by_self_path/`);
         // 检查响应是否包含 results 字段（分页响应的常见结构）
