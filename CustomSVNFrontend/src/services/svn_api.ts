@@ -3,7 +3,6 @@ import api from "@/services/api";
 import type {Branch, Commit, Repository, SearchCommitsData, SearchCommitsResponse} from "@/services/interfaces";
 import type {CancelToken} from "axios";
 import axios from "axios";
-import * as url from "node:url";
 
 export const fetchBranches = async (repositoryId: string): Promise<Branch[]> => {
     try {
@@ -18,7 +17,7 @@ export const fetchBranches = async (repositoryId: string): Promise<Branch[]> => 
 export const getBranches = async (params: any): Promise<Branch[]> => {
     try {
         const response = await api.get(`api/svn/branches_query/`,
-            params
+            {params}
         );
         return response.data.results;
     } catch (error) {
@@ -27,10 +26,10 @@ export const getBranches = async (params: any): Promise<Branch[]> => {
     }
 }
 
-export const getRepositories = async (params): Promise<Repository[]> => {
+export const getRepositories = async (params: any): Promise<Repository[]> => {
     try {
         const response = await api.get(`api/svn/repositories_query/`,
-            params
+            {params}
         );
         return response.data.results;
     } catch (error) {
