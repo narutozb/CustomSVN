@@ -1,14 +1,12 @@
-from crypt import methods
-
-from django.core.serializers import serialize
+from django.db.models import Max
 from rest_framework.decorators import action
 from django_filters import rest_framework as filters
 from rest_framework import viewsets
 from rest_framework.response import Response
 
 from svn._serializers.serializer_branch import BranchQuerySerializer
-from svn._serializers.serializer_repository import RepositoryQuerySerializer
-from svn.models import Repository, Branch
+from svn._serializers.serializer_repository import RepositoryQuerySerializer, RepositoryQuerySoloSerializer
+from svn.models import Repository, Branch, Commit
 from svn.pagination import CustomPagination
 
 
@@ -54,3 +52,31 @@ class RepositoryQueryViewSet(viewsets.ReadOnlyModelViewSet):
             return self.get_paginated_response(serializer.data)
 
         return Response(serializer.data)
+
+    @action(detail=True, methods=['GET'])
+    def detail_authors(self, request, pk=None):
+        commits = Commit.objects.filter(repository_id=pk)
+        authors = commits.values('author').annotate(
+            max_id=Max('id')
+        ).values_list('author', flat=True)
+
+        return Response(authors)
+
+    @action(detail=False, methods=['GET'])
+    def authors(self, request):
+        commits = Commit.objects
+        authors = commits.values('author').annotate(
+            max_id=Max('id')
+        ).values_list('author', flat=True)
+
+        return Response(authors)
+
+    @action(detail=True, methods=['GET'])
+    def solo(self, request, pk: None):
+        # repo = Repository.objects.select_related("branch").get(id=pk)
+
+        repo = Repository.objects.prefetch_related("branches").get(id=pk)
+        print(repo)
+        serializer = RepositoryQuerySoloSerializer(repo)
+        # return Response(serializer.data)
+        return Response()

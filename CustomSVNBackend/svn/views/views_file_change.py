@@ -1,17 +1,14 @@
 from django_filters import rest_framework as filters
 from rest_framework import viewsets
 from rest_framework.decorators import action
-from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 
 from django.db.models import Max, F, Subquery, OuterRef
 
-from maya.models import TransformNode
 from svn._serializers.serializer_commit import CommitQuerySerializerS
 from svn._serializers.serializer_file_change import FileChangeQuerySerializer, FileChangeQuerySerializerS
 from svn.models import FileChange, Commit
 from svn.pagination import CustomPagination
-from svn.serializers import FileChangeSerializer
 
 
 class FileChangeFilter(filters.FilterSet):

@@ -3,7 +3,7 @@ from rest_framework.response import Response
 
 
 class CustomPagination(PageNumberPagination):
-    page_size = 200  # 每页显示的记录数，可以在此调整
+    page_size = 500  # 每页显示的记录数，可以在此调整
 
     def get_paginated_response(self, data):
         return Response({

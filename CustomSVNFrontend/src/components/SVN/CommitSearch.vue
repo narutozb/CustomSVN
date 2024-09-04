@@ -16,23 +16,24 @@
         </el-option>
       </el-select>
     </el-form-item>
-    <el-form-item label="Search Branches">
-      <el-transfer
+    <el-form-item label="Branches">
+      <custom-transfer
           v-model="form.branches"
           :data="branchesData"
-          filterable
-          :titles="['Available Branches', 'Selected Branches']"
-          :render-content="renderBranchContent"
+          left-title="Available"
+          right-title="Selected"
           @change="handleBranchChange"
-      >
-        <template #left-footer>
-          <el-button class="transfer-footer" size="small" @click="selectAllBranches">Select All</el-button>
-        </template>
-        <template #right-footer>
-          <el-button class="transfer-footer" size="small" @click="deselectAllBranches">Deselect All</el-button>
-        </template>
-      </el-transfer>
+      />
     </el-form-item>
+<!--    <el-form-item label="Authors">-->
+<!--      <custom-transfer-->
+<!--          v-model="form.authors"-->
+<!--          :data="authorsData"-->
+<!--          left-title="Available"-->
+<!--          right-title="Selected"-->
+<!--          @change="handleAuthorChange"-->
+<!--      />-->
+<!--    </el-form-item>-->
     <el-form-item label="Time Range">
       <el-col :span="11">
         <el-date-picker
@@ -143,6 +144,7 @@ import {ElMessage} from "element-plus";
 
 import type {Branch, SearchCommitsResponse} from "@/services/interfaces";
 import axios, {CancelTokenSource} from 'axios';
+import CustomTransfer from "@/components/Common/CustomTransfer.vue";
 
 const searchDuration = ref<number>(0);
 
@@ -173,23 +175,17 @@ const form = reactive({
 const isSearching = ref(false);
 const cancelTokenSource = ref<CancelTokenSource | null>(null);
 
-interface BranchData {
-  key: string;
-  label: string;
-  disabled: boolean;
-}
 
 const branchesData = computed(() => {
-  return branches.value.map(branch => ({
+  const data = branches.value.map(branch => ({
     key: branch.id,
     label: branch.name,
     disabled: branch.name === 'root'
   }));
+  console.log(data)
+  return data
 });
 
-const renderBranchContent: TransferProps['renderContent'] = (h, option) => {
-  return h('span', {}, option.label);
-};
 
 const handleBranchChange = (value: string[], direction: 'left' | 'right', movedKeys: string[]) => {
   console.log('Branch selection changed:', value, direction, movedKeys);
@@ -197,13 +193,6 @@ const handleBranchChange = (value: string[], direction: 'left' | 'right', movedK
   debouncedSubmitSearch();
 };
 
-const selectAllBranches = () => {
-  form.branches = branchesData.value.filter(branch => !branch.disabled).map(branch => branch.key);
-};
-
-const deselectAllBranches = () => {
-  form.branches = [];
-};
 
 const submitSearch = async () => {
   if (isSearching.value) return;
@@ -273,16 +262,13 @@ const setDefaultDates = () => {
 const loadBranches = async (repositoryId: string) => {
   try {
     branches.value = await getBranches({repo_id: repositoryId})
-    setDefaultBranches()
   } catch (error) {
     console.error('获取分支列表失败:', error)
   }
 }
 
+const loadAuthors = async (repositoryId: string) => {
 
-const setDefaultBranches = () => {
-  const trunkBranch = branches.value.find(branch => branch.name === '/trunk')
-  form.branches = trunkBranch ? [trunkBranch.id] : []
 }
 
 // 监听表单数据的变化

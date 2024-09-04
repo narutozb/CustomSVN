@@ -3,14 +3,12 @@ from django_filters import rest_framework as filters
 
 from rest_framework import mixins, viewsets
 from rest_framework.decorators import action
-from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 
 from django.db.models import Q, Max
 from functools import reduce
 from operator import or_
 
-from maya.models import TransformNode
 from svn._serializers.serializer_commit import CommitQuerySerializer, CommitQuerySerializerS
 from svn._serializers.serializer_file_change import FileChangeQuerySerializer
 from svn.models import Commit, FileChange, Repository
