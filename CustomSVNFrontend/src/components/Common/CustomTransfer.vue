@@ -6,6 +6,8 @@
       :titles="[leftTitle, rightTitle]"
       :render-content="renderContent"
       @change="handleChange"
+      :style="{ '--el-transfer-panel-width': panelWidth || '400px'}"
+
   >
     <template #left-footer>
       <el-button class="transfer-footer" size="small" @click="selectAll">Select All</el-button>
@@ -17,8 +19,8 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, watch } from 'vue';
-import type { TransferProps } from 'element-plus';
+import {ref, computed, watch} from 'vue';
+import type {TransferProps} from 'element-plus';
 
 interface TransferItem {
   key: string;
@@ -31,6 +33,8 @@ const props = defineProps<{
   data: TransferItem[];
   leftTitle: string;
   rightTitle: string;
+  panelWidth?: string; // 新增属性
+
 }>();
 
 const emit = defineEmits<{
@@ -72,8 +76,7 @@ const deselectAll = () => {
   padding: 6px 5px;
 }
 
-.el-transfer {
-  text-align: left;
-  display: inline-block;
-}
+
+
 </style>
+
