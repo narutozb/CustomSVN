@@ -84,7 +84,8 @@ export interface FileChangeDetails {
     path: string;
     action: string;
     kind: string;
-    repository: Repository
+    suffix: string;
+    repository: Repository;
 }
 
 
