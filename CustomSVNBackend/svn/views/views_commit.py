@@ -2,6 +2,7 @@ from django_filters import rest_framework as filters
 from django.core.paginator import EmptyPage, PageNotAnInteger
 from django.db.models import Q, Max
 from django.utils import timezone
+from rest_framework.exceptions import NotFound
 
 from rest_framework import mixins, viewsets, status
 from rest_framework.decorators import action
@@ -105,8 +106,13 @@ class CommitQueryViewSet(viewsets.ReadOnlyModelViewSet):
     filterset_class = CommitFilter
     ordering_fields = ['revision', 'date', 'author']
 
+    def paginate_queryset(self, queryset):
+        if self.paginator is None:
+            return None
+        return self.paginator.paginate_queryset(queryset, self.request, view=self)
+
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().select_related('repository', 'branch').prefetch_related('file_changes')
         message_contains = self.request.query_params.get('message_contains')
         file_path_contains = self.request.query_params.get('file_path_contains')
 
@@ -122,25 +128,16 @@ class CommitQueryViewSet(viewsets.ReadOnlyModelViewSet):
 
         return queryset
 
-
     def list(self, request, *args, **kwargs):
-        try:
-            queryset = self.filter_queryset(self.get_queryset())
+        queryset = self.filter_queryset(self.get_queryset())
 
-            if not queryset.exists():
-                return self.get_empty_paginated_response("No commits found for the specified criteria.")
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
 
-            page = self.paginate_queryset(queryset)
-            if page is not None:
-                serializer = self.get_serializer(page, many=True)
-                return self.get_paginated_response(serializer.data)
-
-            serializer = self.get_serializer(queryset, many=True)
-            return Response(serializer.data)
-
-        except Exception as e:
-            logger.error(f"Error in CommitQueryViewSet.list: {str(e)}", exc_info=True)
-            return Response({"error": "An unexpected error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
     def get_empty_paginated_response(self, message):
         try:
