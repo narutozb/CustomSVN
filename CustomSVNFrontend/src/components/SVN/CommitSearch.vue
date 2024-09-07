@@ -3,9 +3,9 @@
     <el-form :model="form" label-width="auto" style="max-width: 100%" size="small" @submit.prevent="submitSearch">
       <el-form-item label="Repository">
         <el-select
-            v-model="form.repository"
+            v-model="form.repo_id"
             placeholder="please select Repository"
-            @change="handleChange"
+            @change="handleRepoChange"
         >
           <el-option
               v-for="repo in store.repositories"
@@ -16,34 +16,61 @@
           </el-option>
         </el-select>
       </el-form-item>
-      <el-form-item label="Branches">
-        <custom-transfer
-            v-model="form.branches"
-            :data="branchesData"
-            left-title="Available"
-            right-title="Selected"
-            @change="handleBranchChange"
-        />
-      </el-form-item>
-      <el-form-item label="Time Range">
-        <el-col :span="11">
-          <el-date-picker
-              v-model="form.start_date"
-              type="date"
-              placeholder="Pick a date"
-              style="width: 100%"
+
+      <el-form-item>
+        <el-form-item label="Branches">
+          <custom-transfer
+              v-model="form.branch_ids"
+              :data="branchesData"
           />
-        </el-col>
-        <el-col :span="2" style="text-align: center">-</el-col>
-        <el-col :span="11">
-          <el-date-picker
-              v-model="form.end_date"
-              type="date"
-              placeholder="Pick a date"
-              style="width: 100%"
+        </el-form-item>
+        <el-form-item label="Authors">
+          <custom-transfer
+              v-model="form.authors"
+              :data="authorsData"
           />
-        </el-col>
+        </el-form-item>
       </el-form-item>
+
+      <el-form-item>
+        <el-form-item label="Revision Range">
+          <el-col :span="11">
+            <el-input-number
+                v-model="form.revision_from"
+                :min="1"
+                placeholder="From revision"
+            />
+          </el-col>
+          <el-col :span="2" style="text-align: center">-</el-col>
+          <el-col :span="11">
+            <el-input-number
+                v-model="form.revision_to"
+                :min="form.revision_from || 1"
+                placeholder="To revision"
+            />
+          </el-col>
+        </el-form-item>
+        <el-form-item label="Time Range">
+          <el-col :span="11">
+            <el-date-picker
+                v-model="form.date_from"
+                type="date"
+                placeholder="Pick a date"
+                style="width: 100%"
+            />
+          </el-col>
+          <el-col :span="2" style="text-align: center">-</el-col>
+          <el-col :span="11">
+            <el-date-picker
+                v-model="form.date_to"
+                type="date"
+                placeholder="Pick a date"
+                style="width: 100%"
+            />
+          </el-col>
+        </el-form-item>
+      </el-form-item>
+
       <el-form-item label="Regex search">
         <el-switch v-model="form.regex_search"/>
       </el-form-item>
@@ -62,7 +89,6 @@
         <el-button type="primary" @click="submitSearch" :loading="loading">
           {{ loading ? 'Searching...' : 'Search' }}
         </el-button>
-        <el-button v-if="loading" @click="cancelSearch">Cancel</el-button>
       </el-form-item>
     </el-form>
 
@@ -107,140 +133,115 @@
         :total="searchResults.count"
     />
   </el-card>
-  <el-alert v-if="error" :title="error" type="error" show-icon />
+  <el-alert v-if="error" :title="error" type="error" show-icon/>
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue';
-import { debounce } from 'lodash';
-import type { TransferProps } from 'element-plus';
-import { useRepositoriesStore } from "@/store/repositories";
-import { getBranches, searchCommits } from '@/services/svn_api';
-import { ElMessage } from "element-plus";
-import type { Branch, SearchCommitsResponse } from "@/services/interfaces";
-import axios, { CancelTokenSource } from 'axios';
+import {computed, onMounted, reactive, ref} from 'vue';
+import {useRepositoriesStore} from "@/store/repositories";
+import {getCommitSearchFilterData, searchCommits} from '@/services/svn_api';
+import type {BranchNameId, SearchCommitsResponse} from "@/services/interfaces";
 import CustomTransfer from "@/components/Common/CustomTransfer.vue";
-import { useLoadingState } from '@/composables/useLoadingState';
+import {useLoadingState} from '@/composables/useLoadingState';
 
 const searchDuration = ref<number>(0);
 const store = useRepositoriesStore();
-const branches = ref<Branch[]>([]);
-const pageSizeOptions = [100, 500, 1000, 5000, 10000];
+const branches = ref<BranchNameId[]>([]);
+const authors = ref<string[]>([]);
+const pageSizeOptions = [50, 100, 500, 1000, 5000, 10000];
 const currentPage = ref(1);
 
 const form = reactive({
-  repository: computed({
+  repo_id: computed({
     get: () => store.selectedRepository,
     set: (value) => {
       store.setSelectedRepository(value);
-      handleChange(value);
     }
   }),
-  branches: [] as string[],
-  start_date: null as Date | null,
-  end_date: null as Date | null,
+  revision_from: null as number | null,
+  revision_to: null as number | null,
+  authors: [],
+  branch_ids: [],
+  date_from: null as Date | null,
+  date_to: null as Date | null,
   contents: '',
   regex_search: false,
   search_fields: ['message', 'author', 'revision', 'file_changes'],
   page_size: 100,
 });
 
-const { loading, error, withLoading } = useLoadingState({
+const {loading, error, withLoading} = useLoadingState({
   loadingMessage: 'Searching commits...',
   errorMessage: 'Failed to search commits. Please try again.'
 });
 
 const loadingMessage = 'Searching commits...';
 
-const cancelTokenSource = ref<CancelTokenSource | null>(null);
 
 const branchesData = computed(() => {
-  const data = branches.value.map(branch => ({
+  return branches.value.map(branch => ({
     key: branch.id,
     label: branch.name,
-    disabled: branch.name === 'root'
   }));
-  console.log(data);
-  return data;
 });
 
-const handleBranchChange = (value: string[], direction: 'left' | 'right', movedKeys: string[]) => {
-  console.log('Branch selection changed:', value, direction, movedKeys);
-  debouncedSubmitSearch();
+const authorsData = computed(() => {
+  return authors.value.map(author => ({
+    key: author,
+    label: author,
+  }));
+});
+
+// 新的辅助函数，用于处理列表数据
+const formatDataForBackend = (data: any): any => {
+  if (Array.isArray(data)) {
+    return data.join(',');
+  } else if (data instanceof Date) {
+    return data.toISOString().split('T')[0]; // 格式化日期为 YYYY-MM-DD
+  } else if (typeof data === 'object' && data !== null) {
+    return Object.fromEntries(
+        Object.entries(data).map(([key, value]) => [key, formatDataForBackend(value)])
+    );
+  }
+  return data;
 };
 
 const submitSearch = async () => {
-  cancelTokenSource.value = axios.CancelToken.source();
   const startTime = performance.now();
 
   await withLoading(async () => {
     try {
-      let start_date = form.start_date ? new Date(form.start_date.getTime() - form.start_date.getTimezoneOffset() * 60000).toISOString().split('T')[0] : null;
-      let end_date = form.end_date ? new Date(form.end_date.getTime() - form.end_date.getTimezoneOffset() * 60000).toISOString().split('T')[0] : null;
-
-      const formattedData = {
+      let formattedData = formatDataForBackend({
         ...form,
-        start_date,
-        end_date,
+        date_from: form.date_from,
+        date_to: form.date_to,
+        revision_from: form.revision_from,
+        revision_to: form.revision_to,
         page: currentPage.value,
         page_size: form.page_size,
-      };
+      });
 
-      console.log(formattedData);
-
-      const results = await searchCommits(formattedData, cancelTokenSource.value?.token);
+      const results = await searchCommits(formattedData);
       if ('error' in results) {
         throw new Error(results.error);
       } else {
         searchResults.value = results;
       }
     } catch (error: unknown) {
-      if (axios.isCancel(error)) {
-        console.log('Search canceled');
-      } else {
-        throw error;
-      }
+      console.error('Search error:', error);
+      throw error;
     } finally {
-      cancelTokenSource.value = null;
       const endTime = performance.now();
       searchDuration.value = Number((endTime - startTime).toFixed(2));
     }
   });
 };
 
-const debouncedSubmitSearch = debounce(() => {
-  searchDuration.value = 0;
-  submitSearch();
-}, 500);
-
-const cancelSearch = () => {
-  if (cancelTokenSource.value) {
-    cancelTokenSource.value.cancel('Search canceled by user');
-  }
-};
-
 const setDefaultDates = () => {
   const now = new Date();
-  form.start_date = new Date(now.getTime() - 24 * 60 * 60 * 1000 * 90);
-  form.end_date = null;
+  form.date_from = new Date(now.getTime() - 24 * 60 * 60 * 1000 * 90);
+  form.date_to = null;
 };
-
-const loadBranches = async (repositoryId: string) => {
-  try {
-    branches.value = await getBranches({repo_id: repositoryId});
-  } catch (error) {
-    console.error('获取分支列表失败:', error);
-  }
-};
-
-watch(() => ({...form, repository: form.repository}), (newForm, oldForm) => {
-  if (newForm.contents !== oldForm.contents && Object.keys(newForm).every(key => key === 'contents' || newForm[key as keyof typeof newForm] === oldForm[key as keyof typeof oldForm])) {
-    return;
-  }
-
-  currentPage.value = 1;
-  debouncedSubmitSearch();
-}, {deep: true});
 
 const searchResults = ref<SearchCommitsResponse>({
   count: 0,
@@ -249,6 +250,14 @@ const searchResults = ref<SearchCommitsResponse>({
   results: [],
 });
 
+// 新的函数，用于加载所有必要的数据
+const loadAllData = async (repositoryId: string) => {
+  const commit_search_filter_data = await getCommitSearchFilterData(repositoryId);
+  branches.value = commit_search_filter_data.branches;
+  authors.value = commit_search_filter_data.authors;
+  // 如果还有其他数据需要加载，可以在这里添加
+};
+
 onMounted(async () => {
   await withLoading(async () => {
     await store.fetchRepositories();
@@ -256,25 +265,26 @@ onMounted(async () => {
     if (store.repositories.length > 0) {
       const defaultRepositoryId = store.repositories[0].id;
       store.setSelectedRepository(defaultRepositoryId);
-      await loadBranches(defaultRepositoryId);
+      await loadAllData(defaultRepositoryId);
     }
   });
 });
 
-const handleChange = async (value: string) => {
-  await loadBranches(value);
-  debouncedSubmitSearch();
+const handleRepoChange = async (value: string) => {
+  form.branch_ids = [];
+  form.authors = [];
+  await loadAllData(value);
 };
 
 const handleSizeChange = (val: number) => {
   form.page_size = val;
   currentPage.value = 1;
-  debouncedSubmitSearch();
+  submitSearch();
 };
 
 const handleCurrentChange = (val: number) => {
   currentPage.value = val;
-  debouncedSubmitSearch();
+  submitSearch();
 };
 </script>
 

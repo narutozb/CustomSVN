@@ -97,3 +97,13 @@ export interface Tag {
 
     [key: string]: any;  // 允许动态属性
 }
+
+export interface BranchNameId {
+    id: number,
+    name: string
+}
+
+export interface CommitSearchFilter {
+    branches: BranchNameId[],
+    authors: string[],
+}

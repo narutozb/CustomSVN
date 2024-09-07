@@ -21,7 +21,7 @@ def main():
         REPO_NAME_CUSTOM_SERVER='redmine',
         REPO_ROOT_URL='https://svn.redmine.org/redmine/',
     )
-    configs = [config2, ]#config2]#, config3]
+    configs = [config3, ]#config2]#, config3]
 
     def upload_data(config: SVNClientConfig):
         status_manager = StatusManager()
