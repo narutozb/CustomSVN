@@ -172,3 +172,22 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # character的app的配置
 MAX_THUMBNAILS_PER_CHARACTER = 3
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': 'debug.log',
+        },
+    },
+    'loggers': {
+        '': {  # 这将捕获所有日志
+            'handlers': ['file'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+    },
+}

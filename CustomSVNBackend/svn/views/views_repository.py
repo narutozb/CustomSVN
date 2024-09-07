@@ -5,7 +5,8 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 
 from svn._serializers.serializer_branch import BranchQuerySerializer
-from svn._serializers.serializer_repository import RepositoryQuerySerializer, RepositoryQuerySoloSerializer
+from svn._serializers.serializer_repository import RepositoryQuerySerializer, RepositoryQuerySoloSerializer, \
+    RepositoryQuerySerializerS, RepositoryCommitSearchFilterSerializer
 from svn.models import Repository, Branch, Commit
 from svn.pagination import CustomPagination
 
@@ -80,3 +81,12 @@ class RepositoryQueryViewSet(viewsets.ReadOnlyModelViewSet):
         serializer = RepositoryQuerySoloSerializer(repo)
         # return Response(serializer.data)
         return Response()
+
+    @action(detail=True, methods=['GET'])
+    def commit_search_filter(self, request, pk=None):
+        '''
+        commit搜索页面的过滤其
+        '''
+        repositories = Repository.objects.get(id=pk)
+        serializer = RepositoryCommitSearchFilterSerializer(repositories)
+        return Response(serializer.data)

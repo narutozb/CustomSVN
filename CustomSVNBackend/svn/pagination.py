@@ -7,13 +7,25 @@ class CustomPagination(PageNumberPagination):
 
     def get_paginated_response(self, data):
         return Response({
-            'count': self.page.paginator.count,
+            'count': self.page.paginator.count if hasattr(self, 'page') else 0,
             'next': self.get_next_link(),
             'previous': self.get_previous_link(),
-            'page_size': self.page_size,  # 自定义返回值
-            'page_count': self.page.paginator.num_pages,  # 自定义返回值
-            'current_page': self.page.number,  # 自定义返回值
-            'last_page': self.page.paginator.num_pages,  # 自定义返回值
+            'page_size': self.page_size,
+            'page_count': self.page.paginator.num_pages if hasattr(self, 'page') else 0,
+            'current_page': self.page.number if hasattr(self, 'page') else 1,
+            'last_page': self.page.paginator.num_pages if hasattr(self, 'page') else 0,
             'results': data,
+        })
 
+    def get_empty_paginated_response(self, message):
+        return Response({
+            'count': 0,
+            'next': None,
+            'previous': None,
+            'page_size': self.page_size,
+            'page_count': 0,
+            'current_page': 1,
+            'last_page': 0,
+            'results': [],
+            'message': message
         })

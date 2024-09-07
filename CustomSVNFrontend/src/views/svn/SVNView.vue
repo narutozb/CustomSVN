@@ -5,8 +5,6 @@ import Dashboard from "@/components/SVN/DashboardTop.vue";
 </script>
 
 <template>
-  <h2>SVN</h2>
-
   <TestOptionsComponent/>
   <RouterView/>
 

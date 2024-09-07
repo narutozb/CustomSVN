@@ -8,7 +8,8 @@ from rest_framework.response import Response
 from django.db.models import Max, F, Subquery, OuterRef
 
 from svn._serializers.serializer_commit import CommitQuerySerializerS
-from svn._serializers.serializer_file_change import FileChangeQuerySerializer, FileChangeQuerySerializerS
+from svn._serializers.serializer_file_change import FileChangeQuerySerializer, FileChangeQuerySerializerS, \
+    FileChangeQuerySoloSerializer
 from svn.models import FileChange, Commit
 from svn.pagination import CustomPagination
 
@@ -136,7 +137,7 @@ class FileChangeQueryViewSet(viewsets.ReadOnlyModelViewSet):
         获取FileChange的详细信息,用于展示在单个FileChange数据页面上
         '''
         queryset = FileChange.objects.get(id=pk)
-        serializer = FileChangeQuerySerializer(queryset)
+        serializer = FileChangeQuerySoloSerializer(queryset)
         return Response(serializer.data)
 
     @action(detail=True, methods=['GET'])
