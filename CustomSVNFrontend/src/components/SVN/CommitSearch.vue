@@ -74,17 +74,19 @@
       <el-form-item label="Regex search">
         <el-switch v-model="form.regex_search"/>
       </el-form-item>
-      <el-form-item label="Search Options">
-        <el-checkbox-group v-model="form.search_fields">
-          <el-checkbox value="message" name="type">Message</el-checkbox>
-          <el-checkbox value="author" name="type">Username</el-checkbox>
-          <el-checkbox value="revision" name="type">Revision</el-checkbox>
-          <el-checkbox value="file_changes" name="type">FileChange</el-checkbox>
-        </el-checkbox-group>
-      </el-form-item>
+
       <el-form-item label="Search Contents">
-        <el-input v-model="form.contents" @keyup.enter="submitSearch"/>
+        <el-input v-model="form.contents" placeholder="Search in message and file paths" @keyup.enter="submitSearch"/>
       </el-form-item>
+
+      <el-form-item label="Filter Type">
+        <el-select v-model="form.filter_type" placeholder="Select filter type">
+          <el-option label="Message" value="message"/>
+          <el-option label="File Path" value="file_path"/>
+          <el-option label="Both" value="both"/>
+        </el-select>
+      </el-form-item>
+
       <el-form-item>
         <el-button type="primary" @click="submitSearch" :loading="loading">
           {{ loading ? 'Searching...' : 'Search' }}
@@ -165,8 +167,8 @@ const form = reactive({
   date_from: null as Date | null,
   date_to: null as Date | null,
   contents: '',
+  filter_type: 'both',
   regex_search: false,
-  search_fields: ['message', 'author', 'revision', 'file_changes'],
   page_size: 100,
 });
 
@@ -211,7 +213,7 @@ const submitSearch = async () => {
 
   await withLoading(async () => {
     try {
-      let formattedData = formatDataForBackend({
+      let searchParams: any = {
         ...form,
         date_from: form.date_from,
         date_to: form.date_to,
@@ -219,7 +221,17 @@ const submitSearch = async () => {
         revision_to: form.revision_to,
         page: currentPage.value,
         page_size: form.page_size,
-      });
+      };
+
+      if (form.filter_type === 'message' || form.filter_type === 'both') {
+        searchParams.message_contains = form.contents;
+      }
+
+      if (form.filter_type === 'file_path' || form.filter_type === 'both') {
+        searchParams.file_path_contains = form.contents;
+      }
+
+      let formattedData = formatDataForBackend(searchParams);
 
       const results = await searchCommits(formattedData);
       if ('error' in results) {
@@ -236,6 +248,7 @@ const submitSearch = async () => {
     }
   });
 };
+
 
 const setDefaultDates = () => {
   const now = new Date();

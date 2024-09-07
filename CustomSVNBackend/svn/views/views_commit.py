@@ -12,9 +12,9 @@ from operator import or_
 from datetime import datetime, time
 import logging
 
-from svn._serializers.serializer_commit import CommitQuerySerializer, CommitQuerySerializerS
+from svn._serializers.serializer_commit import CommitQuerySerializerS
 from svn._serializers.serializer_file_change import FileChangeQuerySerializer
-from svn.models import Commit, FileChange, Repository
+from svn.models import Commit, FileChange
 from svn.pagination import CustomPagination
 
 
@@ -40,6 +40,14 @@ class CommitFilter(filters.FilterSet):
 
     # 新增的 repository id 过滤器
     repo_id = filters.NumberFilter(field_name='repository__id')
+
+    file_path_contains = filters.CharFilter(method='filter_file_path', label='file_path_contains')
+
+    def filter_file_path(self, queryset, name, value):
+        return queryset.filter(file_changes__path__icontains=value).distinct()
+
+    def filter_message_contains(self, queryset, name, value):
+        return queryset.filter(message__icontains=value)
 
     def filter_authors(self, queryset, name, value):
         if not value:
@@ -82,6 +90,8 @@ class CommitFilter(filters.FilterSet):
             'branch_ids',
             'revision_from',
             'revision_to',
+            'message_contains',
+            'file_path_contains',
         ]
 
 
@@ -95,6 +105,24 @@ class CommitQueryViewSet(viewsets.ReadOnlyModelViewSet):
     filterset_class = CommitFilter
     ordering_fields = ['revision', 'date', 'author']
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        message_contains = self.request.query_params.get('message_contains')
+        file_path_contains = self.request.query_params.get('file_path_contains')
+
+        if message_contains and file_path_contains:
+            return queryset.filter(
+                Q(message__icontains=message_contains) |
+                Q(file_changes__path__icontains=file_path_contains)
+            ).distinct()
+        elif message_contains:
+            return queryset.filter(message__icontains=message_contains)
+        elif file_path_contains:
+            return queryset.filter(file_changes__path__icontains=file_path_contains).distinct()
+
+        return queryset
+
+
     def list(self, request, *args, **kwargs):
         try:
             queryset = self.filter_queryset(self.get_queryset())
@@ -102,30 +130,10 @@ class CommitQueryViewSet(viewsets.ReadOnlyModelViewSet):
             if not queryset.exists():
                 return self.get_empty_paginated_response("No commits found for the specified criteria.")
 
-            page = request.query_params.get('page', 1)
-            page_size = request.query_params.get('page_size', self.pagination_class.page_size)
-
-            paginator = self.pagination_class()
-
-            try:
-                page_size = int(page_size)
-                if page_size > 0:
-                    paginator.page_size = page_size
-                else:
-                    return Response({"error": "Invalid page_size parameter"}, status=status.HTTP_400_BAD_REQUEST)
-            except ValueError:
-                return Response({"error": "Invalid page_size parameter"}, status=status.HTTP_400_BAD_REQUEST)
-
-            try:
-                page_data = paginator.paginate_queryset(queryset, request, view=self)
-            except EmptyPage:
-                return Response({"error": "This page number is out of range"}, status=status.HTTP_400_BAD_REQUEST)
-            except PageNotAnInteger:
-                return Response({"error": "Invalid page parameter"}, status=status.HTTP_400_BAD_REQUEST)
-
-            if page_data is not None:
-                serializer = self.get_serializer(page_data, many=True)
-                return paginator.get_paginated_response(serializer.data)
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
 
             serializer = self.get_serializer(queryset, many=True)
             return Response(serializer.data)
