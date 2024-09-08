@@ -58,7 +58,7 @@ export interface SearchCommitsResponse {
     count: number;
     next: string | null;
     previous: string | null;
-    results: any[]; // Ensure this is always an array
+    results: Commit[];
     error?: string;
 }
 
