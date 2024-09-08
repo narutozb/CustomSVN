@@ -55,10 +55,10 @@ export interface Character {
 }
 
 export interface SearchCommitsResponse {
-    results?: any[];
-    count?: number;
-    next?: string | null;
-    previous?: string | null;
+    count: number;
+    next: string | null;
+    previous: string | null;
+    results: any[]; // Ensure this is always an array
     error?: string;
 }
 
