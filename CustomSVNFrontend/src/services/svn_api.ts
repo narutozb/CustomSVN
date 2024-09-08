@@ -1,4 +1,3 @@
-// src/services/svn_api.ts
 import api from "@/services/api";
 import type {
     Branch,
@@ -46,10 +45,18 @@ export const searchCommits = async (data: SearchCommitsData): Promise<SearchComm
         return response.data;
     } catch (error: any) {
         console.error('Failed to search commits:', error);
-        if (error.response && error.response.data) {
-            return {error: error.response.data.error || 'Failed to search commits'};
+        const errorResponse: SearchCommitsResponse = {
+            count: 0,
+            next: null,
+            previous: null,
+            results: [],
+        };
+        if (error.response && error.response.data && error.response.data.error) {
+            (errorResponse as any).error = error.response.data.error;
+        } else {
+            (errorResponse as any).error = 'Failed to search commits, please try again later';
         }
-        return {error: 'Failed to search commits, please try again later'};
+        return errorResponse;
     }
 }
 

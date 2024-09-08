@@ -35,10 +35,6 @@
         </el-col>
       </el-form-item>
 
-      <el-form-item label="Regex search">
-        <el-switch v-model="form.regex_search" />
-      </el-form-item>
-
       <el-form-item label="Search Contents">
         <el-input v-model="form.contents" placeholder="Search in message and file paths" @keyup.enter="submitSearch" />
       </el-form-item>
@@ -120,7 +116,6 @@ const form = reactive({
   date_to: null as Date | null,
   contents: '',
   filter_type: 'both',
-  regex_search: false,
   page_size: 100,
 });
 
@@ -156,7 +151,6 @@ const submitSearch = async () => {
       const formattedData = formatDataForBackend(searchParams);
       const results = await searchCommits(formattedData);
 
-      // 更新这部分以正确处理错误
       if ('error' in results && typeof results.error === 'string') {
         throw new Error(results.error);
       } else if ('error' in results) {
