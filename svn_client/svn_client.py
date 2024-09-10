@@ -21,7 +21,7 @@ def main():
         REPO_NAME_CUSTOM_SERVER='redmine',
         REPO_ROOT_URL='https://svn.redmine.org/redmine/',
     )
-    configs = [config3, ]#config2]#, config3]
+    configs = [config2]  # config2]#, config3]
 
     def upload_data(config: SVNClientConfig):
         status_manager = StatusManager()
@@ -32,7 +32,7 @@ def main():
                 manager.update_commits_data()
                 if config.RUN_ONCE:
                     break  # 完成一次更新后退出循环
-                print(f'开始休眠:{config.SVN_UPDATE_INTERVAL}秒')
+                print(f'{config.REPO_NAME_CUSTOM_SERVER}开始休眠:{config.SVN_UPDATE_INTERVAL}秒')
                 time.sleep(config.SVN_UPDATE_INTERVAL)
 
             except Exception as e:

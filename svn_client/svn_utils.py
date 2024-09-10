@@ -6,15 +6,7 @@ import xml.etree.ElementTree as ET
 
 from config import SUBPROCESS_ENV
 from dc import SVNInfoLocalDC, CommitLogDC, FileChangeDC
-from endpoints import Endpoints
 from exceptions import SVNUpdateError
-
-
-def get_latest_revision(session, repo_name, headers):
-    response = session.get(Endpoints.get_latest_revision_api_url(repo_name), headers=headers)
-    if response.status_code == 200:
-        return response.json().get('latest_revision')
-    return None
 
 
 def get_svn_log(repo_url, start_revision=None, end_revision=None):

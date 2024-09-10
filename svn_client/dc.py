@@ -80,3 +80,44 @@ class FileChangeFromServerDC:
     commit: int
     path: str
     action: str
+
+
+@dataclasses.dataclass
+class __Paginate:
+    count: int = 0
+    next: str | None = None
+    previous: str | None = None
+    page_size: int = 0
+    page_count: int = 0
+    current_page: int = 1
+    last_page: int = 1
+
+
+@dataclasses.dataclass
+class QueryRepositoriesFilter:
+    '''
+    查询仓库时使用
+    '''
+    name: str = None
+    id: str | int = None
+    commit_id: str | int = None
+    file_change_id: str | int = None
+
+
+@dataclasses.dataclass
+class RepositoryQueryS:
+    id: int = None
+    name: str = None
+    description: str = None
+    created_at: str = None
+    url: str = None
+
+
+@dataclasses.dataclass
+class CommitQueryS:
+    id: int = None
+    revision: int = None
+    branch: int = None
+    message: str = None
+    author: str = None
+    date: str = None
