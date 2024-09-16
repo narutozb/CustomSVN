@@ -54,8 +54,7 @@ def parse_svn_log2(xml_data: str) -> List[CommitLogDC]:
                 )
                 for path_elem in paths
             ] if paths else []
-            branch_name = get_commit_branch_name(file_changes[0].path, revision) if file_changes else 'unknown'
-
+            branch_name = get_commit_branch_name(file_changes[0].path) if file_changes else 'unknown'
             commit = CommitLogDC(
                 revision=revision,
                 author=author,
@@ -243,17 +242,112 @@ def calculate_size(data):
     return sys.getsizeof(json.dumps(data))
 
 
-def get_commit_branch_name(file_path: str, revision: int):
-    '''
-    从changed path 获取其分支名称
-    :param commit:
-    :return:
-    '''
-    if int(revision) == 1:
-        return 'root'
+def get_commit_branch_name(path, standard_dirs=None):
+    """
+    从给定的相对路径中提取 SVN 分支名称。
 
-    split_path = file_path.split('/')
-    if file_path.startswith('/trunk'):
-        return '/trunk'
+    参数：
+    - path: SVN 仓库的相对路径（以 '/' 开头）
+
+    返回值：
+    - branch_name: 提取的分支名称（如 'trunk'、'branches/release1.1'、'tags/0.8.1'）
+
+    示例：
+    - '/trunk/test/unit/lib/redmine/hook_test.rb' -> 'trunk'
+    - '/trunk/app/controllers/settings_controller.rb' -> 'trunk'
+    - '/sandbox/rails-2.2/app/helpers/application_helper.rb' -> 'sandbox/rails-2.2'
+    - '/tags/0.8.1' -> 'tags/0.8.1'
+    :param path:  SVN 仓库的相对路径
+    :param standard_dirs: 用于识别分支的标准目录名称列表，默认是 ['trunk', 'branches', 'tags']
+    """
+
+    # 定义 SVN 常用的目录
+    if standard_dirs is None:
+        standard_dirs = ['trunk', 'branches', 'tags', ]
+
+    # 去除开头的 '/'
+    if path.startswith('/'):
+        path = path[1:]
+
+    # 分割路径
+    path_parts = path.split('/')
+
+    if not path_parts:
+        return None  # 空路径
+
+    # 如果第一个部分在标准目录中
+    if path_parts[0] in standard_dirs:
+        # 对于 'trunk'，分支名称为 'trunk'
+        if path_parts[0] == 'trunk':
+            branch_name = '/trunk'
+        # 对于 'branches'、'tags'、'sandbox'，包括下一级目录作为分支名称
+        elif len(path_parts) >= 2:
+            branch_name = f"/{path_parts[0]}/{path_parts[1]}"
+        else:
+            # 如果没有下一级目录，则仅返回标准目录名
+            branch_name = f'/{path_parts[0]}'
     else:
-        return '/'.join(split_path[:3])
+        # 如果不在标准目录中，可能是自定义目录，返回第一个部分
+        branch_name = f'/{path_parts[0]}'  # 自定义目录
+
+    return branch_name
+
+
+def get_svn_branch_path(path, branch_dirs=None, depth=None):
+    """
+    获取指定路径下SVN仓库的分支路径。
+
+    参数：
+    - path: 工作副本的本地路径.
+    例如：path = r"D:\svn_project_test\MyDataSVN\trunk\RootFolder"
+    - branch_dirs: 用于识别分支的目录名称列表，默认是 ['branches', 'tags', 'trunk']
+    - depth: 指定需要获取的路径深度，如果为 None，则获取到分支目录下一级
+
+    返回值：
+    - branch_path: 分支的相对路径（例如 '/trunk'、'/branches/release1.1'），如果未能识别，则返回整个相对路径
+    """
+    if branch_dirs is None:
+        branch_dirs = ['branches', 'tags', 'trunk']
+
+    try:
+        # 执行 'svn info' 命令
+        result = subprocess.run(['svn', 'info', path], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        if result.returncode != 0:
+            print(f"执行 svn info 时出错：{result.stderr}")
+            return None
+
+        # 解析输出，获取URL和仓库根
+        url = None
+        repo_root = None
+        for line in result.stdout.splitlines():
+            if line.startswith('URL:'):
+                url = line.split('URL:')[1].strip()
+            elif line.startswith('Repository Root:'):
+                repo_root = line.split('Repository Root:')[1].strip()
+            if url and repo_root:
+                break
+
+        if not url or not repo_root:
+            print("无法在 svn info 输出中找到 URL 或 Repository Root。")
+            return None
+
+        # 获取相对于仓库根的路径
+        relative_path = url[len(repo_root):].strip('/')
+        path_parts = relative_path.split('/')
+
+        # 查找第一个匹配的分支目录
+        for i, part in enumerate(path_parts):
+            if part in branch_dirs:
+                # 根据 depth 参数确定返回的路径
+                if depth is None:
+                    branch_path = '/' + '/'.join(path_parts[:i + 2])  # 默认获取到分支目录下一级
+                else:
+                    branch_path = '/' + '/'.join(path_parts[:i + depth])
+                return branch_path
+
+        # 如果未找到匹配的分支目录，则返回整个相对路径
+        return '/' + relative_path
+
+    except Exception as e:
+        print(f"发生异常：{e}")
+        return None

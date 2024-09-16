@@ -19,6 +19,7 @@ class MayaClientManager(ClientBase):
         self.update_to_revision = update_to_revision
         self.repo_path_settings = repo_path_settings
         self.repository = self.get_repository(self.repo_path_settings.REPO_NAME)
+
         self.local_svn_utilities = LocalSVNUtilities()
 
     # def update_to_revision(self):
@@ -102,18 +103,21 @@ class MayaClientManager(ClientBase):
         return result
 
     def get_latest_commit(self):
+
         __fields = ['id', 'revision', 'branch', 'message', 'author', 'date']
         __Commit = namedtuple('__Commit', __fields)
-
+        print('-' * 50)
         params = {'repository_id': self.repository.id}
         response = self.session.get(f'{Config.ROOT_URL}/api/svn/commits_query/latest_commit/',
                                     params=params).json()
-
+        print(params)
         if response:
             return __Commit(**response)
 
     def get_repository(self, repo_name: str):
-        RepositoryAPI = namedtuple('RepositoryAPI', ['id', 'name', 'url', 'description'])
+
+        RepositoryAPI = namedtuple('RepositoryAPI', ['id', 'name', 'url', 'created_at', 'description'])
+
         data = self.session.get(f'{Config.ROOT_URL}/api/svn/repositories_query/',
                                 params={'name': repo_name}).json().get('results')
         if data:
