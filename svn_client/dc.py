@@ -1,4 +1,5 @@
 import dataclasses
+from typing import Optional
 
 
 @dataclasses.dataclass
@@ -98,7 +99,7 @@ class QueryRepositoriesFilter:
     '''
     查询仓库时使用
     '''
-    name: str = None
+    name: Optional[str] = None
     id: str | int = None
     commit_id: str | int = None
     file_change_id: str | int = None

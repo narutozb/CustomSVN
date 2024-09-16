@@ -63,8 +63,41 @@
     </div>
 
     <el-table :data="searchResults.results" style="width: 100%">
-      <el-table-column prop="revision" label="Revision" width="180" />
-      <el-table-column prop="author" label="Author" width="180" />
+      <el-table-column type="expand">
+        <template #default="props">
+          <el-popover
+              placement="right"
+              :width="600"
+              trigger="click"
+          >
+            <template #reference>
+              <el-button type="text">View Details</el-button>
+            </template>
+            <template #default>
+              <div class="commit-details">
+                <h3>Commit Details</h3>
+                <el-descriptions :column="1" border>
+                  <el-descriptions-item label="Repository Name">{{ props.row.repository?.name }}</el-descriptions-item>
+                  <el-descriptions-item label="Branch Name">{{ props.row.branch?.name }}</el-descriptions-item>
+                  <el-descriptions-item label="Revision">{{ props.row.revision }}</el-descriptions-item>
+                  <el-descriptions-item label="Author">{{ props.row.author }}</el-descriptions-item>
+                  <el-descriptions-item label="Date">{{ $filters.formatDate(props.row.date) }}</el-descriptions-item>
+                  <el-descriptions-item label="Message">{{ props.row.message }}</el-descriptions-item>
+                </el-descriptions>
+
+                <h4>File Changes</h4>
+                <el-table :data="props.row.file_changes" style="width: 100%">
+                  <el-table-column prop="path" label="Path" />
+                  <el-table-column prop="action" label="Action" />
+                  <el-table-column prop="kind" label="Kind" />
+                </el-table>
+              </div>
+            </template>
+          </el-popover>
+        </template>
+      </el-table-column>
+      <el-table-column prop="revision" label="Revision" width="120" />
+      <el-table-column prop="author" label="Author" width="150" />
       <el-table-column prop="date" label="Date" width="180">
         <template #default="scope">
           {{ $filters.formatDate(scope.row.date) }}
@@ -74,7 +107,7 @@
       <el-table-column label="Actions" width="120">
         <template #default="scope">
           <router-link :to="{ name: 'CommitDetail', params: { id: scope.row.id } }">
-            <el-button type="text" size="small">View Details</el-button>
+            <el-button type="text" size="small">Full Details</el-button>
           </router-link>
         </template>
       </el-table-column>
@@ -240,5 +273,19 @@ const handleCurrentChange = async (val: number) => {
   margin-top: 10px;
   font-size: 14px;
   color: #606266;
+}
+
+.commit-details {
+  font-size: 14px;
+}
+
+.commit-details h3 {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.commit-details h4 {
+  margin-top: 16px;
+  margin-bottom: 8px;
 }
 </style>

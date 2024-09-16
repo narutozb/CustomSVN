@@ -3,7 +3,7 @@ import dataclasses
 from apis import SvnApis
 from config import SVNClientConfig
 from dc import CommitLogToServerDC
-from login import ClientBase
+from client_base import ClientBase
 from status_manager import StatusManager
 from svn_utils import get_latest_svn_revision, parse_svn_log2, get_svn_log2, calculate_size
 
@@ -14,7 +14,7 @@ class SVNManager(ClientBase):
         super().__init__()
         self.config = svn_client_config
         self.status_manager = status_manager
-        self.apis = SvnApis(self.session)
+        self.apis = SvnApis(self)
 
         # 每当执行update_commits_data之前需要更新此变量
         self.__latest_revision_from_server = None
@@ -73,8 +73,11 @@ class SVNManager(ClientBase):
         上传commit函数.也是外部所调用的函数
         :return:
         '''
+
         self.status_manager.start_upload()
         self.__latest_revision_from_server = self.get_existing_revision()
+        print('*'*50)
+
         try:
             commits_data = self.get_commits_data()
             __div_data_size = 0

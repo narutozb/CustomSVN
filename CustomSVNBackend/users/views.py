@@ -1,10 +1,4 @@
 # users/views.py
-from django.contrib.auth import logout
-
-from django.shortcuts import redirect, render
-from django.contrib import messages
-from django.views import View
-from django.contrib.auth import authenticate, login
 
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
@@ -13,10 +7,10 @@ from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework import viewsets, status
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from .models import CustomUser
-from .serializers import UserSerializer
+from .serializers import UserSerializer, CustomTokenObtainPairSerializer, CustomTokenRefreshSerializer
 
 
 class CustomAuthToken(ObtainAuthToken):
@@ -35,7 +29,6 @@ class CustomAuthToken(ObtainAuthToken):
 class UserViewSet(viewsets.ModelViewSet):
     queryset = CustomUser.objects.all()
     serializer_class = UserSerializer
-
 
 
 class LogoutView(APIView):
@@ -61,3 +54,11 @@ class UserInfoView(APIView):
             'username': user.username,
             'email': user.email,
         })
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
+
+
+class CustomTokenRefreshView(TokenRefreshView):
+    serializer_class = CustomTokenRefreshSerializer

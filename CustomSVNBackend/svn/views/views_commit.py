@@ -43,7 +43,7 @@ class CommitFilter(filters.FilterSet):
     repo_id = filters.NumberFilter(field_name='repository__id')
 
     file_path_contains = filters.CharFilter(method='filter_file_path', label='file_path_contains')
-    
+
 
     def filter_file_path(self, queryset, name, value):
         return queryset.filter(file_changes__path__icontains=value).distinct()

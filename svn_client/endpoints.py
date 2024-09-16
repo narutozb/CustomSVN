@@ -26,16 +26,3 @@ class Endpoints:
         if print_url:
             print(result)
         return result
-
-    @classmethod
-    def get_file_changes_by_repo_and_revision_api_url(cls, repo_name: str, revision: int):
-        return f'{cls.api_url}svn/repositories/{repo_name}/commits/{revision}/file_changes/'
-
-    @classmethod
-    def get_maya_file_changes_by_repo_and_revision_api_url(
-            cls,
-            repo_name: str,
-            revision: int,
-            maya_client_version: str
-    ):
-        return f'{cls.api_url}maya/{repo_name}/{revision}/file_changes/?maya_client_version={maya_client_version}'

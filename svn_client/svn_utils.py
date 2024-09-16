@@ -9,22 +9,6 @@ from dc import SVNInfoLocalDC, CommitLogDC, FileChangeDC
 from exceptions import SVNUpdateError
 
 
-def get_svn_log(repo_url, start_revision=None, end_revision=None):
-    if not start_revision:
-        start_revision = 1
-
-    if not end_revision:
-        end_revision = 'HEAD'
-
-    cmd = ['svn', 'log', repo_url, '--xml']
-
-    cmd.extend(['-r', f'{start_revision}:{end_revision}'])
-    print(' '.join(cmd))
-
-    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    return handle_encoding(result.stdout)
-
-
 def get_svn_log2(repo_url, start_revision=None, end_revision=None):
     if not start_revision:
         start_revision = 1
@@ -36,27 +20,9 @@ def get_svn_log2(repo_url, start_revision=None, end_revision=None):
 
     cmd.extend(['-r', f'{start_revision}:{end_revision}'])
 
-    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=SUBPROCESS_ENV)
     return handle_encoding(result.stdout)
-
-
-def parse_svn_log(xml_data):
-    root = ET.fromstring(xml_data)
-    commits = []
-    for entry in root.findall('logentry'):
-        revision = entry.get('revision')
-        author = entry.find('author').text
-        date = entry.find('date').text
-        msg = entry.find('msg').text
-        commit = {
-            'revision': revision,
-            'author': author,
-            'date': date,
-            'message': msg,
-            'file_changes': []
-        }
-        commits.append(commit)
-    return commits
+    # return handle_encoding(result.stdout)
 
 
 def get_commit_branch_name(file_path: str, revision: int):
@@ -126,7 +92,6 @@ def get_latest_svn_revision(repo_url):
     result = subprocess.run(commands, stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE, env=SUBPROCESS_ENV)
 
-    # print(f'{" ".join(commands)}')
     if result.stdout.strip():
         return int(result.stdout.strip())
     else:

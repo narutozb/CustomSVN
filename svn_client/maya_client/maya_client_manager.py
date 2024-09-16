@@ -7,7 +7,7 @@ from collections import namedtuple
 
 from config import Config
 from dc import RepoPathSettings, FileChangeFromServerDC
-from login import ClientBase
+from client_base import ClientBase
 from maya_client.local_process import LocalSVNUtilities
 from maya_client.maya_data import MayaData
 from svn_utils import get_local_file_svn_info
