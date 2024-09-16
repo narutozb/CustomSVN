@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework import viewsets, status
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework.parsers import JSONParser, FormParser
 
 from .models import CustomUser
 from .serializers import UserSerializer, CustomTokenObtainPairSerializer, CustomTokenRefreshSerializer
@@ -58,6 +59,7 @@ class UserInfoView(APIView):
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
+    parser_classes = [JSONParser, FormParser]
 
 
 class CustomTokenRefreshView(TokenRefreshView):

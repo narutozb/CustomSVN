@@ -1,6 +1,6 @@
 # apis/base.py
 
-from client_base import ClientBase
+from apis.client_base import ClientBase
 
 
 class ApisBase:

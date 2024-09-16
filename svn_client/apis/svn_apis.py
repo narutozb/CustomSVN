@@ -3,8 +3,9 @@
 from .base import ApisBase
 from dataclasses import asdict
 from typing import Optional
-from dc import QueryRepositoriesFilter, CommitQueryS  # 导入数据类
-from client_base import ClientBase
+from svn_client.dc import QueryRepositoriesFilter, CommitQueryS  # 导入数据类
+from apis.client_base import ClientBase
+
 
 class SvnApis(ApisBase):
     def __init__(self, client: ClientBase):

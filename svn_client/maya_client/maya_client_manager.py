@@ -1,4 +1,3 @@
-import dataclasses
 import json
 import os.path
 import tempfile
@@ -6,11 +5,11 @@ import uuid
 from collections import namedtuple
 
 from config import Config
-from dc import RepoPathSettings, FileChangeFromServerDC
-from client_base import ClientBase
+from svn_client.dc import RepoPathSettings, FileChangeFromServerDC
+from apis.client_base import ClientBase
 from maya_client.local_process import LocalSVNUtilities
 from maya_client.maya_data import MayaData
-from svn_utils import get_local_file_svn_info
+from svn_client.svn_utils import get_local_file_svn_info
 
 
 class MayaClientManager(ClientBase):
