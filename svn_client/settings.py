@@ -1,9 +1,6 @@
-import dataclasses
-import os.path
-
 import yaml
 
-from dc import RepoPathSettings
+from svn_client.dc import RepoPathSettings
 
 
 class MayaClientSettings:

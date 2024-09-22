@@ -43,7 +43,7 @@ class CommitFilter(filters.FilterSet):
     repo_id = filters.NumberFilter(field_name='repository__id')
 
     file_path_contains = filters.CharFilter(method='filter_file_path', label='file_path_contains')
-    
+
 
     def filter_file_path(self, queryset, name, value):
         return queryset.filter(file_changes__path__icontains=value).distinct()
@@ -153,8 +153,8 @@ class CommitQueryViewSet(viewsets.ReadOnlyModelViewSet):
         try:
             branch_id = request.query_params.get('branch_id')
 
-            if not branch_id:
-                return Response({"detail": "BranchID parameter is required."}, status=status.HTTP_400_BAD_REQUEST)
+            # if not branch_id:
+            #     return Response({"detail": "BranchID parameter is required."}, status=status.HTTP_400_BAD_REQUEST)
 
             queryset = Commit.objects.filter(branch__id=branch_id)
             latest_commit = queryset.order_by('-revision').first()

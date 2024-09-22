@@ -2,7 +2,7 @@ import dataclasses
 
 import fbx
 
-from dc import FBXClientConfigDC
+from svn_client.dc import FBXClientConfigDC
 from fbx_client._dc import FBSkeletonDC
 from fbx_client.custom_layer import CustomLayer
 from fbx_client.custom_skeleton import CustomFBSkeletonUtils
