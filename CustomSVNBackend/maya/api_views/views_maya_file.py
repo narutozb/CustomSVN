@@ -36,11 +36,6 @@ class MayaFileQueryViewSet(
     filter_backends = [DjangoFilterBackend]
     filterset_class = MayaFileFilter  # 使用我们的自定义过滤器
 
-    # @action(detail=False, methods=['GET'])
-    # def latest_commit(self, request):
-    #     latest_commit = MayaFile.objects.filter().order_by('changed_file__commit__revision').first()
-    #     return Response(MayaFileSerializer(latest_commit).data)
-
     @action(detail=False, methods=['get'])
     def orphan_file_changes(self, request):
         '''
