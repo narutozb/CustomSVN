@@ -1,4 +1,6 @@
 # maya/models.py
+from types import NoneType
+
 from django.db import models
 from django.core.exceptions import ValidationError
 from svn.models import FileChange
@@ -49,6 +51,9 @@ class SceneInfo(models.Model):
     play_back_end_time = models.FloatField(default=0.0, blank=True, null=True)
     frame_rate = models.FloatField(default=0.0, blank=True, null=True)
 
+    def __str__(self):
+        return f'SceneInfo:{self.maya_file}'
+
 
 class NodeAttribute(models.Model):
     scene = models.ForeignKey(SceneInfo, on_delete=models.CASCADE, related_name='node_attributes')
@@ -58,6 +63,9 @@ class NodeAttribute(models.Model):
     def clean(self):
         if self.parent and self.parent == self:
             raise ValidationError("A node cannot be its own parent.")
+
+    def __str__(self):
+        return f'{self.parent.node_name if self.parent else None}|{self.node_name}'
 
     class Meta:
         abstract = True
