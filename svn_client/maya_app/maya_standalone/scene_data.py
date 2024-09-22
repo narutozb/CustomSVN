@@ -41,6 +41,7 @@ class CustomCMApplication(CMNode, CMStandaloneProperty):
     def save_file(self, options: CMFileOptions):
         cmds.file(*options.get_save_file_options()[0], **options.get_save_file_options()[1])
 
+
 class SceneFileInformation:
     def __init__(self, open_file_option: CMFileOptions):
         self.app = CMApplication()
@@ -127,6 +128,7 @@ class SceneFileInformation:
             "play_back_start_time": scene_info.scene_evaluate.get_settings_evaluate().get('play_back_start_time'),
             "play_back_end_time": scene_info.scene_evaluate.get_settings_evaluate().get('play_back_end_time'),
             "frame_rate": scene_info.scene_evaluate.get_settings_evaluate().get('frame_rate'),
+            'transform_nodes':self.get_transforms()
         }
 
 
@@ -143,14 +145,12 @@ class CheckMayaData:
             'opened_successfully': self.scene_file_information.opened_file_status.opened_successfully,
             'local_path': self.file_path,
             'scene_info': {},
-            "transform_nodes": self.scene_file_information.get_transforms(),
-            "shape_nodes": [],
+            # "shape_nodes": [],
         }
         if self.scene_file_information.opened_file_status.opened_successfully:
             data['scene_info'] = self.scene_file_information.get_scene_info()
-
-        return data
-
+            # data['transform_nodes'] = self.scene_file_information.get_transforms()
+            return data
 
 if __name__ == '__main__':
     file_path = r'D:\svn_project_test\MyDataSVN_trunk\RootFolder\test_file1 - 副本 - 副本 (2).mb'

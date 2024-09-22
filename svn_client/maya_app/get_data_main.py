@@ -32,16 +32,15 @@ if __name__ == '__main__':
 
     result: list = []
     for file_path in maya_file_list:
-        # fo.set_open_file_options(file_path, o=True, force=True)
-        # scene = SceneFileInformation(fo)
-        # print(scene.get_data())
+
         md = CheckMayaData(file_path, )
         d = {
             "opened_successfully": md.scene_file_information.opened_file_status.opened_successfully,
             "description": md.scene_file_information.opened_file_status.detail,
             'local_path': file_path,
+
         }
-        result.append(d)
+        result.append(md.get_data())
 
     data_path = os.path.join(tempfile.gettempdir(), f'{uuid.uuid4()}.json')
     with open(data_path, 'w', encoding='utf8') as f:
