@@ -4,6 +4,7 @@ REPO_PATH:
 #      - D:\svn_project_test\MyDataSVN_trunk
 #      - D:\svn_project_test\MyDataSVN\branches
       - D:\svn_project_test\MyDataSVN\trunk
+#      - D:\svn_project_test\MyDataSVN\branches
 
 INTERPRETER:
   MAYA: C:\Program Files\Autodesk\Maya2024\bin\mayapy.exe

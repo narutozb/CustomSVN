@@ -106,6 +106,18 @@ class QueryRepositoriesFilter:
 
 
 @dataclasses.dataclass
+class QueryBranchesFilter:
+    '''
+    查询分支使用
+    '''
+    name: str = None
+    id: str | int = None
+    repo_name: str = None
+    repo_id: str | int = None
+    commit_id: str | int = None
+
+
+@dataclasses.dataclass
 class RepositoryQueryS:
     id: int = None
     name: str = None
@@ -122,3 +134,10 @@ class CommitQueryS:
     message: str = None
     author: str = None
     date: str = None
+
+
+@dataclasses.dataclass
+class BranchQueryS:
+    id: int = None
+    name: str = None
+    repository: int | str = None

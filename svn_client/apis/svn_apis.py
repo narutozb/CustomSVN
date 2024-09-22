@@ -3,7 +3,7 @@
 from .base import ApisBase
 from dataclasses import asdict
 from typing import Optional
-from svn_client.dc import QueryRepositoriesFilter, CommitQueryS  # 导入数据类
+from svn_client.dc import QueryRepositoriesFilter, CommitQueryS, RepositoryQueryS, QueryBranchesFilter  # 导入数据类
 from apis.client_base import ClientBase
 
 
@@ -20,6 +20,11 @@ class SvnApis(ApisBase):
         response = self.client.make_request('GET', url=url, params=params_dict)
         results = response.json()
         return results
+
+    def get_repository_by_name(self, name: str):
+        results = self.get_repositories(QueryRepositoriesFilter(name=name)).get('results')
+        if len(results) > 0:
+            return RepositoryQueryS(**results[0])
 
     def get_repository_latest_commit(self, repo_id: int):
         '''
@@ -47,3 +52,13 @@ class SvnApis(ApisBase):
         url = f'svn/receive_commits/'
         response = self.client.make_request('POST', url, json=data)
         return response.json()
+
+    def get_branches(self, params: Optional[QueryBranchesFilter] = None):
+        '''
+        获取分支列表
+        '''
+        url = f'svn/branches_query/'
+        params_dict = asdict(params) if params else {}
+        response = self.client.make_request('GET', url=url, params=params_dict)
+        results = response.json()
+        return results

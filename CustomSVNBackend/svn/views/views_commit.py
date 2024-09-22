@@ -153,8 +153,8 @@ class CommitQueryViewSet(viewsets.ReadOnlyModelViewSet):
         try:
             branch_id = request.query_params.get('branch_id')
 
-            if not branch_id:
-                return Response({"detail": "BranchID parameter is required."}, status=status.HTTP_400_BAD_REQUEST)
+            # if not branch_id:
+            #     return Response({"detail": "BranchID parameter is required."}, status=status.HTTP_400_BAD_REQUEST)
 
             queryset = Commit.objects.filter(branch__id=branch_id)
             latest_commit = queryset.order_by('-revision').first()

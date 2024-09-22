@@ -10,8 +10,8 @@ router.register(r'mayafiles', MayaFileViewSet)
 router.register(r'sceneinfos', SceneInfoViewSet)
 router.register(r'transformnodes', TransformNodeViewSet)
 router.register(r'shapenodes', ShapeNodeViewSet)
-router.register('mayafile/query', MayaFileQueryViewSet,basename='mayafile-query')
-router.register('mayafile/command', MayaFileCommandViewSet,basename='mayafile-command')
+router.register('mayafile/query', MayaFileQueryViewSet, basename='mayafile-query')
+router.register('mayafile/command', MayaFileCommandViewSet, basename='mayafile-command')
 
 urlpatterns = [
     path('', include(router.urls)),

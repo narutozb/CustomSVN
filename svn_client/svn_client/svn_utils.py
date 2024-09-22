@@ -180,7 +180,7 @@ def update_to_revision(revision, repo_path):
             text=True,
             env=SUBPROCESS_ENV,
         )
-        # print(f'更新成功!仓库{repo_path}到revision:{revision}')
+        print(f'更新成功!仓库{repo_path}到revision:{revision}')
     except subprocess.CalledProcessError as e:
         raise SVNUpdateError(f'更新失败!!在将repo_path:{repo_path}更新到revision:{revision}时出现了异常')
 
