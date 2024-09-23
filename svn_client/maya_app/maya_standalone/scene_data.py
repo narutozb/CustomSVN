@@ -80,8 +80,10 @@ class SceneFileInformation:
         scene_info = SceneInformation()
         result = []
         for i in scene_info.transform_manager.get_all_transforms():
+            relatives = cmds.listRelatives(i.get_name(), parent=True)
             result.append({
-                'node_name': i.get_long_name(),
+                'node_name': i.get_name(),
+                'parent': relatives[0] if relatives else None,
                 'translate_x': i.translation_x,
                 'translate_y': i.translation_y,
                 'translate_z': i.translation_z,
@@ -92,6 +94,7 @@ class SceneFileInformation:
                 'scale_y': i.scale_y,
                 'scale_z': i.scale_z,
                 'visibility': i.visibility,
+
             })
 
         return result
@@ -128,7 +131,7 @@ class SceneFileInformation:
             "play_back_start_time": scene_info.scene_evaluate.get_settings_evaluate().get('play_back_start_time'),
             "play_back_end_time": scene_info.scene_evaluate.get_settings_evaluate().get('play_back_end_time'),
             "frame_rate": scene_info.scene_evaluate.get_settings_evaluate().get('frame_rate'),
-            'transform_nodes':self.get_transforms()
+            'transform_nodes': self.get_transforms()
         }
 
 
@@ -151,6 +154,7 @@ class CheckMayaData:
             data['scene_info'] = self.scene_file_information.get_scene_info()
             # data['transform_nodes'] = self.scene_file_information.get_transforms()
             return data
+
 
 if __name__ == '__main__':
     file_path = r'D:\svn_project_test\MyDataSVN_trunk\RootFolder\test_file1 - 副本 - 副本 (2).mb'
