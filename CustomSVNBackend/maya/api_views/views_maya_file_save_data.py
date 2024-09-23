@@ -142,3 +142,5 @@ class ExtendedMayaFileCommandViewSet(viewsets.GenericViewSet):
         serializer.is_valid(raise_exception=True)
         maya_files = serializer.save()
         return Response(MayaFileOutputSerializer(maya_files, many=True).data, status=status.HTTP_200_OK)
+
+

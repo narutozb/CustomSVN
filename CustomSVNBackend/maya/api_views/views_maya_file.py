@@ -2,7 +2,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import mixins, viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from maya.api_serializers.serializer_maya_file import MayaFileSerializer, BulkMayaFileSerializer
+from maya.api_serializers.serializer_maya_file import MayaFileQuerySerializerS, BulkMayaFileSerializer, \
+    MayaFileQuerySerializer
 from django.db.models import OuterRef, Exists
 
 from django_filters import rest_framework as filters
@@ -26,13 +27,9 @@ class MayaFileFilter(filters.FilterSet):
         return queryset.filter(changed_file__id__in=file_change_ids)
 
 
-class MayaFileQueryViewSet(
-    mixins.ListModelMixin,
-    mixins.RetrieveModelMixin,
-    viewsets.GenericViewSet
-):
+class MayaFileQueryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = MayaFile.objects.all()
-    serializer_class = MayaFileSerializer
+    serializer_class = MayaFileQuerySerializer
     filter_backends = [DjangoFilterBackend]
     filterset_class = MayaFileFilter  # 使用我们的自定义过滤器
 
@@ -115,16 +112,16 @@ class MayaFileCommandViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin, m
     def get_serializer_class(self):
         if self.action in ['create', 'update']:
             return BulkMayaFileSerializer
-        return MayaFileSerializer
+        return MayaFileQuerySerializerS
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         maya_files = serializer.save()
-        return Response(MayaFileSerializer(maya_files, many=True).data, status=status.HTTP_201_CREATED)
+        return Response(MayaFileQuerySerializerS(maya_files, many=True).data, status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         maya_files = serializer.save()
-        return Response(MayaFileSerializer(maya_files, many=True).data, status=status.HTTP_200_OK)
+        return Response(MayaFileQuerySerializerS(maya_files, many=True).data, status=status.HTTP_200_OK)

@@ -17,6 +17,9 @@ class MayaFile(models.Model):
     def __str__(self):
         return f"MayaFile for {self.changed_file.path}"
 
+    class Meta:
+        ordering = ('id',)
+
 
 class SceneInfo(models.Model):
     maya_file = models.OneToOneField(MayaFile, on_delete=models.CASCADE, related_name='scene_info', blank=True,
@@ -57,15 +60,12 @@ class SceneInfo(models.Model):
 
 class NodeAttribute(models.Model):
     scene = models.ForeignKey(SceneInfo, on_delete=models.CASCADE, related_name='node_attributes')
-    node_name = models.CharField(max_length=255)
+    node_name = models.CharField(max_length=512)
     parent = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='children')
 
     def clean(self):
         if self.parent and self.parent == self:
             raise ValidationError("A node cannot be its own parent.")
-
-    def __str__(self):
-        return f'{self.parent.node_name if self.parent else None}|{self.node_name}'
 
     class Meta:
         abstract = True
@@ -84,6 +84,9 @@ class TransformNode(NodeAttribute):
     visibility = models.BooleanField(default=True)
     scene = models.ForeignKey(SceneInfo, on_delete=models.CASCADE, related_name='transform_nodes', null=True,
                               blank=True)
+
+    class Meta:
+        ordering = ('id',)
 
 
 class ShapeNode(NodeAttribute):

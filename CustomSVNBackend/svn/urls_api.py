@@ -1,3 +1,5 @@
+from os.path import basename
+
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
@@ -8,7 +10,7 @@ from svn.views.views import RepositoryViewSet, CommitViewSet, get_latest_revisio
 
 from svn.views.update_svn import receive_commits
 from svn.views.views_branch import BranchQueryViewSet
-from svn.views.views_commit import CommitQueryViewSet, CommitSearchViewSet
+from svn.views.views_commit import CommitQueryViewSet, CommitSearchViewSet, CommitPreviewViewSet
 from svn.views.views_file_change import FileChangeQueryViewSet
 from svn.views.views_repository import RepositoryQueryViewSet
 
@@ -22,6 +24,7 @@ router.register('repositories_query', RepositoryQueryViewSet, basename='Reposito
 router.register('branches_query', BranchQueryViewSet, basename='Branches-Query')
 router.register('file_changes_query', FileChangeQueryViewSet, basename='FileChanges-Query')
 router.register('commits_search', CommitSearchViewSet, basename='Commits-Search')
+router.register('commits_search_commit_preview', CommitPreviewViewSet, basename='Commits-Search-Preview')
 
 urlpatterns = [
     path('', include(router.urls)),

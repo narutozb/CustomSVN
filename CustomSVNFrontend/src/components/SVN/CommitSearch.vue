@@ -73,27 +73,7 @@
                 :show-after="100"
             >
               <template #default>
-                <div class="commit-details">
-                  <h3>Commit Details</h3>
-                  <el-descriptions :column="1" border>
-                    <el-descriptions-item label="Repository Name">{{
-                        scope.row.repository?.name
-                      }}
-                    </el-descriptions-item>
-                    <el-descriptions-item label="Branch Name">{{ scope.row.branch?.name }}</el-descriptions-item>
-                    <el-descriptions-item label="Revision">{{ scope.row.revision }}</el-descriptions-item>
-                    <el-descriptions-item label="Author">{{ scope.row.author }}</el-descriptions-item>
-                    <el-descriptions-item label="Date">{{ $filters.formatDate(scope.row.date) }}</el-descriptions-item>
-                    <el-descriptions-item label="Message">{{ scope.row.message }}</el-descriptions-item>
-                  </el-descriptions>
-
-                  <h4>File Changes</h4>
-                  <el-table :data="scope.row.file_changes" style="width: 100%">
-                    <el-table-column prop="path" label="Path"/>
-                    <el-table-column prop="action" label="Action" width="80"/>
-                    <el-table-column prop="kind" label="Kind" width="80"/>
-                  </el-table>
-                </div>
+                <CommitDetailPreview :commitId="scope.row.id" />
               </template>
               <template #reference>
                 <router-link
@@ -140,6 +120,7 @@ import type {BranchNameId, SearchCommitsResponse} from "@/services/interfaces";
 import CustomTransfer from "@/components/Common/CustomTransfer.vue";
 import {useLoadingState} from '@/composables/useLoadingState';
 import {ElMessage} from "element-plus";
+import CommitDetailPreview from "@/components/SVN/CommitDetailPreview.vue";
 
 const searchDuration = ref<number>(0);
 const store = useRepositoriesStore();
@@ -149,7 +130,7 @@ const pageSizeOptions = [100, 500, 1000, 5000, 10000];
 const currentPage = ref(1);
 
 // 新增：配置项来控制是否启用 Hover 功能
-const enableHover = ref(false); // 默认启用 Hover 功能，可以根据需要修改默认值
+const enableHover = ref(true); // 默认启用 Hover 功能，可以根据需要修改默认值
 
 const form = reactive({
   repo_id: computed({
