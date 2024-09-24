@@ -311,7 +311,8 @@ def get_svn_branch_path(path, branch_dirs=None, depth=None):
 
     try:
         # 执行 'svn info' 命令
-        result = subprocess.run(['svn', 'info', path], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        result = subprocess.run(['svn', 'info', path],
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=SUBPROCESS_ENV)
         if result.returncode != 0:
             print(f"执行 svn info 时出错：{result.stderr}")
             return None
