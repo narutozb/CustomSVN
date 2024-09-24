@@ -11,6 +11,7 @@ from svn.views.views import RepositoryViewSet, CommitViewSet, get_latest_revisio
 from svn.views.update_svn import receive_commits
 from svn.views.views_branch import BranchQueryViewSet
 from svn.views.views_commit import CommitQueryViewSet, CommitSearchViewSet, CommitPreviewViewSet
+from svn.views.views_commit_hightlight import HighlightedCommitViewSet
 from svn.views.views_file_change import FileChangeQueryViewSet
 from svn.views.views_repository import RepositoryQueryViewSet
 
@@ -26,6 +27,8 @@ router.register('file_changes_query', FileChangeQueryViewSet, basename='FileChan
 router.register('commits_search', CommitSearchViewSet, basename='Commits-Search')
 router.register('commits_search_commit_preview', CommitPreviewViewSet, basename='Commits-Search-Preview')
 
+router.register(r'commits_query-highlighted-commits', HighlightedCommitViewSet, basename='highlighted-commit')
+
 urlpatterns = [
     path('', include(router.urls)),
     path('repositories/<str:repo_name>/latest_revision/', get_latest_revision, name='get_latest_revision'),
@@ -38,7 +41,7 @@ urlpatterns = [
 
     path('repo_name/<str:repo_name>/file_changes_by_path/', GetFileChangesByFilePath.as_view(),
          name='file_changes_by_path'),
-    path('_commits/search/', CommitSearchView.as_view(), name='commit-search'),
+    # path('_commits/search/', CommitSearchView.as_view(), name='commit-search'),
     path('_commits/commit-details/<int:commit_id>/', CommitDetailView.as_view(), name='commit-details'),
     path('_commits/by-file-path/', CommitsByFilePathView.as_view(), name='commits-by-file-path'),
     path('_file_changes/<int:file_change_id>/', GetFileChangeDetail.as_view(), name='file-change-detail'),

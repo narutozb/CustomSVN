@@ -10,7 +10,7 @@
         <el-descriptions-item label="Revision">{{ commit.revision }}</el-descriptions-item>
         <el-descriptions-item label="Author">{{ commit.author }}</el-descriptions-item>
         <el-descriptions-item label="Date">{{ $filters.formatDate(commit.date) }}</el-descriptions-item>
-        <el-descriptions-item label="Message">{{ commit.message }}</el-descriptions-item>
+        <el-descriptions-item label="Message111">{{ commit.message }}</el-descriptions-item>
       </el-descriptions>
 
       <h3>File Changes</h3>
