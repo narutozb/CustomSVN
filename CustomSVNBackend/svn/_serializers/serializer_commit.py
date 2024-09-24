@@ -19,3 +19,15 @@ class CommitQuerySerializer(serializers.ModelSerializer):
     class Meta:
         model = Commit
         fields = ['id', 'revision', 'author', 'message', 'date', 'total_file_changes', 'repository', 'branch']
+
+
+class CommitPreviewSerializer(serializers.ModelSerializer):
+    '''
+    在Commit搜索页面使用的Hover预览
+    '''
+
+    class Meta:
+        model = Commit
+        fields = [
+            'revision', 'author', 'date',
+        ]

@@ -40,7 +40,8 @@ export const getRepositories = async (params: any): Promise<Repository[]> => {
 
 export const searchCommits = async (data: SearchCommitsData): Promise<SearchCommitsResponse> => {
     try {
-        const response = await api.get('api/svn/commits_query/', {params: data});
+        // const response = await api.get('api/svn/commits_query/', {params: data});
+        const response = await api.get('api/svn/commits_query-highlighted-commits/', {params: data});
         console.log(data)
         return response.data;
     } catch (error: any) {
@@ -63,12 +64,14 @@ export const searchCommits = async (data: SearchCommitsData): Promise<SearchComm
 export const getCommitDetail = async (commitId: number) => {
     try {
         const response = await api.get(`api/svn/_commits/commit-details/${commitId}/`);
+        console.log(response.data)
         return response.data;
     } catch (error) {
         console.error('Failed to get commit details:', error);
         throw error;
     }
 }
+
 
 export const getFileChangeDetail = async (fileChangeId: number) => {
     try {

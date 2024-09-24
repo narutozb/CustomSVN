@@ -3,47 +3,47 @@
     <el-form :model="form" label-width="auto" style="max-width: 100%" size="small" @submit.prevent="submitSearch">
       <el-form-item label="Repository">
         <el-select v-model="form.repo_id" placeholder="Please select Repository" @change="handleRepoChange">
-          <el-option v-for="repo in store.repositories" :key="repo.id" :label="repo.name" :value="repo.id" />
+          <el-option v-for="repo in store.repositories" :key="repo.id" :label="repo.name" :value="repo.id"/>
         </el-select>
       </el-form-item>
 
       <el-form-item label="Branches">
-        <custom-transfer v-model="form.branch_ids" :data="branchesData" />
+        <custom-transfer v-model="form.branch_ids" :data="branchesData"/>
       </el-form-item>
 
       <el-form-item label="Authors">
-        <custom-transfer v-model="form.authors" :data="authorsData" />
+        <custom-transfer v-model="form.authors" :data="authorsData"/>
       </el-form-item>
 
       <el-form-item label="Revision Range">
         <el-col :span="11">
-          <el-input-number v-model="form.revision_from" :min="1" placeholder="From revision" />
+          <el-input-number v-model="form.revision_from" :min="1" placeholder="From revision"/>
         </el-col>
         <el-col :span="2" style="text-align: center">-</el-col>
         <el-col :span="11">
-          <el-input-number v-model="form.revision_to" :min="form.revision_from || 1" placeholder="To revision" />
+          <el-input-number v-model="form.revision_to" :min="form.revision_from || 1" placeholder="To revision"/>
         </el-col>
       </el-form-item>
 
       <el-form-item label="Time Range">
         <el-col :span="11">
-          <el-date-picker v-model="form.date_from" type="date" placeholder="Pick a date" style="width: 100%" />
+          <el-date-picker v-model="form.date_from" type="date" placeholder="Pick a date" style="width: 100%"/>
         </el-col>
         <el-col :span="2" style="text-align: center">-</el-col>
         <el-col :span="11">
-          <el-date-picker v-model="form.date_to" type="date" placeholder="Pick a date" style="width: 100%" />
+          <el-date-picker v-model="form.date_to" type="date" placeholder="Pick a date" style="width: 100%"/>
         </el-col>
       </el-form-item>
 
       <el-form-item label="Search Contents">
-        <el-input v-model="form.contents" placeholder="Search in message and file paths" @keyup.enter="submitSearch" />
+        <el-input v-model="form.contents" placeholder="Search in message and file paths" @keyup.enter="submitSearch"/>
       </el-form-item>
 
       <el-form-item label="Filter Type">
         <el-select v-model="form.filter_type" placeholder="Select filter type">
-          <el-option label="Message" value="message" />
-          <el-option label="File Path" value="file_path" />
-          <el-option label="Both" value="both" />
+          <el-option label="Message" value="message"/>
+          <el-option label="File Path" value="file_path"/>
+          <el-option label="Both" value="both"/>
         </el-select>
       </el-form-item>
 
@@ -56,52 +56,79 @@
 
     <el-pagination v-if="searchResults.count > 0" v-model:current-page="currentPage" v-model:page-size="form.page_size"
                    :page-sizes="pageSizeOptions" :total="searchResults.count" @size-change="handleSizeChange"
-                   @current-change="handleCurrentChange" layout="total, sizes, prev, pager, next" />
+                   @current-change="handleCurrentChange" layout="total, sizes, prev, pager, next"/>
 
     <div v-if="searchDuration > 0" class="search-duration">
       Search time: {{ searchDuration }}ms
     </div>
 
     <el-table :data="searchResults.results" style="width: 100%">
-      <el-table-column prop="revision" label="Revision" width="180" />
-      <el-table-column prop="author" label="Author" width="180" />
-      <el-table-column prop="date" label="Date" width="180">
+      <el-table-column label="Revision" width="120">
+        <template #default="scope">
+          <el-popover
+              placement="right"
+              :width="400"
+              trigger="hover"
+              :show-after="100"
+          >
+            <template #default>
+              <CommitDetailPreview :commit="scope.row" />
+            </template>
+            <template #reference>
+              <router-link
+                  :to="{ name: 'CommitDetail', params: { id: scope.row.id } }"
+                  class="revision-link"
+              >
+                {{ scope.row.revision }}
+              </router-link>
+            </template>
+          </el-popover>
+        </template>
+      </el-table-column>
+      <el-table-column label="Author" width="150">
+        <template #default="scope">
+          <span v-html="scope.row.author"></span>
+        </template>
+      </el-table-column>
+      <el-table-column label="Date" width="180">
         <template #default="scope">
           {{ $filters.formatDate(scope.row.date) }}
         </template>
       </el-table-column>
-      <el-table-column prop="message" label="Message" />
-      <el-table-column label="Actions" width="120">
+      <el-table-column label="Message">
         <template #default="scope">
-          <router-link :to="{ name: 'CommitDetail', params: { id: scope.row.id } }">
-            <el-button type="text" size="small">View Details</el-button>
-          </router-link>
+          <span v-html="scope.row.message"></span>
         </template>
       </el-table-column>
     </el-table>
 
     <el-pagination v-if="searchResults.results.length > 0" v-model:current-page="currentPage"
                    v-model:page-size="form.page_size" :page-sizes="pageSizeOptions" :total="searchResults.count"
-                   @size-change="handleSizeChange" @current-change="handleCurrentChange" layout="total, sizes, prev, pager, next" />
+                   @size-change="handleSizeChange" @current-change="handleCurrentChange"
+                   layout="total, sizes, prev, pager, next"/>
   </el-card>
-  <el-alert v-if="error" :title="error" type="error" show-icon />
+  <el-alert v-if="error" :title="error" type="error" show-icon/>
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, reactive, ref } from 'vue';
-import { useRepositoriesStore } from "@/store/repositories";
-import { getCommitSearchFilterData, searchCommits } from '@/services/svn_api';
-import type { BranchNameId, SearchCommitsResponse } from "@/services/interfaces";
+import {computed, onMounted, reactive, ref} from 'vue';
+import {useRepositoriesStore} from "@/store/repositories";
+import {getCommitSearchFilterData, searchCommits} from '@/services/svn_api';
+import type {BranchNameId, SearchCommitsResponse} from "@/services/interfaces";
 import CustomTransfer from "@/components/Common/CustomTransfer.vue";
-import { useLoadingState } from '@/composables/useLoadingState';
-import { ElMessage } from "element-plus";
+import {useLoadingState} from '@/composables/useLoadingState';
+import {ElMessage} from "element-plus";
+import CommitDetailPreview from "@/components/SVN/CommitDetailPreview.vue";
 
 const searchDuration = ref<number>(0);
 const store = useRepositoriesStore();
 const branches = ref<BranchNameId[]>([]);
 const authors = ref<string[]>([]);
-const pageSizeOptions = [50, 100, 500, 1000, 5000, 10000];
+const pageSizeOptions = [100, 500, 1000, 5000, 10000];
 const currentPage = ref(1);
+
+// 新增：配置项来控制是否启用 Hover 功能
+const enableHover = ref(true); // 默认启用 Hover 功能，可以根据需要修改默认值
 
 const form = reactive({
   repo_id: computed({
@@ -119,15 +146,18 @@ const form = reactive({
   page_size: 100,
 });
 
-const { loading, error, withLoading } = useLoadingState({
+const {loading, error, withLoading} = useLoadingState({
   loadingMessage: 'Searching commits...',
   errorMessage: 'Failed to search commits. Please try again.'
 });
 
 const loadingMessage = 'Searching commits...';
 
-const branchesData = computed(() => branches.value.map(branch => ({ key: branch.id, label: branch.name })));
-const authorsData = computed(() => authors.value.map(author => ({ key: author, label: author })));
+const branchesData = computed(() => branches.value.map(branch => ({key: branch.id, label: branch.name})));
+const authorsData = computed(() => authors.value.map(author => ({key: author, label: author})));
+
+
+
 
 const formatDataForBackend = (data: any): any => {
   if (Array.isArray(data)) return data.join(',');
@@ -149,6 +179,7 @@ const submitSearch = async () => {
         file_path_contains: form.filter_type !== 'message' ? form.contents : undefined,
       };
       const formattedData = formatDataForBackend(searchParams);
+
       const results = await searchCommits(formattedData);
 
       if ('error' in results && typeof results.error === 'string') {
@@ -185,7 +216,7 @@ const searchResults = ref<SearchCommitsResponse>({
 });
 
 const loadAllData = async (repositoryId: string) => {
-  const { branches: newBranches, authors: newAuthors } = await getCommitSearchFilterData(repositoryId);
+  const {branches: newBranches, authors: newAuthors} = await getCommitSearchFilterData(repositoryId);
   branches.value = newBranches;
   authors.value = newAuthors;
 };
@@ -241,4 +272,28 @@ const handleCurrentChange = async (val: number) => {
   font-size: 14px;
   color: #606266;
 }
+
+.commit-details {
+  font-size: 14px;
+}
+
+.commit-details h3 {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.commit-details h4 {
+  margin-top: 16px;
+  margin-bottom: 8px;
+}
+
+.revision-link {
+  text-decoration: none;
+  color: #409EFF;
+}
+
+.revision-link:hover {
+  text-decoration: underline;
+}
+
 </style>

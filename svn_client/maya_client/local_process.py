@@ -1,7 +1,7 @@
 import os.path
 
 from maya_client.maya_data import MayaData
-from svn_utils import get_local_file_svn_info, list_svn_files, update_to_revision, cleanup
+from svn_client.svn_utils import get_local_file_svn_info, list_svn_files, update_to_revision, cleanup
 from settings import MayaClientSettings
 
 

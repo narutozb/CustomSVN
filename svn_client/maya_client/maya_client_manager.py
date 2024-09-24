@@ -1,59 +1,63 @@
-import dataclasses
 import json
 import os.path
 import tempfile
 import uuid
 from collections import namedtuple
 
+from apis import SvnApis
+from apis.maya_apis import MayaApis
 from config import Config
-from dc import RepoPathSettings, FileChangeFromServerDC
-from login import ClientBase
+from svn_client.dc import RepoPathSettings, FileChangeFromServerDC, QueryRepositoriesFilter, QueryBranchesFilter, \
+    BranchQueryS, CommitQueryS
+from apis.client_base import ClientBase
 from maya_client.local_process import LocalSVNUtilities
 from maya_client.maya_data import MayaData
-from svn_utils import get_local_file_svn_info
+from svn_client.svn_utils import get_local_file_svn_info, get_svn_branch_path
 
 
 class MayaClientManager(ClientBase):
 
-    def __init__(self, repo_path_settings: RepoPathSettings, update_to_revision: int = None):
+    def __init__(self, repo_path_settings: RepoPathSettings):
         super().__init__()
-        self.update_to_revision = update_to_revision
         self.repo_path_settings = repo_path_settings
         self.repository = self.get_repository(self.repo_path_settings.REPO_NAME)
         self.local_svn_utilities = LocalSVNUtilities()
+        self.svn_apis = SvnApis(self)
+        self.maya_apis = MayaApis(self)
 
-    # def update_to_revision(self):
-
-    def send_data(self):
-
-        data: list = []
+    def send_data(self, update_to_revision: int):
         # 1.1 更新特定本地仓库到特定revision
         for path in self.repo_path_settings.LOCAL_SVN_REPO_PATH_LIST:
+            # 1.1.1 将本地仓库升级到特定revision
+            if not update_to_revision:
+                '''
+                当revision为None时，不更新本地仓库
+                '''
+                continue
 
-            self.local_svn_utilities.update_to_revision(self.update_to_revision, path)
+            self.local_svn_utilities.update_to_revision(update_to_revision, path)
 
             # 1.2. 获取本地svn管理的maya文件列表和svn基本信息
             maya_file_list = self.local_svn_utilities.get_maya_file_list(path)
-            pre_list = []
+            pre_list = []  # 获取需要上传的文件列表
             for maya_file_path in maya_file_list:
                 mf = get_local_file_svn_info(maya_file_path)
-                if mf.last_change_rev == self.update_to_revision:
+                if mf.last_change_rev == update_to_revision:
                     pre_list.append(maya_file_path)
 
             data_from_maya = self.get_data_from_maya(pre_list)
-            send_data = {'maya_files': data_from_maya}
-            for i in data_from_maya:
-                print(i)
 
-            # r = self.session.post('http://127.0.0.1:8000/api/maya/mayafile/command/',
-            #                       headers=self.headers, data=json.dumps(send_data))
-            # print(r.text)
+            send_data = {
+                'maya_files': data_from_maya,
+            }
 
-        # 2. 在自定义服务器中查询是否存在maya文件信息。筛选需要上传或者更新的文件列表
+            print(json.dumps(send_data))
 
-        # 3. 将数据传入maya获取必要数据。然后获取
-
-        # 4. 将必要数据传输到自定义服务器进行储存
+            # 如果有数据，就发送数据
+            if data_from_maya:
+                r = self.session.post('http://127.0.0.1:8000/api/maya/mayafile/save_data/',
+                                      headers=self.headers, data=json.dumps(send_data))
+                print(r.text)
 
     def get_data_from_maya(self, maya_file_path):
         result = []
@@ -84,8 +88,7 @@ class MayaClientManager(ClientBase):
 
         repository_id = self.repository.id
         params = {'repository_id': repository_id, 'revision': revision}
-        commit_response = self.session.get(f'{Config.ROOT_URL}/api/svn/commits_query/', params=params
-                                           )
+        commit_response = self.session.get(f'{Config.ROOT_URL}/api/svn/commits_query/', params=params)
         commit_id = commit_response.json().get('results')
         if commit_id:
             commit_id = commit_id[0].get('id')
@@ -105,17 +108,45 @@ class MayaClientManager(ClientBase):
     def get_latest_commit(self):
         __fields = ['id', 'revision', 'branch', 'message', 'author', 'date']
         __Commit = namedtuple('__Commit', __fields)
-
-        params = {'repository_id': self.repository.id}
-        response = self.session.get(f'{Config.ROOT_URL}/api/svn/commits_query/latest_commit/',
-                                    params=params).json()
-
+        response = self.session.get(f'{Config.ROOT_URL}/api/svn/repositories_query/{self.repository.id}/latest_commit/',
+                                    ).json()
         if response:
             return __Commit(**response)
 
     def get_repository(self, repo_name: str):
-        RepositoryAPI = namedtuple('RepositoryAPI', ['id', 'name', 'url', 'description'])
+
+        RepositoryAPI = namedtuple('RepositoryAPI', ['id', 'name', 'url', 'created_at', 'description'])
+
         data = self.session.get(f'{Config.ROOT_URL}/api/svn/repositories_query/',
                                 params={'name': repo_name}).json().get('results')
         if data:
             return RepositoryAPI(**data[0])
+
+    def get_prepare_process_revision(self, local_path: str):
+        '''
+        获取commit考前的不存在MayaFile的Commit数据。为更新本地仓库和之后的上传数据做准备的函数
+        :param local_path:
+        :return:
+        '''
+        branch_name = get_svn_branch_path(local_path)
+        branches = self.svn_apis.get_branches(QueryBranchesFilter(name=branch_name, repo_id=self.repository.id)).get(
+            'results')
+
+        branch_id = BranchQueryS(**branches[0]).id
+        earliest_commit_without_mayafile = self.maya_apis.get_earliest_commit_without_mayafile(
+            {'branch_id': branch_id})
+
+        return CommitQueryS(**earliest_commit_without_mayafile)
+
+    def run_update_from_earliest_commit_without_mayafile(self, ):
+
+        '''
+        更新流程如下
+        1. 通过branch_id获取
+
+        :return:
+        '''
+        for path in self.repo_path_settings.LOCAL_SVN_REPO_PATH_LIST:
+            prepare_process_revision = self.get_prepare_process_revision(path)
+            send_data_response = self.send_data(prepare_process_revision.revision)
+            print(send_data_response)

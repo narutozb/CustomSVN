@@ -1,8 +1,7 @@
+# views_commit.py
 from django_filters import rest_framework as filters
-from django.core.paginator import EmptyPage, PageNotAnInteger
 from django.db.models import Q, Max
 from django.utils import timezone
-from rest_framework.exceptions import NotFound
 
 from rest_framework import mixins, viewsets, status
 from rest_framework.decorators import action
@@ -13,7 +12,7 @@ from operator import or_
 from datetime import datetime, time
 import logging
 
-from svn._serializers.serializer_commit import CommitQuerySerializerS
+from svn._serializers.serializer_commit import CommitQuerySerializerS, CommitPreviewSerializer
 from svn._serializers.serializer_file_change import FileChangeQuerySerializer
 from svn.models import Commit, FileChange
 from svn.pagination import CustomPagination
@@ -43,7 +42,6 @@ class CommitFilter(filters.FilterSet):
     repo_id = filters.NumberFilter(field_name='repository__id')
 
     file_path_contains = filters.CharFilter(method='filter_file_path', label='file_path_contains')
-    
 
     def filter_file_path(self, queryset, name, value):
         return queryset.filter(file_changes__path__icontains=value).distinct()
@@ -153,8 +151,8 @@ class CommitQueryViewSet(viewsets.ReadOnlyModelViewSet):
         try:
             branch_id = request.query_params.get('branch_id')
 
-            if not branch_id:
-                return Response({"detail": "BranchID parameter is required."}, status=status.HTTP_400_BAD_REQUEST)
+            # if not branch_id:
+            #     return Response({"detail": "BranchID parameter is required."}, status=status.HTTP_400_BAD_REQUEST)
 
             queryset = Commit.objects.filter(branch__id=branch_id)
             latest_commit = queryset.order_by('-revision').first()
@@ -222,3 +220,12 @@ class CommitSearchViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = CustomPagination
     filterset_class = CommitFilter
     ordering_fields = ['revision', 'date', 'author']
+
+
+class CommitPreviewViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = CommitPreviewSerializer
+    queryset = Commit.objects.all()
+
+    @action(methods='GET', detail=False)
+    def get_commit_preview_data(self, request):
+        return Response({'a': 123})

@@ -3,13 +3,13 @@ import json
 import os
 from pprint import pprint
 
-from dc import SVNInfoLocalExtDC, FBXClientConfigDC, RepositoryCustomVerifyDC
+from svn_client.dc import SVNInfoLocalExtDC, FBXClientConfigDC, RepositoryCustomVerifyDC
 from endpoints import Endpoints
 from fbx_client.fbx_client_manager import DataManager
 
 from fbx_client.reader import CustomFbxReader
-from login import ClientBase
-from svn_utils import get_local_file_svn_info, is_svn_repository
+from apis.client_base import ClientBase
+from svn_client.svn_utils import get_local_file_svn_info, is_svn_repository
 
 root_dir = FBXClientConfigDC.local_svn_path
 

@@ -10,7 +10,6 @@ from svn.models import FileChange, Repository
 
 class FileChangeQuerySerializerS(serializers.ModelSerializer):
     suffix = serializers.SerializerMethodField()
-
     class Meta:
         model = FileChange
         fields = ['id', 'commit', 'path', 'action', 'kind', ]

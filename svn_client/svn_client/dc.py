@@ -1,4 +1,5 @@
 import dataclasses
+from typing import Optional
 
 
 @dataclasses.dataclass
@@ -80,3 +81,63 @@ class FileChangeFromServerDC:
     commit: int
     path: str
     action: str
+
+
+@dataclasses.dataclass
+class __Paginate:
+    count: int = 0
+    next: str | None = None
+    previous: str | None = None
+    page_size: int = 0
+    page_count: int = 0
+    current_page: int = 1
+    last_page: int = 1
+
+
+@dataclasses.dataclass
+class QueryRepositoriesFilter:
+    '''
+    查询仓库时使用
+    '''
+    name: Optional[str] = None
+    id: str | int = None
+    commit_id: str | int = None
+    file_change_id: str | int = None
+
+
+@dataclasses.dataclass
+class QueryBranchesFilter:
+    '''
+    查询分支使用
+    '''
+    name: str = None
+    id: str | int = None
+    repo_name: str = None
+    repo_id: str | int = None
+    commit_id: str | int = None
+
+
+@dataclasses.dataclass
+class RepositoryQueryS:
+    id: int = None
+    name: str = None
+    description: str = None
+    created_at: str = None
+    url: str = None
+
+
+@dataclasses.dataclass
+class CommitQueryS:
+    id: int = None
+    revision: int = None
+    branch: int = None
+    message: str = None
+    author: str = None
+    date: str = None
+
+
+@dataclasses.dataclass
+class BranchQueryS:
+    id: int = None
+    name: str = None
+    repository: int | str = None

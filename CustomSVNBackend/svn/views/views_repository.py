@@ -5,6 +5,7 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 
 from svn._serializers.serializer_branch import BranchQuerySerializer
+from svn._serializers.serializer_commit import CommitQuerySerializerS
 from svn._serializers.serializer_repository import RepositoryQuerySerializer, RepositoryQuerySoloSerializer, \
     RepositoryQuerySerializerS, RepositoryCommitSearchFilterSerializer
 from svn.models import Repository, Branch, Commit
@@ -23,7 +24,7 @@ class RepositoryFilter(filters.FilterSet):
 
 class RepositoryQueryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Repository.objects.all()
-    serializer_class = RepositoryQuerySerializer
+    serializer_class = RepositoryQuerySerializerS
     pagination_class = CustomPagination
     filterset_class = RepositoryFilter
 
@@ -89,4 +90,10 @@ class RepositoryQueryViewSet(viewsets.ReadOnlyModelViewSet):
         '''
         repositories = Repository.objects.get(id=pk)
         serializer = RepositoryCommitSearchFilterSerializer(repositories)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['GET'])
+    def latest_commit(self, request, pk=None):
+        commit = Commit.objects.filter(repository_id=pk).order_by('-revision').first()
+        serializer = CommitQuerySerializerS(commit)
         return Response(serializer.data)

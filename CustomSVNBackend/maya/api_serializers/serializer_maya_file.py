@@ -1,12 +1,26 @@
 from rest_framework import serializers
+
+from maya.api_serializers.serializer_scene import SceneQuerySerializerS
 from maya.models import MayaFile, FileChange
 from svn.models import Repository
 
 
-class MayaFileSerializer(serializers.ModelSerializer):
+class MayaFileQuerySerializerS(serializers.ModelSerializer):
+    scene_info_id = serializers.IntegerField(source='scene_info.id', read_only=True, allow_null=True)
+
     class Meta:
         model = MayaFile
-        fields = ('id', 'changed_file', 'opened_successfully', 'status', 'description', 'local_path', 'client_version')
+        fields = (
+            'id', 'changed_file', 'opened_successfully', 'status', 'description', 'local_path', 'client_version',
+            'scene_info_id')
+
+
+class MayaFileQuerySerializer(serializers.ModelSerializer):
+    scene = SceneQuerySerializerS(source='scene_info', read_only=True, allow_null=True)
+
+    class Meta:
+        model = MayaFile
+        fields = '__all__'
 
 
 class MayaFileCommandSerializer(serializers.Serializer):
@@ -44,6 +58,7 @@ class MayaFileCommandSerializer(serializers.Serializer):
             return maya_file
         except (Repository.DoesNotExist, FileChange.DoesNotExist):
             raise serializers.ValidationError(f"Invalid data for repository {repository_name} or file path {path}.")
+
 
 class BulkMayaFileSerializer(serializers.Serializer):
     maya_files = MayaFileCommandSerializer(many=True)

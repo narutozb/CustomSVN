@@ -1,10 +1,4 @@
 # users/views.py
-from django.contrib.auth import logout
-
-from django.shortcuts import redirect, render
-from django.contrib import messages
-from django.views import View
-from django.contrib.auth import authenticate, login
 
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
@@ -13,29 +7,16 @@ from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework import viewsets, status
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework.parsers import JSONParser, FormParser
 
 from .models import CustomUser
-from .serializers import UserSerializer
-
-
-class CustomAuthToken(ObtainAuthToken):
-    def post(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data, context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data['user']
-        token, created = Token.objects.get_or_create(user=user)
-        return Response({
-            'token': token.key,
-            'user_id': user.pk,
-            'email': user.email
-        })
+from .serializers import UserSerializer, CustomTokenObtainPairSerializer, CustomTokenRefreshSerializer
 
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = CustomUser.objects.all()
     serializer_class = UserSerializer
-
 
 
 class LogoutView(APIView):
@@ -61,3 +42,12 @@ class UserInfoView(APIView):
             'username': user.username,
             'email': user.email,
         })
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
+    parser_classes = [JSONParser, FormParser]
+
+
+class CustomTokenRefreshView(TokenRefreshView):
+    serializer_class = CustomTokenRefreshSerializer
