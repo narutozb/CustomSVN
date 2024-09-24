@@ -65,43 +65,41 @@
     <el-table :data="searchResults.results" style="width: 100%">
       <el-table-column label="Revision" width="120">
         <template #default="scope">
-          <template v-if="enableHover">
-            <el-popover
-                placement="right"
-                :width="400"
-                trigger="hover"
-                :show-after="100"
-            >
-              <template #default>
-                <CommitDetailPreview :commitId="scope.row.id" />
-              </template>
-              <template #reference>
-                <router-link
-                    :to="{ name: 'CommitDetail', params: { id: scope.row.id } }"
-                    class="revision-link"
-                >
-                  {{ scope.row.revision }}
-                </router-link>
-              </template>
-            </el-popover>
-          </template>
-          <template v-else>
-            <router-link
-                :to="{ name: 'CommitDetail', params: { id: scope.row.id } }"
-                class="revision-link"
-            >
-              {{ scope.row.revision }}
-            </router-link>
-          </template>
+          <el-popover
+              placement="right"
+              :width="400"
+              trigger="hover"
+              :show-after="100"
+          >
+            <template #default>
+              <CommitDetailPreview :commit="scope.row" />
+            </template>
+            <template #reference>
+              <router-link
+                  :to="{ name: 'CommitDetail', params: { id: scope.row.id } }"
+                  class="revision-link"
+              >
+                {{ scope.row.revision }}
+              </router-link>
+            </template>
+          </el-popover>
         </template>
       </el-table-column>
-      <el-table-column prop="author" label="Author" width="150"/>
-      <el-table-column prop="date" label="Date" width="180">
+      <el-table-column label="Author" width="150">
+        <template #default="scope">
+          <span v-html="scope.row.author"></span>
+        </template>
+      </el-table-column>
+      <el-table-column label="Date" width="180">
         <template #default="scope">
           {{ $filters.formatDate(scope.row.date) }}
         </template>
       </el-table-column>
-      <el-table-column prop="message" label="Message"/>
+      <el-table-column label="Message">
+        <template #default="scope">
+          <span v-html="scope.row.message"></span>
+        </template>
+      </el-table-column>
     </el-table>
 
     <el-pagination v-if="searchResults.results.length > 0" v-model:current-page="currentPage"
@@ -158,6 +156,9 @@ const loadingMessage = 'Searching commits...';
 const branchesData = computed(() => branches.value.map(branch => ({key: branch.id, label: branch.name})));
 const authorsData = computed(() => authors.value.map(author => ({key: author, label: author})));
 
+
+
+
 const formatDataForBackend = (data: any): any => {
   if (Array.isArray(data)) return data.join(',');
   if (data instanceof Date) return data.toISOString().split('T')[0];
@@ -178,6 +179,7 @@ const submitSearch = async () => {
         file_path_contains: form.filter_type !== 'message' ? form.contents : undefined,
       };
       const formattedData = formatDataForBackend(searchParams);
+
       const results = await searchCommits(formattedData);
 
       if ('error' in results && typeof results.error === 'string') {
@@ -293,4 +295,5 @@ const handleCurrentChange = async (val: number) => {
 .revision-link:hover {
   text-decoration: underline;
 }
+
 </style>

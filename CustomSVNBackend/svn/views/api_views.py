@@ -106,7 +106,6 @@ class CommitSearchView(APIView):
             start_date = data.get('start_date')
             end_date = data.get('end_date')
             contents = data.get('contents')
-            regex_search = data.get('regex_search', False)
             search_type = data.get('search_fields', [])
 
             # 开始构建查询
@@ -120,15 +119,7 @@ class CommitSearchView(APIView):
                 queryset = self.__filter_date(queryset, start_date, end_date)
 
             # 过滤关键字
-            if regex_search and contents:
-                queryset, error = self.__safe_regex_filter(queryset, fields=search_type, keywords=[contents])
-                if error:
-                    return Response({
-                        "error": "Invalid regex pattern",
-                        "details": error,
-                        "data": []
-                    }, status=status.HTTP_400_BAD_REQUEST)
-            elif not regex_search and contents:
+            if contents:
                 queryset = self.__filter_contains_keywords(queryset, fields=search_type, keywords=[contents], )
 
             # 应用分页
