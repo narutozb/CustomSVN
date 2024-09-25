@@ -43,7 +43,7 @@
         <el-select v-model="form.filter_type" placeholder="Select filter type">
           <el-option label="Message" value="message"/>
           <el-option label="File Path" value="file_path"/>
-          <el-option label="Both" value="both"/>
+          <el-option label="All" value="both"/>
         </el-select>
       </el-form-item>
 
