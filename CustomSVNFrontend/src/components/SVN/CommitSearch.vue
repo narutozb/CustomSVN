@@ -213,7 +213,7 @@ const submitSearch = async () => {
     };
     const formattedData = formatDataForBackend(searchParams);
 
-    const results = await searchCommits(formattedData, abortController.signal);
+    const results = await searchCommits(formattedData);
 
     if ('error' in results && typeof results.error === 'string') {
       throw new Error(results.error);

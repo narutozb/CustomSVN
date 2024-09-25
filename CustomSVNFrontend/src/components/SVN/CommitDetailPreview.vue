@@ -7,7 +7,7 @@
       <el-descriptions-item label="Revision">{{ commit.revision || 'N/A' }}</el-descriptions-item>
       <el-descriptions-item label="Author">{{ commit.author || 'N/A' }}</el-descriptions-item>
       <el-descriptions-item label="Date">
-        {{ commit.date ? $filters.formatDate(commit.date) : 'N/A' }}
+        {{ commit.date ? formatDate(commit.date) : 'N/A' }}
       </el-descriptions-item>
       <el-descriptions-item label="Message">
         <span v-html="commit.message || 'N/A'"></span>
@@ -47,22 +47,33 @@
 
 <script lang="ts" setup>
 import { ref, watch } from 'vue';
-import type { Commit } from "@/services/interfaces";
+
+
+interface Commit {
+  id: number;
+  revision: number;
+  author: string;
+  date: string;
+  message: string;
+  repo_name?: string;
+  branch_name?: string;
+  file_changes?: any[];
+  // 添加其他可能的属性
+}
 
 const props = defineProps<{
   commit: Commit | null
-  params: any
 }>();
 
 const loading = ref(false);
 const error = ref<string | null>(null);
 const fileChanges = ref<any[]>([]);
 
-const fetchFileChanges = async (commitId: number) => {
+const fetchFileChanges = async (commit: Commit) => {
   loading.value = true;
   error.value = null;
   try {
-    fileChanges.value = props.commit?.file_changes || [];
+    fileChanges.value = commit.file_changes || [];
   } catch (err) {
     console.error('Error fetching file changes:', err);
     error.value = "An error occurred while fetching file changes";
@@ -77,14 +88,15 @@ watch(() => props.commit, (newCommit) => {
     fileChanges.value = [];
   } else {
     error.value = null;
-    if (newCommit.id) {
-      fetchFileChanges(newCommit.id);
-    } else {
-      error.value = "Invalid commit data";
-    }
+    fetchFileChanges(newCommit);
   }
 }, { immediate: true });
 
+const formatDate = (date: string | Date) => {
+  if (!date) return 'N/A';
+  const d = new Date(date);
+  return d.toLocaleString();
+};
 </script>
 
 <style scoped>
