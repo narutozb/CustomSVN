@@ -1,3 +1,4 @@
+# views_commit_highlight.py 后端
 import re
 from datetime import datetime, time
 
@@ -189,6 +190,6 @@ class HighlightedCommitViewSet(viewsets.ModelViewSet):
                 q_objects |= Q(message__icontains=message_contains)
             if file_path_contains:
                 q_objects |= Q(file_changes__path__icontains=file_path_contains)
-            queryset = queryset.filter(q_objects).distinct()
+            queryset = queryset.filter(q_objects).distinct().select_related('repository', 'branch').prefetch_related('file_changes')
 
         return queryset

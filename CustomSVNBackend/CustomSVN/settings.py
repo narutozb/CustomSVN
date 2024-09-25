@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'corsheaders',
+
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_simplejwt',  # jwt 认证
@@ -196,4 +197,11 @@ LOGGING = {
             'propagate': True,
         },
     },
+}
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+    }
 }

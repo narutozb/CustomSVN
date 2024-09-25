@@ -3,6 +3,8 @@ from rest_framework.decorators import action
 from django_filters import rest_framework as filters
 from rest_framework import viewsets
 from rest_framework.response import Response
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
 
 from svn._serializers.serializer_branch import BranchQuerySerializer
 from svn._serializers.serializer_commit import CommitQuerySerializerS
@@ -41,6 +43,7 @@ class RepositoryQueryViewSet(viewsets.ReadOnlyModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
+    @method_decorator(cache_page(60 * 60))  # 缓存1小时
     @action(detail=True, methods=['GET'])
     def branches(self, request, pk=None):
         branches = Branch.objects.filter(repository_id=pk)
@@ -55,6 +58,7 @@ class RepositoryQueryViewSet(viewsets.ReadOnlyModelViewSet):
 
         return Response(serializer.data)
 
+    @method_decorator(cache_page(60))  # 缓存1分钟
     @action(detail=True, methods=['GET'])
     def detail_authors(self, request, pk=None):
         commits = Commit.objects.filter(repository_id=pk)
@@ -64,6 +68,7 @@ class RepositoryQueryViewSet(viewsets.ReadOnlyModelViewSet):
 
         return Response(authors)
 
+    @method_decorator(cache_page(60))  # 缓存1分钟
     @action(detail=False, methods=['GET'])
     def authors(self, request):
         commits = Commit.objects
@@ -83,6 +88,7 @@ class RepositoryQueryViewSet(viewsets.ReadOnlyModelViewSet):
         # return Response(serializer.data)
         return Response()
 
+    @method_decorator(cache_page(60 * 60))  # 缓存1小时
     @action(detail=True, methods=['GET'])
     def commit_search_filter(self, request, pk=None):
         '''
@@ -92,6 +98,7 @@ class RepositoryQueryViewSet(viewsets.ReadOnlyModelViewSet):
         serializer = RepositoryCommitSearchFilterSerializer(repositories)
         return Response(serializer.data)
 
+    @method_decorator(cache_page(60))  # 缓存1分钟
     @action(detail=True, methods=['GET'])
     def latest_commit(self, request, pk=None):
         commit = Commit.objects.filter(repository_id=pk).order_by('-revision').first()
