@@ -5,7 +5,7 @@ from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 
-from django.db.models import Q
+from django.db.models import Q, Subquery, F, OuterRef
 from svn._serializers.serializer_branch import BranchQuerySerializer, BranchQuerySerializerS
 from svn._serializers.serializer_commit import CommitQuerySerializer
 from svn._serializers.serializer_file_change import FileChangeQuerySerializer
@@ -87,3 +87,28 @@ class BranchQueryViewSet(viewsets.ReadOnlyModelViewSet):
         if page is not None:
             return self.get_paginated_response(serializer.data)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['GET'])
+    def latest_file_changes(self, request, pk=None):
+        branch = self.get_object()
+        # 查询每个 path 的最新 commit_revision
+        latest_file_changes = FileChange.objects.filter(
+            commit__branch=branch
+        ).annotate(
+            latest_commit_revision=Subquery(
+                FileChange.objects.filter(
+                    commit__branch=branch,
+                    path=OuterRef('path')
+                ).order_by('-commit__revision').values('commit__revision')[:1]
+            )
+        ).filter(
+            commit__revision=F('latest_commit_revision')
+        )
+        # 应用分页
+        page = self.paginate_queryset(latest_file_changes)
+        if page is not None:
+            serializer = FileChangeQuerySerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        else:
+            serializer = FileChangeQuerySerializer(latest_file_changes, many=True)
+            return Response(serializer.data)
