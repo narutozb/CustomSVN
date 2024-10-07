@@ -12,7 +12,6 @@
 
     <el-card>
       <el-form :model="form" label-width="auto" style="max-width: 100%" size="small" @submit.prevent="submitSearch">
-        <!-- Form inputs remain the same -->
         <el-form-item label="Repository">
           <el-select v-model="form.repo_id" placeholder="Please select Repository" @change="handleRepoChange">
             <el-option v-for="repo in store.repositories" :key="repo.id" :label="repo.name" :value="repo.id"/>
@@ -86,7 +85,6 @@
           :data="searchResults.results"
           style="width: 100%"
       >
-        <!-- Table columns remain the same -->
         <el-table-column label="Revision" width="120">
           <template #default="{ row }">
             <el-popover
@@ -121,7 +119,11 @@
         </el-table-column>
         <el-table-column label="Message">
           <template #default="{ row }">
-            <span v-html="row.message"></span>
+            <el-tooltip :content="row.message" placement="top" :show-after="500">
+              <div class="message-cell">
+                <span v-html="truncateMessage(row.message)"></span>
+              </div>
+            </el-tooltip>
           </template>
         </el-table-column>
       </el-table>
@@ -315,6 +317,11 @@ const formatDate = (date: string | Date) => {
   const d = new Date(date);
   return d.toLocaleString();
 };
+
+const truncateMessage = (message: string, maxLength = 100) => {
+  if (message.length <= maxLength) return message;
+  return message.slice(0, maxLength) + '...';
+};
 </script>
 
 <style scoped>
@@ -364,9 +371,17 @@ const formatDate = (date: string | Date) => {
   text-decoration: underline;
 }
 
+.message-cell {
+  max-width: 500px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 :deep(.el-table .cell) {
-  overflow: visible;
-  white-space: pre-wrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 :deep(mark) {

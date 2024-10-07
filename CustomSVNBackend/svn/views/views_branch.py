@@ -1,6 +1,6 @@
 from django_filters import rest_framework as filters
 
-from rest_framework import mixins, viewsets
+from rest_framework import mixins, viewsets, status
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
@@ -24,6 +24,23 @@ class BranchFilter(filters.FilterSet):
         model = Branch
         fields = ["name", 'repo_name', 'repo_id', 'name_contains']
 
+
+class _FileChangeFilter(filters.FilterSet):
+    path = filters.CharFilter(field_name='path', lookup_expr='icontains')
+    actions = filters.CharFilter(method='filter_actions', label='Multiple Actions')
+    kind = filters.CharFilter(field_name='kind', lookup_expr='icontains')
+
+    class Meta:
+        model = FileChange
+        fields = [
+            'path',
+            'actions',
+            'kind',
+        ]
+
+    def filter_actions(self, queryset, name, value):
+        action_list = [action.strip() for action in value.split(',') if action.strip()]
+        return queryset.filter(action__in=action_list)
 
 class BranchQueryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Branch.objects.all()
@@ -91,7 +108,6 @@ class BranchQueryViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=True, methods=['GET'])
     def latest_file_changes(self, request, pk=None):
         branch = self.get_object()
-        # 查询每个 path 的最新 commit_revision
         latest_file_changes = FileChange.objects.filter(
             commit__branch=branch
         ).annotate(
@@ -104,11 +120,20 @@ class BranchQueryViewSet(viewsets.ReadOnlyModelViewSet):
         ).filter(
             commit__revision=F('latest_commit_revision')
         )
+        # 手动应用过滤器
+        filterset = _FileChangeFilter(request.GET, queryset=latest_file_changes)
+        if not filterset.is_valid():
+            return Response(filterset.errors, status=status.HTTP_400_BAD_REQUEST)
+        filtered_latest_file_changes = filterset.qs
         # 应用分页
-        page = self.paginate_queryset(latest_file_changes)
+        page = self.paginate_queryset(filtered_latest_file_changes)
         if page is not None:
             serializer = FileChangeQuerySerializer(page, many=True)
             return self.get_paginated_response(serializer.data)
         else:
-            serializer = FileChangeQuerySerializer(latest_file_changes, many=True)
+            serializer = FileChangeQuerySerializer(filtered_latest_file_changes, many=True)
             return Response(serializer.data)
+
+
+
+

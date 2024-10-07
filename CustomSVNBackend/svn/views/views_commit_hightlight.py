@@ -1,12 +1,13 @@
 # views_commit_highlight.py 后端
 import re
 from datetime import datetime, time
-
+from django.db.models import Prefetch
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.utils import timezone
 from django.db.models import Q
 from django_filters import rest_framework as filters
+
 from rest_framework import serializers, viewsets
 
 from svn._serializers.serializer_commit import CommitQuerySerializerS
@@ -78,9 +79,6 @@ class CommitFilter(filters.FilterSet):
 
 
 class _HighlightedFileChangeSerializer(serializers.ModelSerializer):
-    """
-    Serializer for FileChange model with highlighted fields based on search terms.
-    """
     path = serializers.SerializerMethodField()
     action = serializers.SerializerMethodField()
     kind = serializers.SerializerMethodField()
@@ -92,8 +90,6 @@ class _HighlightedFileChangeSerializer(serializers.ModelSerializer):
     def _highlight_text(self, text, search_term):
         if not search_term or not text:
             return text
-
-        # 使用正则表达式进行不区分大小写的搜索和替换
         pattern = re.compile(re.escape(search_term), re.IGNORECASE)
         highlighted = pattern.sub(lambda m: f'<mark>{escape(m.group())}</mark>', text)
         return mark_safe(highlighted)
@@ -103,17 +99,12 @@ class _HighlightedFileChangeSerializer(serializers.ModelSerializer):
 
     def get_action(self, obj):
         return obj.action
-        # return self._highlight_text(obj.action, self.context.get('file_path_contains'))
 
     def get_kind(self, obj):
         return obj.kind
-        # return self._highlight_text(obj.kind, self.context.get('file_path_contains'))
 
 
 class HighlightedCommitSerializer(CommitQuerySerializerS):
-    """
-    Serializer for Commit model with highlighted fields and nested file changes.
-    """
     repo_name = serializers.SerializerMethodField()
     message = serializers.SerializerMethodField()
     branch_name = serializers.SerializerMethodField()
@@ -121,14 +112,10 @@ class HighlightedCommitSerializer(CommitQuerySerializerS):
 
     class Meta(CommitQuerySerializerS.Meta):
         fields = CommitQuerySerializerS.Meta.fields + [
-            'repo_name', 'message',
-            'branch_name', 'file_changes',
+            'repo_name', 'message', 'branch_name', 'file_changes',
         ]
 
     def _highlight_text(self, text, search_term):
-        """
-        Highlights the search_term in the given text by wrapping it with <mark> tags.
-        """
         if not search_term or not text:
             return text
         highlighted = text.replace(search_term, f'<mark>{escape(search_term)}</mark>')
@@ -145,20 +132,21 @@ class HighlightedCommitSerializer(CommitQuerySerializerS):
         return self._highlight_text(branch_name, self.context.get('branch_name_contains'))
 
     def get_file_changes(self, obj):
-        file_changes = obj.file_changes.all()
+        return_all_file_changes = self.context.get('return_all_file_changes', False)
+        file_path_contains = self.context.get('file_path_contains', '')
+
+        if not return_all_file_changes and file_path_contains:
+            file_changes = obj.file_changes.filter(path__icontains=file_path_contains)
+        else:
+            file_changes = obj.file_changes.all()
+
         context = self.context.copy()
-        # 确保 file_path_contains 参数被传递给 FileChange 序列化器
-        context['file_path_contains'] = self.context.get('file_path_contains') or self.context.get('message_contains')
+        context['file_path_contains'] = file_path_contains or self.context.get('message_contains', '')
         serializer = _HighlightedFileChangeSerializer(file_changes, many=True, context=context)
         return serializer.data
 
 
-# svn/views.py
-
 class HighlightedCommitViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet for listing and retrieving Commit instances with highlighting functionality.
-    """
     queryset = Commit.objects.all()
     serializer_class = HighlightedCommitSerializer
     pagination_class = CustomPagination
@@ -166,30 +154,33 @@ class HighlightedCommitViewSet(viewsets.ModelViewSet):
     ordering_fields = ['revision', 'date', 'author']
 
     def get_serializer_context(self):
-        """
-        Adds additional context to the serializer, including the search terms for highlighting.
-        """
         context = super().get_serializer_context()
         context.update({
             'repo_name_contains': self.request.query_params.get('repo_name_contains', ''),
             'message_contains': self.request.query_params.get('message_contains', ''),
             'branch_name_contains': self.request.query_params.get('branch_name_contains', ''),
             'file_path_contains': self.request.query_params.get('file_path_contains', ''),
+            'return_all_file_changes': self.request.query_params.get('return_all_file_changes',
+                                                                     'false').lower() == 'true',
         })
         return context
 
     def filter_queryset(self, queryset):
         queryset = super().filter_queryset(queryset)
-
         message_contains = self.request.query_params.get('message_contains', '')
         file_path_contains = self.request.query_params.get('file_path_contains', '')
-
-        if message_contains or file_path_contains:
-            q_objects = Q()
-            if message_contains:
-                q_objects |= Q(message__icontains=message_contains)
-            if file_path_contains:
-                q_objects |= Q(file_changes__path__icontains=file_path_contains)
-            queryset = queryset.filter(q_objects).distinct().select_related('repository', 'branch').prefetch_related('file_changes')
-
+        return_all_file_changes = self.request.query_params.get('return_all_file_changes', 'false').lower() == 'true'
+        q_objects = Q()
+        if message_contains:
+            q_objects |= Q(message__icontains=message_contains)
+        if file_path_contains:
+            q_objects |= Q(file_changes__path__icontains=file_path_contains)
+        if q_objects:
+            queryset = queryset.filter(q_objects).distinct()
+        if not return_all_file_changes and file_path_contains:
+            queryset = queryset.select_related('repository', 'branch').prefetch_related(
+                Prefetch('file_changes', queryset=FileChange.objects.filter(path__icontains=file_path_contains))
+            )
+        else:
+            queryset = queryset.select_related('repository', 'branch').prefetch_related('file_changes')
         return queryset
