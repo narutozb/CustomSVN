@@ -1,113 +1,159 @@
 <template>
-  <el-card v-loading="loading" :element-loading-text="loadingMessage">
-    <el-form :model="form" label-width="auto" style="max-width: 100%" size="small" @submit.prevent="submitSearch">
-      <el-form-item label="Repository">
-        <el-select v-model="form.repo_id" placeholder="Please select Repository" @change="handleRepoChange">
-          <el-option v-for="repo in store.repositories" :key="repo.id" :label="repo.name" :value="repo.id"/>
-        </el-select>
-      </el-form-item>
-
-      <el-form-item label="Branches">
-        <custom-transfer v-model="form.branch_ids" :data="branchesData"/>
-      </el-form-item>
-
-      <el-form-item label="Authors">
-        <custom-transfer v-model="form.authors" :data="authorsData"/>
-      </el-form-item>
-
-      <el-form-item label="Revision Range">
-        <el-col :span="11">
-          <el-input-number v-model="form.revision_from" :min="1" placeholder="From revision"/>
-        </el-col>
-        <el-col :span="2" style="text-align: center">-</el-col>
-        <el-col :span="11">
-          <el-input-number v-model="form.revision_to" :min="form.revision_from || 1" placeholder="To revision"/>
-        </el-col>
-      </el-form-item>
-
-      <el-form-item label="Time Range">
-        <el-col :span="11">
-          <el-date-picker v-model="form.date_from" type="date" placeholder="Pick a date" style="width: 100%"/>
-        </el-col>
-        <el-col :span="2" style="text-align: center">-</el-col>
-        <el-col :span="11">
-          <el-date-picker v-model="form.date_to" type="date" placeholder="Pick a date" style="width: 100%"/>
-        </el-col>
-      </el-form-item>
-
-      <el-form-item label="Search Contents">
-        <el-input v-model="form.contents" placeholder="Search in message and file paths" @keyup.enter="submitSearch"/>
-      </el-form-item>
-
-      <el-form-item label="Filter Type">
-        <el-select v-model="form.filter_type" placeholder="Select filter type">
-          <el-option label="Message" value="message"/>
-          <el-option label="File Path" value="file_path"/>
-          <el-option label="All" value="both"/>
-        </el-select>
-      </el-form-item>
-
-      <el-form-item>
-        <el-button type="primary" @click="submitSearch" :loading="loading">
-          {{ loading ? 'Searching...' : 'Search' }}
-        </el-button>
-      </el-form-item>
-    </el-form>
-
-    <el-pagination v-if="searchResults.count > 0" v-model:current-page="currentPage" v-model:page-size="form.page_size"
-                   :page-sizes="pageSizeOptions" :total="searchResults.count" @size-change="handleSizeChange"
-                   @current-change="handleCurrentChange" layout="total, sizes, prev, pager, next"/>
-
-    <div v-if="searchDuration > 0" class="search-duration">
-      Search time: {{ searchDuration }}ms
+  <div class="search-container">
+    <div v-if="loading" class="loading-overlay">
+      <el-card class="loading-card">
+        <div class="loading-content">
+          <el-icon class="is-loading">
+            <Loading/>
+          </el-icon>
+          <span>Searching commits...</span>
+          <el-button @click="cancelSearch" size="small">Cancel</el-button>
+        </div>
+      </el-card>
     </div>
 
-    <el-table :data="searchResults.results" style="width: 100%">
-      <el-table-column label="Revision" width="120">
-        <template #default="scope">
-          <el-popover
-              placement="right"
-              :width="400"
-              trigger="hover"
-              :show-after="100"
-          >
-            <template #default>
-              <CommitDetailPreview :commit="scope.row" />
-            </template>
-            <template #reference>
-              <router-link
-                  :to="{ name: 'CommitDetail', params: { id: scope.row.id } }"
-                  class="revision-link"
-              >
-                {{ scope.row.revision }}
-              </router-link>
-            </template>
-          </el-popover>
-        </template>
-      </el-table-column>
-      <el-table-column label="Author" width="150">
-        <template #default="scope">
-          <span v-html="scope.row.author"></span>
-        </template>
-      </el-table-column>
-      <el-table-column label="Date" width="180">
-        <template #default="scope">
-          {{ $filters.formatDate(scope.row.date) }}
-        </template>
-      </el-table-column>
-      <el-table-column label="Message">
-        <template #default="scope">
-          <span v-html="scope.row.message"></span>
-        </template>
-      </el-table-column>
-    </el-table>
+    <el-card>
+      <el-form :model="form" label-width="auto" style="max-width: 100%" size="small" @submit.prevent="submitSearch">
+        <el-form-item label="Repository">
+          <el-select v-model="form.repo_id" placeholder="Please select Repository" @change="handleRepoChange">
+            <el-option v-for="repo in store.repositories" :key="repo.id" :label="repo.name" :value="repo.id"/>
+          </el-select>
+        </el-form-item>
 
-    <el-pagination v-if="searchResults.results.length > 0" v-model:current-page="currentPage"
-                   v-model:page-size="form.page_size" :page-sizes="pageSizeOptions" :total="searchResults.count"
-                   @size-change="handleSizeChange" @current-change="handleCurrentChange"
-                   layout="total, sizes, prev, pager, next"/>
-  </el-card>
-  <el-alert v-if="error" :title="error" type="error" show-icon/>
+        <el-form-item label="Branches">
+          <custom-transfer v-model="form.branch_ids" :data="branchesData"/>
+        </el-form-item>
+
+        <el-form-item label="Authors">
+          <custom-transfer v-model="form.authors" :data="authorsData"/>
+        </el-form-item>
+
+        <el-form-item label="Revision Range">
+          <el-col :span="11">
+            <el-input-number v-model="form.revision_from" :min="1" placeholder="From revision"/>
+          </el-col>
+          <el-col :span="2" style="text-align: center">-</el-col>
+          <el-col :span="11">
+            <el-input-number v-model="form.revision_to" :min="form.revision_from || 1" placeholder="To revision"/>
+          </el-col>
+        </el-form-item>
+
+        <el-form-item label="Time Range">
+          <el-col :span="11">
+            <el-date-picker v-model="form.date_from" type="date" placeholder="Pick a date" style="width: 100%"/>
+          </el-col>
+          <el-col :span="2" style="text-align: center">-</el-col>
+          <el-col :span="11">
+            <el-date-picker v-model="form.date_to" type="date" placeholder="Pick a date" style="width: 100%"/>
+          </el-col>
+        </el-form-item>
+
+        <el-form-item label="Search Contents">
+          <el-input v-model="form.contents" placeholder="Search in message and file paths"/>
+        </el-form-item>
+
+        <el-form-item label="Filter Type">
+          <el-select v-model="form.filter_type" placeholder="Select filter type">
+            <el-option label="Message" value="message"/>
+            <el-option label="File Path" value="file_path"/>
+            <el-option label="All" value="both"/>
+          </el-select>
+        </el-form-item>
+
+        <el-form-item>
+          <el-button type="primary" @click="submitSearch" :disabled="loading">
+            Search
+          </el-button>
+        </el-form-item>
+      </el-form>
+
+      <el-pagination
+          v-if="searchResults.count > 0"
+          v-model:current-page="currentPage"
+          v-model:page-size="form.page_size"
+          :page-sizes="pageSizeOptions"
+          :total="searchResults.count"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+          layout="total, sizes, prev, pager, next"
+      />
+
+      <div v-if="searchDuration > 0" class="search-duration">
+        Search time: {{ searchDuration }}ms
+      </div>
+
+      <el-table
+          v-if="searchResults.results.length > 0"
+          :data="searchResults.results"
+          style="width: 100%"
+      >
+        <el-table-column label="Revision" width="120">
+          <template #default="{ row }">
+            <el-popover
+                placement="right"
+                :width="400"
+                trigger="hover"
+                :show-after="100"
+            >
+              <template #default>
+                <CommitDetailPreview :commit="row"/>
+              </template>
+              <template #reference>
+                <router-link
+                    :to="{ name: 'CommitDetail', params: { id: row.id } }"
+                    class="revision-link"
+                >
+                  {{ row.revision }}
+                </router-link>
+              </template>
+            </el-popover>
+          </template>
+        </el-table-column>
+        <el-table-column label="Author" width="150">
+          <template #default="{ row }">
+            <span v-html="row.author"></span>
+          </template>
+        </el-table-column>
+        <el-table-column label="Date" width="180">
+          <template #default="{ row }">
+            {{ formatDate(row.date) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="Message">
+          <template #default="{ row }">
+            <el-popover
+                placement="top"
+                trigger="hover"
+                :show-after="100"
+                effect="light"
+                width="400"
+            >
+              <template #reference>
+                <div class="message-cell">
+                  <span v-html="truncateMessage(row.message)"></span>
+                </div>
+              </template>
+              <div class="popover-content" v-html="row.message"></div>
+            </el-popover>
+          </template>
+        </el-table-column>
+
+
+      </el-table>
+
+      <el-pagination
+          v-if="searchResults.results.length > 0"
+          v-model:current-page="currentPage"
+          v-model:page-size="form.page_size"
+          :page-sizes="pageSizeOptions"
+          :total="searchResults.count"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+          layout="total, sizes, prev, pager, next"
+      />
+    </el-card>
+    <el-alert v-if="error" :title="error" type="error" show-icon/>
+  </div>
 </template>
 
 <script lang="ts" setup>
@@ -116,19 +162,19 @@ import {useRepositoriesStore} from "@/store/repositories";
 import {getCommitSearchFilterData, searchCommits} from '@/services/svn_api';
 import type {BranchNameId, SearchCommitsResponse} from "@/services/interfaces";
 import CustomTransfer from "@/components/Common/CustomTransfer.vue";
-import {useLoadingState} from '@/composables/useLoadingState';
 import {ElMessage} from "element-plus";
 import CommitDetailPreview from "@/components/SVN/CommitDetailPreview.vue";
+import {Loading} from '@element-plus/icons-vue'
 
-const searchDuration = ref<number>(0);
 const store = useRepositoriesStore();
+const searchDuration = ref<number>(0);
 const branches = ref<BranchNameId[]>([]);
 const authors = ref<string[]>([]);
 const pageSizeOptions = [100, 500, 1000, 5000, 10000];
 const currentPage = ref(1);
-
-// 新增：配置项来控制是否启用 Hover 功能
-const enableHover = ref(true); // 默认启用 Hover 功能，可以根据需要修改默认值
+const loading = ref(false);
+const error = ref<string | null>(null);
+let abortController: AbortController | null = null;
 
 const form = reactive({
   repo_id: computed({
@@ -146,18 +192,15 @@ const form = reactive({
   page_size: 100,
 });
 
-const {loading, error, withLoading} = useLoadingState({
-  loadingMessage: 'Searching commits...',
-  errorMessage: 'Failed to search commits. Please try again.'
-});
-
-const loadingMessage = 'Searching commits...';
-
 const branchesData = computed(() => branches.value.map(branch => ({key: branch.id, label: branch.name})));
 const authorsData = computed(() => authors.value.map(author => ({key: author, label: author})));
 
-
-
+const searchResults = ref<SearchCommitsResponse>({
+  count: 0,
+  next: null,
+  previous: null,
+  results: [],
+});
 
 const formatDataForBackend = (data: any): any => {
   if (Array.isArray(data)) return data.join(',');
@@ -169,37 +212,55 @@ const formatDataForBackend = (data: any): any => {
 };
 
 const submitSearch = async () => {
+  if (loading.value) return;
+
   const startTime = performance.now();
-  return await withLoading(async () => {
-    try {
-      const searchParams = {
-        ...form,
-        page: currentPage.value,
-        message_contains: form.filter_type !== 'file_path' ? form.contents : undefined,
-        file_path_contains: form.filter_type !== 'message' ? form.contents : undefined,
-      };
-      const formattedData = formatDataForBackend(searchParams);
+  loading.value = true;
+  error.value = null;
+  abortController = new AbortController();
 
-      const results = await searchCommits(formattedData);
+  try {
+    const searchParams = {
+      ...form,
+      page: currentPage.value,
+      message_contains: form.filter_type !== 'file_path' ? form.contents : undefined,
+      file_path_contains: form.filter_type !== 'message' ? form.contents : undefined,
+    };
+    const formattedData = formatDataForBackend(searchParams);
 
-      if ('error' in results && typeof results.error === 'string') {
-        throw new Error(results.error);
-      } else if ('error' in results) {
-        throw new Error('An unknown error occurred');
-      }
+    const results = await searchCommits(formattedData);
 
-      searchResults.value = results as SearchCommitsResponse;
-    } catch (error: unknown) {
+    if ('error' in results && typeof results.error === 'string') {
+      throw new Error(results.error);
+    } else if ('error' in results) {
+      throw new Error('An unknown error occurred');
+    }
+
+    searchResults.value = results as SearchCommitsResponse;
+  } catch (error: unknown) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.log('Search was cancelled');
+    } else {
       console.error('Search error:', error);
       if (error instanceof Error) {
         ElMessage.error(error.message);
       } else {
         ElMessage.error('An unexpected error occurred');
       }
-    } finally {
-      searchDuration.value = Number((performance.now() - startTime).toFixed(2));
     }
-  });
+  } finally {
+    loading.value = false;
+    searchDuration.value = Number((performance.now() - startTime).toFixed(2));
+    abortController = null;
+  }
+};
+
+const cancelSearch = () => {
+  if (abortController) {
+    abortController.abort();
+    loading.value = false;
+    ElMessage.info('Search cancelled');
+  }
 };
 
 const setDefaultDates = () => {
@@ -208,13 +269,6 @@ const setDefaultDates = () => {
   form.date_to = null;
 };
 
-const searchResults = ref<SearchCommitsResponse>({
-  count: 0,
-  next: null,
-  previous: null,
-  results: [],
-});
-
 const loadAllData = async (repositoryId: string) => {
   const {branches: newBranches, authors: newAuthors} = await getCommitSearchFilterData(repositoryId);
   branches.value = newBranches;
@@ -222,7 +276,8 @@ const loadAllData = async (repositoryId: string) => {
 };
 
 onMounted(async () => {
-  await withLoading(async () => {
+  loading.value = true;
+  try {
     await store.fetchRepositories();
     setDefaultDates();
     if (store.repositories.length > 0) {
@@ -231,7 +286,12 @@ onMounted(async () => {
       await loadAllData(defaultRepositoryId);
       await submitSearch();
     }
-  });
+  } catch (err) {
+    console.error('Error during initialization:', err);
+    error.value = 'Failed to initialize. Please try refreshing the page.';
+  } finally {
+    loading.value = false;
+  }
 });
 
 const handleRepoChange = async (value: string) => {
@@ -264,27 +324,55 @@ const handleCurrentChange = async (val: number) => {
     }
   }
 };
+
+const formatDate = (date: string | Date) => {
+  if (!date) return 'N/A';
+  const d = new Date(date);
+  return d.toLocaleString();
+};
+
+const truncateMessage = (message: string, maxLength = 100) => {
+  if (message.length <= maxLength) return message;
+  return message.slice(0, maxLength) + '...';
+};
 </script>
 
 <style scoped>
+.search-container {
+  position: relative;
+}
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 20vh;
+  z-index: 9999;
+}
+
+.loading-card {
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .search-duration {
   margin-top: 10px;
   font-size: 14px;
   color: #606266;
-}
-
-.commit-details {
-  font-size: 14px;
-}
-
-.commit-details h3 {
-  margin-top: 0;
-  margin-bottom: 16px;
-}
-
-.commit-details h4 {
-  margin-top: 16px;
-  margin-bottom: 8px;
 }
 
 .revision-link {
@@ -296,4 +384,28 @@ const handleCurrentChange = async (val: number) => {
   text-decoration: underline;
 }
 
+.message-cell {
+  max-width: 500px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.popover-content {
+  max-width: 400px;
+  word-wrap: break-word;
+}
+
+
+:deep(.el-table .cell) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:deep(mark) {
+  background-color: yellow;
+  padding: 0.2em 0;
+}
 </style>

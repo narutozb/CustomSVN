@@ -29,5 +29,5 @@ class CommitPreviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Commit
         fields = [
-            'revision', 'author', 'date',
+            'revision', 'author', 'date', 'repository', 'branch', 'file_changes'
         ]

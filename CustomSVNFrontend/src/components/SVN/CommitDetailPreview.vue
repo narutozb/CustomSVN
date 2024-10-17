@@ -7,10 +7,12 @@
       <el-descriptions-item label="Revision">{{ commit.revision || 'N/A' }}</el-descriptions-item>
       <el-descriptions-item label="Author">{{ commit.author || 'N/A' }}</el-descriptions-item>
       <el-descriptions-item label="Date">
-        {{ commit.date ? $filters.formatDate(commit.date) : 'N/A' }}
+        {{ commit.date ? formatDate(commit.date) : 'N/A' }}
       </el-descriptions-item>
       <el-descriptions-item label="Message">
-        <span v-html="commit.message || 'N/A'"></span>
+        <div class="message-container">
+          <span v-html="commit.message || 'N/A'"></span>
+        </div>
       </el-descriptions-item>
     </el-descriptions>
 
@@ -21,7 +23,7 @@
           :data="fileChanges"
           style="width: 100%"
           size="small"
-          height="250"
+          :max-height="250"
       >
         <el-table-column prop="path" label="Path">
           <template #default="scope">
@@ -39,30 +41,41 @@
           </template>
         </el-table-column>
       </el-table>
+      <el-alert v-if="fileChanges.length === 0 && !loading" title="No file changes available" type="info" show-icon/>
     </div>
-    <el-alert v-if="fileChanges.length === 0 && !loading" title="No file changes available" type="info" show-icon/>
     <el-alert v-if="error" :title="error" type="error" show-icon/>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, watch } from 'vue';
-import type { Commit } from "@/services/interfaces";
+import {ref, watch} from 'vue';
+
+
+interface Commit {
+  id: number;
+  revision: number;
+  author: string;
+  date: string;
+  message: string;
+  repo_name?: string;
+  branch_name?: string;
+  file_changes?: any[];
+  // 添加其他可能的属性
+}
 
 const props = defineProps<{
   commit: Commit | null
-  params: any
 }>();
 
 const loading = ref(false);
 const error = ref<string | null>(null);
 const fileChanges = ref<any[]>([]);
 
-const fetchFileChanges = async (commitId: number) => {
+const fetchFileChanges = async (commit: Commit) => {
   loading.value = true;
   error.value = null;
   try {
-    fileChanges.value = props.commit?.file_changes || [];
+    fileChanges.value = commit.file_changes || [];
   } catch (err) {
     console.error('Error fetching file changes:', err);
     error.value = "An error occurred while fetching file changes";
@@ -77,19 +90,23 @@ watch(() => props.commit, (newCommit) => {
     fileChanges.value = [];
   } else {
     error.value = null;
-    if (newCommit.id) {
-      fetchFileChanges(newCommit.id);
-    } else {
-      error.value = "Invalid commit data";
-    }
+    fetchFileChanges(newCommit);
   }
-}, { immediate: true });
+}, {immediate: true});
 
+const formatDate = (date: string | Date) => {
+  if (!date) return 'N/A';
+  const d = new Date(date);
+  return d.toLocaleString();
+};
 </script>
 
 <style scoped>
 .commit-details {
   font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
 }
 
 .commit-details h3 {
@@ -102,9 +119,18 @@ watch(() => props.commit, (newCommit) => {
   margin-bottom: 8px;
 }
 
-.file-changes-container {
-  max-height: 250px;
+.message-container {
+  max-height: 200px;
   overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.file-changes-container {
+  flex-grow: 1;
+  overflow-y: auto;
+  min-height: 50px;
+  max-height: 250px;
 }
 
 /* 保留高亮样式 */
@@ -116,5 +142,20 @@ watch(() => props.commit, (newCommit) => {
 :deep(mark) {
   background-color: yellow;
   padding: 0.2em 0;
+}
+
+/* 确保表格不会超出容器 */
+:deep(.el-table) {
+  max-height: 100% !important;
+}
+
+/* 调整 el-descriptions-item 的样式 */
+:deep(.el-descriptions-item__content) {
+  display: flex;
+  align-items: flex-start;
+}
+
+:deep(.el-descriptions-item__label) {
+  flex-shrink: 0;
 }
 </style>

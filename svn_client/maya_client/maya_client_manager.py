@@ -51,13 +51,10 @@ class MayaClientManager(ClientBase):
                 'maya_files': data_from_maya,
             }
 
-            print(json.dumps(send_data))
-
             # 如果有数据，就发送数据
             if data_from_maya:
                 r = self.session.post('http://127.0.0.1:8000/api/maya/mayafile/save_data/',
                                       headers=self.headers, data=json.dumps(send_data))
-                print(r.text)
 
     def get_data_from_maya(self, maya_file_path):
         result = []

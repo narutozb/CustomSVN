@@ -94,9 +94,23 @@ class SceneFileInformation:
                 'scale_y': i.scale_y,
                 'scale_z': i.scale_z,
                 'visibility': i.visibility,
-
+                'attr_name': cmds.nodeType(i.get_name())
             })
 
+        return result
+
+    def get_morph_targets(self):
+        result = []
+        for bs in cmds.ls(type='blendShape'):
+            mts = cmds.aliasAttr(bs, q=True)
+            if mts:
+                for idx, mt in enumerate(mts):
+                    if idx % 2 == 0:
+                        result.append({
+                            'weight': mts[idx + 1],
+                            'node_name': cmds.getAttr(f'{bs}.{mts[idx + 1]}'),
+                            'parent_name': bs
+                        })
         return result
 
     def get_scene_info(self):
@@ -131,8 +145,18 @@ class SceneFileInformation:
             "play_back_start_time": scene_info.scene_evaluate.get_settings_evaluate().get('play_back_start_time'),
             "play_back_end_time": scene_info.scene_evaluate.get_settings_evaluate().get('play_back_end_time'),
             "frame_rate": scene_info.scene_evaluate.get_settings_evaluate().get('frame_rate'),
-            'transform_nodes': self.get_transforms()
+            'transform_nodes': self.get_transforms(),
+            'morph_target_nodes': self.get_morph_targets(),
+            'blend_shape_nodes': self.get_blend_shapes(),
         }
+
+    def get_blend_shapes(self):
+        result = []
+        for i in cmds.ls(type='blendShape'):
+            result.append({
+                'node_name': i
+            })
+        return result
 
 
 class CheckMayaData:
@@ -157,8 +181,8 @@ class CheckMayaData:
 
 
 if __name__ == '__main__':
-    file_path = r'D:\svn_project_test\MyDataSVN_trunk\RootFolder\test_file1 - 副本 - 副本 (2).mb'
+    file_path = r'D:\svn_project_test\MyDataSVN\trunk\RootFolder\characters\Avatar_Boy_Bow_Gorou\maya.mb'
 
     md = CheckMayaData(file_path, )
-    # print(md.scene_file_information.get_transforms())
+
     print(md.get_data())

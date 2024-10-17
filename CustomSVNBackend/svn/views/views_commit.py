@@ -16,6 +16,7 @@ from svn._serializers.serializer_commit import CommitQuerySerializerS, CommitPre
 from svn._serializers.serializer_file_change import FileChangeQuerySerializer
 from svn.models import Commit, FileChange
 from svn.pagination import CustomPagination
+from svn.serializers import CommitSerializer
 
 
 class CommitFilter(filters.FilterSet):
@@ -225,7 +226,4 @@ class CommitSearchViewSet(viewsets.ReadOnlyModelViewSet):
 class CommitPreviewViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = CommitPreviewSerializer
     queryset = Commit.objects.all()
-
-    @action(methods='GET', detail=False)
-    def get_commit_preview_data(self, request):
-        return Response({'a': 123})
+    pagination_class = CustomPagination
