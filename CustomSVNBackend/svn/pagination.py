@@ -1,3 +1,5 @@
+import time
+
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
@@ -16,6 +18,7 @@ class CustomPagination(PageNumberPagination):
             'page_count': self.page.paginator.num_pages,
             'current_page': self.page.number,
             'last_page': self.page.paginator.num_pages,
+            'search_time': self.search_time,  # 在响应中包含搜索时间
             'results': data,
         })
 
@@ -29,5 +32,12 @@ class CustomPagination(PageNumberPagination):
             'current_page': 1,
             'last_page': 0,
             'results': [],
+            'search_time': self.search_time,  # 在响应中包含搜索时间
             'message': message
         })
+
+    def paginate_queryset(self, queryset, request, view=None):
+        start_time = time.time()
+        result = super().paginate_queryset(queryset, request, view)
+        self.search_time = time.time() - start_time
+        return result

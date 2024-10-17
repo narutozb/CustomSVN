@@ -88,49 +88,6 @@ class FileChangeQueryViewSet(viewsets.ReadOnlyModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-    @action(detail=False, methods=['GET'])
-    def latest_by_path(self, request):
-        """
-        获取指定 repository 和 branch 中每个唯一 path 的最新 FileChange 对象
-        """
-        repo_id = request.query_params.get('repo_id')
-        branch_id = request.query_params.get('branch_id')
-
-        if not repo_id or not branch_id:
-            return Response({"error": "Both repo_id and branch_id are required."}, status=400)
-
-        # 子查询：获取每个 path 的最新 revision
-        latest_revisions = FileChange.objects.filter(
-            commit__repository_id=repo_id,
-            commit__branch_id=branch_id
-        ).values('path').annotate(
-            latest_revision=Max('commit__revision')
-        )
-
-        # 主查询：获取最新的 FileChange 对象
-        queryset = FileChange.objects.filter(
-            commit__repository_id=repo_id,
-            commit__branch_id=branch_id,
-            path__in=Subquery(latest_revisions.values('path')),
-            commit__revision__in=Subquery(latest_revisions.values('latest_revision'))
-        ).order_by('path', '-commit__revision')
-
-        # 使用 Python 来去重，保留每个 path 的最新记录
-        unique_files = {}
-        for file_change in queryset:
-            if file_change.path not in unique_files:
-                unique_files[file_change.path] = file_change
-
-        queryset = list(unique_files.values())
-
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
-
     @action(detail=True, methods=['GET'])
     def file_change_details(self, request, pk: None):
         '''

@@ -3,6 +3,8 @@ from types import NoneType
 
 from django.db import models
 from django.core.exceptions import ValidationError
+from django.template.defaultfilters import default
+
 from svn.models import FileChange
 
 
@@ -62,6 +64,7 @@ class NodeAttribute(models.Model):
     scene = models.ForeignKey(SceneInfo, on_delete=models.CASCADE, related_name='node_attributes')
     node_name = models.CharField(max_length=512)
     parent = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='children')
+    attr_name = models.CharField(null=True, blank=True, max_length=32)
 
     def clean(self):
         if self.parent and self.parent == self:
@@ -88,6 +91,15 @@ class TransformNode(NodeAttribute):
     class Meta:
         ordering = ('id',)
 
+    def __str__(self):
+        return self.node_name
 
-class ShapeNode(NodeAttribute):
-    scene = models.ForeignKey(SceneInfo, on_delete=models.CASCADE, related_name='shape_nodes', null=True, blank=True)
+
+class BlendShapeNode(NodeAttribute):
+    scene = models.ForeignKey(SceneInfo, on_delete=models.CASCADE, related_name='blend_shape_nodes', null=True, blank=True)
+
+
+class MorphTargetNode(NodeAttribute):
+    weight = models.FloatField(default=1)
+    scene = models.ForeignKey(SceneInfo, on_delete=models.CASCADE, related_name='morph_target_nodes', null=True,
+                              blank=True)

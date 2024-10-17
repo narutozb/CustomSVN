@@ -25,6 +25,9 @@ class Branch(models.Model):
 
     class Meta:
         ordering = ['id']
+        indexes = [
+            models.Index(fields=['name']),
+        ]
 
 
 class Commit(models.Model):
@@ -39,6 +42,13 @@ class Commit(models.Model):
     class Meta:
         unique_together = ('repository', 'revision')
         ordering = ['-revision']  # Default ordering by date
+
+        indexes = [
+            models.Index(fields=['author']),
+            models.Index(fields=['date']),
+            models.Index(fields=['message']),
+            models.Index(fields=['revision']),
+        ]
 
     def __str__(self):
         return f"r{self.revision} - {self.author}"

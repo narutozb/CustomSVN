@@ -15,7 +15,7 @@ class ReceiveCommitSerializer(serializers.ModelSerializer):
         fields = ['repository', 'revision', 'author', 'message', 'date', 'branch', 'svn_client_version', 'file_changes']
 
     def create(self, validated_data):
-        print('create..')
+        # print('create..')
         file_changes_data = validated_data.pop('file_changes', [])
         commit = Commit.objects.create(**validated_data)
         file_changes_instances = [FileChange(commit=commit, **change_data) for change_data in file_changes_data]
