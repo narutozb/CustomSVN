@@ -3,7 +3,9 @@
     <div v-if="loading" class="loading-overlay">
       <el-card class="loading-card">
         <div class="loading-content">
-          <el-icon class="is-loading"><Loading /></el-icon>
+          <el-icon class="is-loading">
+            <Loading/>
+          </el-icon>
           <span>Searching commits...</span>
           <el-button @click="cancelSearch" size="small">Cancel</el-button>
         </div>
@@ -94,7 +96,7 @@
                 :show-after="100"
             >
               <template #default>
-                <CommitDetailPreview :commit="row" />
+                <CommitDetailPreview :commit="row"/>
               </template>
               <template #reference>
                 <router-link
@@ -119,13 +121,24 @@
         </el-table-column>
         <el-table-column label="Message">
           <template #default="{ row }">
-            <el-tooltip :content="row.message" placement="top" :show-after="500">
-              <div class="message-cell">
-                <span v-html="truncateMessage(row.message)"></span>
-              </div>
-            </el-tooltip>
+            <el-popover
+                placement="top"
+                trigger="hover"
+                :show-after="100"
+                effect="light"
+                width="400"
+            >
+              <template #reference>
+                <div class="message-cell">
+                  <span v-html="truncateMessage(row.message)"></span>
+                </div>
+              </template>
+              <div class="popover-content" v-html="row.message"></div>
+            </el-popover>
           </template>
         </el-table-column>
+
+
       </el-table>
 
       <el-pagination
@@ -144,14 +157,14 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, reactive, ref } from 'vue';
-import { useRepositoriesStore } from "@/store/repositories";
-import { getCommitSearchFilterData, searchCommits } from '@/services/svn_api';
-import type { BranchNameId, SearchCommitsResponse } from "@/services/interfaces";
+import {computed, onMounted, reactive, ref} from 'vue';
+import {useRepositoriesStore} from "@/store/repositories";
+import {getCommitSearchFilterData, searchCommits} from '@/services/svn_api';
+import type {BranchNameId, SearchCommitsResponse} from "@/services/interfaces";
 import CustomTransfer from "@/components/Common/CustomTransfer.vue";
-import { ElMessage } from "element-plus";
+import {ElMessage} from "element-plus";
 import CommitDetailPreview from "@/components/SVN/CommitDetailPreview.vue";
-import { Loading } from '@element-plus/icons-vue'
+import {Loading} from '@element-plus/icons-vue'
 
 const store = useRepositoriesStore();
 const searchDuration = ref<number>(0);
@@ -179,8 +192,8 @@ const form = reactive({
   page_size: 100,
 });
 
-const branchesData = computed(() => branches.value.map(branch => ({ key: branch.id, label: branch.name })));
-const authorsData = computed(() => authors.value.map(author => ({ key: author, label: author })));
+const branchesData = computed(() => branches.value.map(branch => ({key: branch.id, label: branch.name})));
+const authorsData = computed(() => authors.value.map(author => ({key: author, label: author})));
 
 const searchResults = ref<SearchCommitsResponse>({
   count: 0,
@@ -257,7 +270,7 @@ const setDefaultDates = () => {
 };
 
 const loadAllData = async (repositoryId: string) => {
-  const { branches: newBranches, authors: newAuthors } = await getCommitSearchFilterData(repositoryId);
+  const {branches: newBranches, authors: newAuthors} = await getCommitSearchFilterData(repositoryId);
   branches.value = newBranches;
   authors.value = newAuthors;
 };
@@ -376,7 +389,14 @@ const truncateMessage = (message: string, maxLength = 100) => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  cursor: pointer;
 }
+
+.popover-content {
+  max-width: 400px;
+  word-wrap: break-word;
+}
+
 
 :deep(.el-table .cell) {
   overflow: hidden;

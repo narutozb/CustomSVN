@@ -170,6 +170,7 @@ class HighlightedCommitViewSet(viewsets.ModelViewSet):
         message_contains = self.request.query_params.get('message_contains', '')
         file_path_contains = self.request.query_params.get('file_path_contains', '')
         return_all_file_changes = self.request.query_params.get('return_all_file_changes', 'false').lower() == 'true'
+
         q_objects = Q()
         if message_contains:
             q_objects |= Q(message__icontains=message_contains)
@@ -177,10 +178,12 @@ class HighlightedCommitViewSet(viewsets.ModelViewSet):
             q_objects |= Q(file_changes__path__icontains=file_path_contains)
         if q_objects:
             queryset = queryset.filter(q_objects).distinct()
+
         if not return_all_file_changes and file_path_contains:
             queryset = queryset.select_related('repository', 'branch').prefetch_related(
                 Prefetch('file_changes', queryset=FileChange.objects.filter(path__icontains=file_path_contains))
             )
         else:
             queryset = queryset.select_related('repository', 'branch').prefetch_related('file_changes')
+
         return queryset

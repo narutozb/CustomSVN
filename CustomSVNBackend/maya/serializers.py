@@ -1,7 +1,7 @@
 from packaging.version import Version, parse
 
 from rest_framework import serializers
-from .models import MayaFile, SceneInfo, TransformNode, ShapeNode
+from .models import MayaFile, SceneInfo, TransformNode, BlendShapeNode
 
 
 class SceneInfoSerializer(serializers.ModelSerializer):
@@ -18,7 +18,7 @@ class TransformNodeSerializer(serializers.ModelSerializer):
 
 class ShapeNodeSerializer(serializers.ModelSerializer):
     class Meta:
-        model = ShapeNode
+        model = BlendShapeNode
         fields = '__all__'
 
 
@@ -55,7 +55,7 @@ class MayaFileSerializer(serializers.ModelSerializer):
 
             if shape_nodes_data:
                 for data in shape_nodes_data:
-                    shape_node = ShapeNode.objects.create(scene=maya_file.scene_info, **data)
+                    shape_node = BlendShapeNode.objects.create(scene=maya_file.scene_info, **data)
                     maya_file.shape_nodes.add(shape_node)
 
         return maya_file
@@ -90,7 +90,7 @@ class MayaFileSerializer(serializers.ModelSerializer):
             if shape_nodes_data:
                 instance.shape_nodes.clear()
                 for data in shape_nodes_data:
-                    shape_node = ShapeNode.objects.create(scene=instance.scene_info, **data)
+                    shape_node = BlendShapeNode.objects.create(scene=instance.scene_info, **data)
                     instance.shape_nodes.add(shape_node)
 
         elif client_version == server_version:
