@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 
 from svn.models import Repository, Commit, FileChange
 from svn.views.views import CustomPagination
-from .models import MayaFile, SceneInfo, TransformNode, ShapeNode
+from .models import MayaFile, SceneInfo, TransformNode, BlendShapeNode
 from .serializers import MayaFileSerializer, SceneInfoSerializer, TransformNodeSerializer, ShapeNodeSerializer
 
 
@@ -28,7 +28,7 @@ class TransformNodeViewSet(viewsets.ModelViewSet):
 
 
 class ShapeNodeViewSet(viewsets.ModelViewSet):
-    queryset = ShapeNode.objects.all()
+    queryset = BlendShapeNode.objects.all()
     serializer_class = ShapeNodeSerializer
 
 
